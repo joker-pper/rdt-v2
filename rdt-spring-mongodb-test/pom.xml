@@ -22,6 +22,8 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
+		<fastjson.version>1.2.48</fastjson.version>
+
 	</properties>
 
 	<dependencies>
@@ -39,7 +41,7 @@
 
 		<dependency>
 			<groupId>com.github.joker-pper</groupId>
-			<artifactId>rdt-spring-mongodb</artifactId>
+			<artifactId>rdt-spring-mongodb-v2</artifactId>
 			<version>1.0</version>
 		</dependency>
 
@@ -49,6 +51,11 @@
 			<version>2.6</version>
 		</dependency>
 
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>fastjson</artifactId>
+			<version>${fastjson.version}</version>
+		</dependency>
 
 	</dependencies>
 

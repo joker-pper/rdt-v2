@@ -21,6 +21,17 @@ public abstract class MongoRdtOperation extends RdtOperationResolver {
         this.mongoTemplate = mongoTemplate;
     }
 
+    public Map getCriteriaToMap(Criteria criteria) {
+        return criteria.getCriteriaObject().toMap();
+    }
+
+    @Override
+    public <T> Collection<T> findByIdIn(Class<T> entityClass, String idKey, Collection<Object> ids) {
+        Query query = new Query(Criteria.where(idKey).in(ids));
+        List<T> list = mongoTemplate.find(query, entityClass);
+        return list;
+    }
+
     @Override
     public Object findById(Class entityClass, Object id) {
         return mongoTemplate.findById(id, entityClass);
@@ -63,7 +74,8 @@ public abstract class MongoRdtOperation extends RdtOperationResolver {
             if (!unknowNotExistValList.isEmpty()) criteria.and(relyProperty).nin(unknowNotExistValList);
         }
 
-        Map typeConditionMap = criteria.getCriteriaObject().toMap(); //获取为当前classModel的条件约束
+        //获取为当前classModel的条件约束
+        Map typeConditionMap = getCriteriaToMap(criteria);
 
         for (String property: conditionValMap.keySet()) {
             criteria.and(property).is(conditionValMap.get(property));
@@ -153,7 +165,7 @@ public abstract class MongoRdtOperation extends RdtOperationResolver {
             if (!unknowNotExistValList.isEmpty()) criteria.and(relyProperty).nin(unknowNotExistValList);
         }
 
-        Map typeConditionMap = criteria.getCriteriaObject().toMap(); //获取为当前classModel的条件约束
+        Map typeConditionMap = getCriteriaToMap(criteria);
 
         for (String property: conditionValMap.keySet()) {
             criteria.and(property).is(conditionValMap.get(property));
@@ -416,7 +428,7 @@ public abstract class MongoRdtOperation extends RdtOperationResolver {
         }
 
         //处理log条件map
-        Map criteriaObjectMap = Prototype.of(criteria.getCriteriaObject().toMap()).deepClone().getModel();
+        Map criteriaObjectMap = Prototype.of(getCriteriaToMap(criteria)).deepClone().getModel();
         Map<String, Object> currentConditionLogMap = new LinkedHashMap<String, Object>(criteriaObjectMap);
         if (!super.getLogDetail()) {
             conditionLogMap.putAll(currentConditionLogMap);

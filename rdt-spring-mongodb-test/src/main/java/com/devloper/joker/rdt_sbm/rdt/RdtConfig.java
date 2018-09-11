@@ -73,6 +73,8 @@ public class RdtConfig {
     public RdtProperties rdtProperties() {
         RdtProperties properties = new RdtProperties();
         properties.setBasePackage(basePackage);
+        properties.setEnableEntityName(true);
+        properties.setEnableColumnName(true);
         //是否通过saveAll保存
         properties.setComplexBySaveAll(false);
         properties.setDeepCloneChangedModify(false);

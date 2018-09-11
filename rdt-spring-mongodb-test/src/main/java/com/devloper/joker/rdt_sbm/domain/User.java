@@ -2,6 +2,7 @@ package com.devloper.joker.rdt_sbm.domain;
 
 import com.devloper.joker.redundant.annotation.base.RdtBaseField;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document
@@ -16,6 +17,9 @@ public class User {
     private int age;
 
     private boolean show;
+
+    @Transient
+    private String userAgeText;
 
     public String getId() {
         return id;
@@ -47,5 +51,13 @@ public class User {
 
     public void setShow(boolean show) {
         this.show = show;
+    }
+
+    public String getUserAgeText() {
+        return userAgeText;
+    }
+
+    public void setUserAgeText(String userAgeText) {
+        this.userAgeText = userAgeText;
     }
 }

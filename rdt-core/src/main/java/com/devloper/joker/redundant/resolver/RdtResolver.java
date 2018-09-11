@@ -224,7 +224,7 @@ public abstract class RdtResolver {
     protected abstract String getPrimaryIdByAnalysis(Class entityClass, Field field);
 
     /**
-     * 设置数据库列字段是否存在
+     * 数据库列字段是否存在
      * @param classModel
      * @param field
      * @return
@@ -245,7 +245,7 @@ public abstract class RdtResolver {
 
         for (Class current : columnTransientAnnotationClassList) {
             if (getAnnotation(field, current) != null) {
-                result = false;
+                result = true;
                 break;
             }
         }

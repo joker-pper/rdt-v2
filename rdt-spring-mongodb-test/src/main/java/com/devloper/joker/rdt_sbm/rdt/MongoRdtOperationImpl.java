@@ -2,24 +2,14 @@ package com.devloper.joker.rdt_sbm.rdt;
 
 import com.devloper.joker.redundant.operation.MongoRdtOperation;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 
 import java.util.Collection;
-import java.util.List;
 
 public class MongoRdtOperationImpl extends MongoRdtOperation {
 
     @Override
     protected Pageable getPageable(long page, long size) {
         return null;
-    }
-
-    @Override
-    public <T> Collection<T> findByIdIn(Class<T> entityClass, String idKey, Collection<Object> ids) {
-        Query query = new Query(Criteria.where(idKey).in(ids));
-        List<T> list = mongoTemplate.find(query, entityClass);
-        return list;
     }
 
     /**

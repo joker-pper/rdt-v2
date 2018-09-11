@@ -10,7 +10,8 @@
     <version>1.0</version>
     <modules>
         <module>rdt-core</module>
-        <module>rdt-spring-mongodb</module>
+        <module>rdt-spring-mongodb-v1</module>
+        <module>rdt-spring-mongodb-v2</module>
     </modules>
 
     <properties>

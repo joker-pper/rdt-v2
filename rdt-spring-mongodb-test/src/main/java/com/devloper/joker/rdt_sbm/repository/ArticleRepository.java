@@ -1,4 +1,4 @@
-package com.devloper.joker.rdt_sbm.repository.domain;
+package com.devloper.joker.rdt_sbm.repository;
 
 import com.devloper.joker.rdt_sbm.domain.Article;
 import com.devloper.joker.rdt_sbm.repository.base.BaseRepository;
