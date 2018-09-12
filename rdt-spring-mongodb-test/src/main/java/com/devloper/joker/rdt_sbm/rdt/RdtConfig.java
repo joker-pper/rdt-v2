@@ -1,5 +1,6 @@
 package com.devloper.joker.rdt_sbm.rdt;
 
+import com.alibaba.fastjson.JSONObject;
 import com.devloper.joker.redundant.model.RdtProperties;
 import com.devloper.joker.redundant.model.RdtSupport;
 import com.devloper.joker.redundant.operation.MongoRdtOperation;
@@ -12,6 +13,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.query.SerializationUtils;
 
 import javax.annotation.Resource;
 import java.lang.reflect.Field;
@@ -27,23 +29,24 @@ public class RdtConfig {
     @Bean
     public RdtResolver rdtResolver() {
         return new RdtResolver() {
+
             @Override
             protected Class<?>[] customBaseEntityAnnotations() {
                 return new Class[] {Document.class};
             }
 
             @Override
-            protected boolean isBaseClassByAnalysis(Class aClass) {
+            protected boolean isBaseClassByAnalysis(Class entityClass) {
                 return false;
             }
 
             @Override
-            protected String getColumnNameByAnalysis(Class<?> aClass, Field field) {
+            protected String getColumnNameByAnalysis(Class<?> entityClass, Field field) {
                 return null;
             }
 
             @Override
-            protected String getEntityNameByAnalysis(Class<?> aClass) {
+            protected String getEntityNameByAnalysis(Class<?> entityClass) {
                 return null;
             }
 
@@ -64,7 +67,7 @@ public class RdtConfig {
 
             @Override
             public String toJson(Object o) {
-                return JSON.serialize(o);
+                return SerializationUtils.serializeToJsonSafely(o);
             }
         };
     }

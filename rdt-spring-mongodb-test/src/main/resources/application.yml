@@ -1,0 +1,14 @@
+logging:
+  level:
+    root: INFO
+    org.springframework.data: debug
+    #com.devloper.joker.redundant: debug
+
+rdt:
+  domain:
+    basePackage: com.devloper.joker.*.domain
+
+spring:
+  data:
+    mongodb:
+      database: rdt-v2-mongodb
