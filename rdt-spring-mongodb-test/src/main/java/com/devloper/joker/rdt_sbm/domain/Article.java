@@ -7,10 +7,7 @@ import com.devloper.joker.redundant.annotation.RdtOne;
 import com.devloper.joker.redundant.annotation.field.RdtField;
 import com.devloper.joker.redundant.annotation.field.RdtFieldCondition;
 import com.devloper.joker.redundant.annotation.field.RdtFields;
-import com.devloper.joker.redundant.annotation.rely.KeyTarget;
-import com.devloper.joker.redundant.annotation.rely.RdtFieldConditionRely;
-import com.devloper.joker.redundant.annotation.rely.RdtFieldRely;
-import com.devloper.joker.redundant.annotation.rely.RdtRely;
+import com.devloper.joker.redundant.annotation.rely.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -38,17 +35,19 @@ public class Article {
     })
     private String content;  //内容
 
-    @RdtRely(nullType = User.class, unknowType = User.class, value = {@KeyTarget(target = User.class), @KeyTarget(target = Article.class, value = "1")})
+    @RdtRelys({
+            @RdtRely(nullType = User.class, unknowType = User.class, value = {@KeyTarget(target = User.class, value = {"1", "2", "3"}),
+                    @KeyTarget(target = Article.class, value = "4")})
+    })
     private Integer type;
 
-
-    @RdtFieldConditionRely(property = "type", targetPropertys = "id", nullTypeProperty = "id")
+    @RdtFieldConditionRely(property = "type", targetPropertys = "id"/*, nullTypeProperty = "id"*/)
     private String firstParentId;
 
     @RdtFieldRely(property = "type", targetPropertys = {"username", "content"})
     private String firstParentText;
 
-    @RdtFieldConditionRely(property = "type", targetPropertys = "id", nullTypeProperty = "id", index = 1)
+    @RdtFieldConditionRely(property = "type", targetPropertys = "id", /*nullTypeProperty = "id",*/ index = 1)
     private String secondParentId;
 
     @RdtFieldRely(property = "type", targetPropertys = {"username", "content"}, index = 1)

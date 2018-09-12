@@ -5,14 +5,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-
+/**
+ * @RdtRely所解析的模型
+ */
 public class RdtRelyModel {
     private List<Class> keyTargetClassList = new ArrayList<Class>();//多个KeyTarget注解顺序的target class
     private Map<Class, List<Object>> targetClassValueMap = new LinkedHashMap<Class, List<Object>>();//target class所需要对应的值
     private Class valType;
     private Class nullType;//存在时最后添加到targetClassValueMap中
     private Class unknowType;//不为null时不处于unknowNotExistValues中所对应的target class
-    private List<Object> unknowNotExistValues = new ArrayList<Object>();
+    private List<Object> unknowNotExistValues = new ArrayList<Object>();//记录的为非unknowType类型时已存在的值
 
     public List<Class> getKeyTargetClassList() {
         return keyTargetClassList;

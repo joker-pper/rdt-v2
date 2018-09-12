@@ -284,7 +284,7 @@ public class RdtPropertiesResolver {
 
         String hintPrefix = classModel.getClassName() + " property " + property + " field ";
         if (conditionRely) hintPrefix += "condition ";
-        hintPrefix += "rely config :" + " group index " + group;
+        hintPrefix += "rely config :" + " group index " + group + " has error, caused by :";
 
         Map<Integer, RdtRelyModel> relyDataMap = classModel.getPropertyRelyDataMap().get(relyColumn.getProperty());
         RdtRelyModel rdtRelyModel = null;
@@ -392,7 +392,7 @@ public class RdtPropertiesResolver {
     private void builderRdtRelyConfigData(ClassModel classModel, Column column, RdtRely rdtRely) {
         int group = rdtRely.group();
         String property = column.getProperty();
-        String hintPrefix = classModel.getClassName() + " property " + property + " rely data config :" + " group index " + group;
+        String hintPrefix = classModel.getClassName() + " property " + property + " rely data config :" + " group index " + group + " has error, caused by :";
 
         Map<String, Map<Integer, RdtRelyModel>> propertyRelyDataMap = classModel.getPropertyRelyDataMap();
         Map<Integer, RdtRelyModel> currentRelyDataMap = propertyRelyDataMap.get(property);
@@ -426,16 +426,20 @@ public class RdtPropertiesResolver {
 
         Map<Class, List<Object>> targetClassValueMap = rdtRelyModel.getTargetClassValueMap();
 
+
+        Map<Object, Class> typeValClassMap = new HashMap<Object, Class>(16);
         for (KeyTarget keyTarget : rdtRely.value()) {
             Class target = keyTarget.target();
             List<Object> valList = targetClassValueMap.get(target);
-            if (valList == null) {
-                valList = new ArrayList<Object>();
-                targetClassValueMap.put(target, valList);
-            } else {  //target class只允许出现一次,通过value配置相关类型值
+            if (valList != null) {
+                //target class只允许出现一次,通过value配置相关类型值
                 throw new IllegalArgumentException(hintPrefix +
                         " @KeyTarget target type " + target.getName() + " only allowed setting once");
             }
+
+            valList = new ArrayList<Object>();
+            targetClassValueMap.put(target, valList);
+
             rdtRelyModel.getKeyTargetClassList().add(target);
             //解析val
             String[] stringArrays = keyTarget.value();
@@ -444,7 +448,16 @@ public class RdtPropertiesResolver {
                 Object val;
                 if (valType == String.class) val = current;
                 else val = rdtResolver.cast(current, valType);
-                valList.add(val);
+
+                Class typeClass = typeValClassMap.get(val);
+                if (typeClass != null) {
+                    throw new IllegalArgumentException(hintPrefix + " @KeyTarget target type " + target.getName() + " type val "+ val + " has already exist the before target type " + typeClass.getName());
+                } else {
+                    //将此类型值与class绑定
+                    typeValClassMap.put(val, target);
+                    valList.add(val);
+                }
+
             }
         }
 
@@ -460,7 +473,10 @@ public class RdtPropertiesResolver {
         if (unknowType != null) {
             loadExtraClass(unknowType);
             List<Object> unknowNotExistValues = rdtRelyModel.getUnknowNotExistValues();
-            unknowNotExistValues.addAll(targetClassValueMap.values());
+            for (List<Object> values : targetClassValueMap.values()) {
+                unknowNotExistValues.addAll(values);
+            }
+            unknowNotExistValues.removeAll(rdtRelyModel.getTargetClassValueMap().get(unknowType));
         }
 
         rdtRelyModel.setValType(valType);
@@ -692,7 +708,7 @@ public class RdtPropertiesResolver {
         modifyDescribe.setValType(rdtRelyModel.getValType());
         modifyDescribe.setValList(targetClassValueMap.get(targetClass));
 
-        if (targetClass.equals(rdtRelyModel.getNullType())) {
+        if (targetClass.equals(rdtRelyModel.getUnknowType())) {
             modifyDescribe.setUnknowNotExistValList(rdtRelyModel.getUnknowNotExistValues());
         }
     }

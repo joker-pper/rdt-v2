@@ -16,5 +16,5 @@ public @interface RdtFieldConditionRely {
     String nullTypeProperty() default "";  //null值所对应类使用的字段
     String unknowTypeProperty() default "";  //未找到对应时的类所使用的字段
     int group() default 0;
-    int index() default 0;
+    int index() default 0;//所属组配置的第几个
 }
