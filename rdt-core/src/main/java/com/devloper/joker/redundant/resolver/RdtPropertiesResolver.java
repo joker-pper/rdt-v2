@@ -366,10 +366,10 @@ public class RdtPropertiesResolver {
                         currentColumn = getColumn(typeClassModel, typePropertyAlias);
                         columnCompareVerification(column, currentColumn, classModel, typeClassModel, conditionRely);
                     } catch (IllegalArgumentException e) {
-                        throw new IllegalArgumentException(e.getMessage() + ", caused by " + hintPrefix);
+                        throw new IllegalArgumentException(hintPrefix + " " + e.getMessage());
                     }
                     if (!typeClassModel.getBaseClass()) {
-                        throw new IllegalArgumentException(typeClassModel.getClassName() + " used for field target class, so must be base class, caused by " + hintPrefix);
+                        throw new IllegalArgumentException(hintPrefix + " " + typeClassModel.getClassName() + " used for field target class, so must be base class");
                     }
 
                     judgeClassRelation(classModel, typeClassModel);

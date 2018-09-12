@@ -30,8 +30,7 @@ public class Article {
     private String age;
 
     @RdtFields({
-            @RdtField(target = User.class, property = "age"),
-            @RdtField(target = User.class, property = "id")
+            @RdtField(target = User.class, property = "age")
     })
     private String content;  //内容
 

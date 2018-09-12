@@ -2,6 +2,7 @@ package com.devloper.joker.rdt_sbm.domain;
 
 import com.devloper.joker.redundant.annotation.field.RdtField;
 import com.devloper.joker.redundant.annotation.field.RdtFieldCondition;
+import com.devloper.joker.redundant.annotation.field.RdtFields;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -18,8 +19,13 @@ public class ArticleProgress {
     @RdtFieldCondition(target = User.class, property = "id")
     private String userId;
 
-    @RdtField(target = User.class)
-    private boolean show;
+    @RdtFields(
+            {
+              @RdtField(target = Article.class),
+              @RdtField(target = User.class, property = "username")
+            }
+    )
+    private String author;
 
     public String getId() {
         return id;
@@ -45,11 +51,11 @@ public class ArticleProgress {
         this.userId = userId;
     }
 
-    public boolean isShow() {
-        return show;
+    public String getAuthor() {
+        return author;
     }
 
-    public void setShow(boolean show) {
-        this.show = show;
+    public void setAuthor(String author) {
+        this.author = author;
     }
 }

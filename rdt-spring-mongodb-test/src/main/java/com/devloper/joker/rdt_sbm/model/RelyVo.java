@@ -1,5 +1,6 @@
 package com.devloper.joker.rdt_sbm.model;
 
+import com.devloper.joker.rdt_sbm.domain.Article;
 import com.devloper.joker.rdt_sbm.domain.User;
 import com.devloper.joker.redundant.annotation.field.RdtField;
 import com.devloper.joker.redundant.annotation.field.RdtFieldCondition;
@@ -21,7 +22,6 @@ public class RelyVo {
 
     @RdtRelys({
             @RdtRely(value = {@KeyTarget(value = {"0", "1"}, target = User.class)
-
             }, valType = Integer.class, nullType = User.class),
             @RdtRely(value = @KeyTarget(value = {"66", "67"}, target = User.class), valType = String.class, nullType = User.class, group = 66)
     }

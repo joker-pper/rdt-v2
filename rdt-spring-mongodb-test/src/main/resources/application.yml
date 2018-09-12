@@ -4,6 +4,7 @@ logging:
     org.springframework.data: debug
     #com.devloper.joker.redundant: debug
 
+
 rdt:
   domain:
     basePackage: com.devloper.joker.*.domain
@@ -12,3 +13,6 @@ spring:
   data:
     mongodb:
       database: rdt-v2-mongodb
+  output:
+    ansi: #设置支持颜色显示
+      enabled: always

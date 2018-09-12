@@ -2,7 +2,10 @@ package com.devloper.joker.rdt_sbm;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.devloper.joker.rdt_sbm.domain.Article;
 import com.devloper.joker.rdt_sbm.domain.User;
+import com.devloper.joker.rdt_sbm.repository.ArticleProgressRepository;
+import com.devloper.joker.rdt_sbm.repository.ArticleRepository;
 import com.devloper.joker.rdt_sbm.repository.UserRepository;
 import com.devloper.joker.redundant.operation.MongoRdtOperation;
 import com.devloper.joker.redundant.support.Prototype;
@@ -15,6 +18,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 
 public class UserTests extends ApplicationTests {
 
@@ -26,30 +30,16 @@ public class UserTests extends ApplicationTests {
     @Resource
     private MongoRdtOperation rdtOperation;
 
+    @Resource
+    private ArticleRepository articleRepository;
+
+    @Resource
+    private ArticleProgressRepository articleProgressRepository;
+
     private String[] userNames = new String[]{"张三", "李四", "王五"};
     private int[] userAges = new int[]{22, 25, 23};
+    private boolean[] userShows = new boolean[]{true, false, false};
     private String[] userIds = new String[]{"1", "2", "3"};
-
-    private boolean initByZero = true;
-
-    /**
-     * 运行时初始化数据
-     */
-    @Before
-    public void initData() {
-        List<User> userList = new ArrayList<>();
-        if (!initByZero || (initByZero && userRepository.count() == 0)) {
-            for (int i = 0; i < userIds.length; i++) {
-                User user = new User();
-                user.setId(userIds[i]);
-                user.setAge(userAges[i]);
-                user.setUserName(userNames[i]);
-                userList.add(user);
-            }
-            userRepository.saveAll(userList);
-        }
-
-    }
 
 
     public <T> T clone(T model) {
@@ -97,5 +87,27 @@ public class UserTests extends ApplicationTests {
         }
 
     }
+
+    @Test
+    public void updateArticleFirst() {
+        Article first = articleRepository.findTopBy();
+        if (first != null) {
+            Article before = articleRepository.findTopBy();
+            int random = new Random().nextInt(userIds.length);
+            first.setAuthor(userNames[random]);
+            first.setUserId(userIds[random]);
+            articleRepository.save(first);
+            if (first.getUserId().equals(before.getUserId())) {
+                log.info("{}", "article的userId未发生变化");
+            } else {
+                log.info("{}", "修改第一个article的数据,articleProgress表中第一条记录的相关值也将更新");
+            }
+
+            rdtOperation.updateMulti(first, before);
+        }
+
+
+    }
+
 
 }
