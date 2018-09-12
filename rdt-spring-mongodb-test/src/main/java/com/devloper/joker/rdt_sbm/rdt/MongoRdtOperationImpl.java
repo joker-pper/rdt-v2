@@ -1,6 +1,7 @@
 package com.devloper.joker.rdt_sbm.rdt;
 
 import com.devloper.joker.redundant.operation.MongoRdtOperation;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.Collection;
@@ -9,7 +10,7 @@ public class MongoRdtOperationImpl extends MongoRdtOperation {
 
     @Override
     protected Pageable getPageable(long page, long size) {
-        return null;
+        return PageRequest.of((int) page, (int)size);
     }
 
     /**
@@ -34,7 +35,6 @@ public class MongoRdtOperationImpl extends MongoRdtOperation {
          }
         return o;
     }
-
 
 
 }

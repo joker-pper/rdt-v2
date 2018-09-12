@@ -25,6 +25,34 @@ public abstract class MongoRdtOperation extends RdtOperationResolver {
         return criteria.getCriteriaObject().toMap();
     }
 
+    protected void updateMulti(Criteria criteria, Update update, Class entityClass) {
+        Query query = Query.query(criteria);
+        mongoTemplate.updateMulti(query, update, entityClass);
+    }
+
+    /**
+     * 添加为对应类的条件(即对应的属性字段为哪些符合的条件)
+     * @param describe
+     * @param criteria
+     * @param relyProperty
+     */
+    protected void modelTypeCriteriaProcessing(ModifyRelyDescribe describe, Criteria criteria, String relyProperty) {
+        List<Object> unknowNotExistValList = describe.getUnknowNotExistValList();
+        List<Object> valList = describe.getValList();
+
+        if (!valList.isEmpty()) {
+            if (unknowNotExistValList.isEmpty()) {
+                criteria.and(relyProperty).in(valList);
+            } else { //满足在valList 或 非unknowNotExistValList时
+                criteria.orOperator(Criteria.where(relyProperty).in(valList), Criteria.where(relyProperty).nin(unknowNotExistValList));
+            }
+        } else {
+            if (!unknowNotExistValList.isEmpty()) {
+                criteria.and(relyProperty).nin(unknowNotExistValList);
+            }
+        }
+    }
+
     @Override
     public <T> Collection<T> findByIdIn(Class<T> entityClass, String idKey, Collection<Object> ids) {
         Query query = new Query(Criteria.where(idKey).in(ids));
@@ -38,65 +66,39 @@ public abstract class MongoRdtOperation extends RdtOperationResolver {
     }
 
     @Override
-    protected Log updateModifyDescribeSimpleImpl(ClassModel classModel, ClassModel modifyClassModel, ModifyDescribe describe, ChangedVo vo, Map<String, Object> conditionValMap, Map<String, Object> updateValMap) {
+    protected void updateModifyDescribeSimpleImpl(ClassModel classModel, ClassModel modifyClassModel, ModifyDescribe describe, ChangedVo vo, Map<String, Object> conditionValMap, Map<String, Object> updateValMap) {
         Criteria criteria = new Criteria();
         Update update = new Update();
-
         for (String property: conditionValMap.keySet()) {
             criteria.and(property).is(conditionValMap.get(property));
         }
         for (String property: updateValMap.keySet()) {
             update.set(property, updateValMap.get(property));
         }
-        Query query = Query.query(criteria);
-        mongoTemplate.updateMulti(query, update, modifyClassModel.getCurrentClass());
-
-        return null;
+        updateMulti(criteria, update, modifyClassModel.getCurrentClass());
     }
 
 
     @Override
-    protected Log updateModifyRelyDescribeSimpleImpl(ClassModel classModel, ClassModel modifyClassModel, ChangedVo vo, Map<String, Object> conditionValMap, Map<String, Object> updateValMap, Column relyCoumn, int group, ModifyRelyDescribe describe) {
+    protected void updateModifyRelyDescribeSimpleImpl(ClassModel classModel, ClassModel modifyClassModel, ChangedVo vo, Map<String, Object> conditionValMap, Map<String, Object> updateValMap, Column relyCoumn, int group, ModifyRelyDescribe describe, RdtLog rdtLog) {
         Criteria criteria = new Criteria();
-
-        Update update = new Update();
         String relyProperty = relyCoumn.getProperty();
 
-        List<Object> unknowNotExistValList = describe.getUnknowNotExistValList();  //非这些值时为classModel
-        List<Object> valList = describe.getValList();
+        modelTypeCriteriaProcessing(describe, criteria, relyProperty);
 
-        if (!valList.isEmpty()) {
-            if (unknowNotExistValList.isEmpty()) criteria.and(relyProperty).in(valList);
-            else { //满足在valList 或 非unknowNotExistValList时
-                criteria.orOperator(Criteria.where(relyProperty).in(valList), Criteria.where(relyProperty).nin(unknowNotExistValList));
-            }
-        } else {
-            if (!unknowNotExistValList.isEmpty()) criteria.and(relyProperty).nin(unknowNotExistValList);
-        }
+        //将筛选类型的条件添加到log中
+        rdtLog.putConditionTop(getCriteriaToMap(criteria));
 
         //获取为当前classModel的条件约束
-        Map typeConditionMap = getCriteriaToMap(criteria);
-
         for (String property: conditionValMap.keySet()) {
             criteria.and(property).is(conditionValMap.get(property));
         }
 
-        Map<String, Object> logConditionMap = new LinkedHashMap<String, Object>(16);
-
-        //将条件放入logConditionMap中作为log查询参数输出
-        if (typeConditionMap != null && !typeConditionMap.isEmpty()) {
-            for (Object key : typeConditionMap.keySet()) {
-                logConditionMap.put(key.toString(), typeConditionMap.get(key));
-            }
-        }
-
+        Update update = new Update();
         for (String property: updateValMap.keySet()) {
             update.set(property, updateValMap.get(property));
         }
-        Query query = Query.query(criteria);
-        mongoTemplate.updateMulti(query, update, modifyClassModel.getCurrentClass());
-
-        return new Log(logConditionMap, null);
+        updateMulti(criteria, update, modifyClassModel.getCurrentClass());
     }
 
     @Override
@@ -115,7 +117,7 @@ public abstract class MongoRdtOperation extends RdtOperationResolver {
     }
 
     @Override
-    protected Log updateModifyDescribeOneImpl(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ClassModel modifyClassModel, ModifyDescribe describe, ChangedVo vo, Map<String, Object> conditionValMap, Map<String, Object> updateValMap) {
+    protected void updateModifyDescribeOneImpl(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ClassModel modifyClassModel, ModifyDescribe describe, ChangedVo vo, Map<String, Object> conditionValMap, Map<String, Object> updateValMap) {
         Criteria criteria = new Criteria();
         Update update = new Update();
 
@@ -125,9 +127,7 @@ public abstract class MongoRdtOperation extends RdtOperationResolver {
         for (String property: updateValMap.keySet()) {
             update.set(property, updateValMap.get(property));
         }
-        Query query = Query.query(criteria);
-        mongoTemplate.updateMulti(query, update, modifyClassModel.getCurrentClass());
-        return null;
+        updateMulti(criteria, update, modifyClassModel.getCurrentClass());
     }
 
 
@@ -147,45 +147,26 @@ public abstract class MongoRdtOperation extends RdtOperationResolver {
     }
 
     @Override
-    protected Log updateModifyRelyDescribeOneImpl(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ClassModel modifyClassModel, ModifyRelyDescribe describe, ChangedVo vo, Map<String, Object> conditionValMap, Map<String, Object> updateValMap, Column relyCoumn, int group) {
+    protected void updateModifyRelyDescribeOneImpl(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ClassModel modifyClassModel, ModifyRelyDescribe describe, ChangedVo vo, Map<String, Object> conditionValMap, Map<String, Object> updateValMap, Column relyCoumn, int group, RdtLog rdtLog) {
         Criteria criteria = new Criteria();
 
         Update update = new Update();
         String relyProperty = getModifyRelyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, relyCoumn);
 
-        List<Object> unknowNotExistValList = describe.getUnknowNotExistValList();
-        List<Object> valList = describe.getValList();
+        modelTypeCriteriaProcessing(describe, criteria, relyProperty);
 
-        if (!valList.isEmpty()) {
-            if (unknowNotExistValList.isEmpty()) criteria.and(relyProperty).in(valList);
-            else { //满足在valList 或 非unknowNotExistValList时
-                criteria.orOperator(Criteria.where(relyProperty).in(valList), Criteria.where(relyProperty).nin(unknowNotExistValList));
-            }
-        } else {
-            if (!unknowNotExistValList.isEmpty()) criteria.and(relyProperty).nin(unknowNotExistValList);
-        }
-
-        Map typeConditionMap = getCriteriaToMap(criteria);
+        //将筛选类型的条件添加到log中
+        rdtLog.putConditionTop(getCriteriaToMap(criteria));
 
         for (String property: conditionValMap.keySet()) {
             criteria.and(property).is(conditionValMap.get(property));
         }
 
-        Map<String, Object> logConditionMap = new LinkedHashMap<String, Object>(16);
-        //将条件放入logConditionMap中作为log查询参数输出
-        if (typeConditionMap != null && !typeConditionMap.isEmpty()) {
-            for (Object key : typeConditionMap.keySet()) {
-                logConditionMap.put(key.toString(), typeConditionMap.get(key));
-            }
-        }
-
         for (String property: updateValMap.keySet()) {
             update.set(property, updateValMap.get(property));
         }
-        Query query = Query.query(criteria);
-        mongoTemplate.updateMulti(query, update, modifyClassModel.getCurrentClass());
 
-        return new Log(logConditionMap, null);
+        updateMulti(criteria, update, modifyClassModel.getCurrentClass());
     }
 
 
@@ -196,12 +177,14 @@ public abstract class MongoRdtOperation extends RdtOperationResolver {
 
 
     @Override
-    protected Log updateModifyDescribeManyImpl(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ClassModel modifyClassModel, ModifyDescribe describe, ChangedVo vo) {
+    protected void updateModifyDescribeManyImpl(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ClassModel modifyClassModel, ModifyDescribe describe, ChangedVo vo, RdtLog rdtLog) {
         Criteria criteria = new Criteria();
 
         final Map<String, Object> conditionValMap = new HashMap<String, Object>(16);  //存放比较属性值的map
         final Map<String, Object> updateValMap = new HashMap<String, Object>(16);  //存放要更新属性值的map
         Map<String, Object> conditionLogMap = new LinkedHashMap<String, Object>(16); //查询条件log数据
+
+        final Map<String, Object> updateLogMap = new LinkedHashMap<String, Object>(16);
 
         //统一处理
         updateManyDataConditionHandle(classModel, complexClassModel, complexAnalysis, modifyClassModel, describe, vo, criteria, conditionValMap, conditionLogMap,null);
@@ -209,9 +192,6 @@ public abstract class MongoRdtOperation extends RdtOperationResolver {
         final String analysisPrefix = complexAnalysis.getPrefix() + ".";
         final String symbol = super.getSymbol();
         final boolean logDetail = super.getLogDetail();
-
-
-        final Map<String, Object> updateLogMap = new LinkedHashMap<String, Object>(16);
 
         rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
             @Override
@@ -228,7 +208,6 @@ public abstract class MongoRdtOperation extends RdtOperationResolver {
         });
 
         Class modifyClass = modifyClassModel.getCurrentClass();
-
         Query query = new Query(criteria);
 
         long pageSize = properties.getPageSize();
@@ -252,9 +231,17 @@ public abstract class MongoRdtOperation extends RdtOperationResolver {
             }
         }
 
-        return new Log(conditionLogMap, updateLogMap);
+        //设置log
+        rdtLog.setCondition(conditionLogMap);
+        rdtLog.setUpdate(updateLogMap);
     }
 
+    /**
+     * 获取Pageable对象
+     * @param page
+     * @param size
+     * @return
+     */
     protected abstract Pageable getPageable(long page, long size);
 
     @Override
@@ -263,7 +250,7 @@ public abstract class MongoRdtOperation extends RdtOperationResolver {
     }
 
     @Override
-    protected Log updateModifyRelyDescribeManyImpl(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ClassModel modifyClassModel, ModifyRelyDescribe describe, ChangedVo vo, Column relyColumn, int group) {
+    protected void updateModifyRelyDescribeManyImpl(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ClassModel modifyClassModel, ModifyRelyDescribe describe, ChangedVo vo, Column relyColumn, int group, RdtLog rdtLog) {
         Criteria criteria = new Criteria();
 
         final Map<String, Object> conditionValMap = new HashMap<String, Object>(16);  //存放比较属性值的map
@@ -314,7 +301,8 @@ public abstract class MongoRdtOperation extends RdtOperationResolver {
                 }
             }
         }
-        return new Log(conditionLogMap, updateLogMap);
+        rdtLog.setCondition(conditionLogMap);
+        rdtLog.setUpdate(updateLogMap);
     }
 
 
@@ -374,7 +362,6 @@ public abstract class MongoRdtOperation extends RdtOperationResolver {
 
         final Map<String, String> conditionPropertyMap = new HashMap<String, String>();
 
-
         rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
             @Override
             public void execute(ModifyCondition condition, String targetProperty, Object targetPropertyVal) {
@@ -394,28 +381,16 @@ public abstract class MongoRdtOperation extends RdtOperationResolver {
             }
         });
 
-        if (relyColumn != null) { //有依赖列时,此时为ModifyRelyDescribe
-
-            List<Object> unknowNotExistValList;
-            List<Object> valList;
-
-            if (describe instanceof ModifyRelyDescribe) {
-                unknowNotExistValList = ((ModifyRelyDescribe) describe).getUnknowNotExistValList();
-                valList = ((ModifyRelyDescribe) describe).getValList();
-            } else throw new IllegalArgumentException("has rely column must be ModifyRelyDescribe instance");
+        if (relyColumn != null) {
+            //有依赖列时,此时为ModifyRelyDescribe
+            if (!(describe instanceof ModifyRelyDescribe)) {
+                throw new IllegalArgumentException("has rely column must be ModifyRelyDescribe instance");
+            }
 
             String relyProperty = relyColumn.getProperty();
-
             if (lastIsOne) relyProperty = lastProperty + "." + relyProperty;
 
-            if (!valList.isEmpty()) {
-                if (unknowNotExistValList.isEmpty()) lastCriteria.and(relyProperty).in(valList);
-                else { //满足在valList 或 非unknowNotExistValList时
-                    lastCriteria.orOperator(Criteria.where(relyProperty).in(valList), Criteria.where(relyProperty).nin(unknowNotExistValList));
-                }
-            } else {
-                if (!unknowNotExistValList.isEmpty()) lastCriteria.and(relyProperty).nin(unknowNotExistValList);
-            }
+            modelTypeCriteriaProcessing((ModifyRelyDescribe)describe, lastCriteria, relyProperty);
         }
 
         if (!elemMatchList.isEmpty()) {  //设置criteria关系
@@ -518,7 +493,6 @@ public abstract class MongoRdtOperation extends RdtOperationResolver {
                                 }
                             }
 
-
                             if (flag) {
                                 for (String currentProperty : conditionValMap.keySet()) {
                                     Object conditionVal = conditionValMap.get(currentProperty);
@@ -555,13 +529,11 @@ public abstract class MongoRdtOperation extends RdtOperationResolver {
                 });
 
                 if (!saveAll) {
-                    Query currentQuery = Query.query(currentCriteria);
-                    mongoTemplate.updateMulti(currentQuery, currentUpdate, modifyClass);
+                    updateMulti(currentCriteria, currentUpdate, modifyClass);
                 }
             }
 
             if (saveAll) this.saveAll(dataList);
-
         }
     }
 
