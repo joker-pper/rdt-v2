@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
-public class UserTests extends ApplicationTests {
+public class DataTests extends ApplicationTests {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -62,7 +62,7 @@ public class UserTests extends ApplicationTests {
             current.setUserName("joker");
             userRepository.save(current);
 
-            //依据前后数据更新相关字段
+            //依据前后数据更新相关字段(字段值未发生变化时不会更新该字段相关值)
             rdtOperation.updateMulti(current, before);
         }
 
@@ -80,6 +80,7 @@ public class UserTests extends ApplicationTests {
 
             //修改userName
             current.setUserName("joker");
+            current.setAge(233);
 
             userRepository.save(current);
             //将会更新被使用的冗余字段

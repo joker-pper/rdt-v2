@@ -181,7 +181,7 @@ public abstract class RdtOperationResolver {
         } catch (Exception e) {
             logger.warn("unable to create instance about {}, will continue update", current.getClass().getName());
         }
-        updateMulti(current, before);
+        updateMulti(current, before, true);
     }
 
 
@@ -191,6 +191,10 @@ public abstract class RdtOperationResolver {
      * @param before
      */
     public void updateMulti(Object current, Object before) {
+        updateMulti(current, before, false);
+    }
+
+    private void updateMulti(Object current, Object before, boolean allUsedPropertysChange) {
         if (current == null) return;
         //获取当前entity的class
         Class entityClass = current.getClass();
@@ -222,16 +226,24 @@ public abstract class RdtOperationResolver {
                                 Object currentVal = rdtResolver.getPropertyValue(current, property);
                                 Object beforeVal = rdtResolver.getPropertyValue(before, property);
                                 boolean changed = false;
-                                if (currentVal != null) {
-                                    changed = !currentVal.equals(beforeVal);
-                                } else {
-                                    if (beforeVal != null) {
-                                        changed = !beforeVal.equals(currentVal);
+                                if (!allUsedPropertysChange) {
+                                    if (currentVal != null) {
+                                        changed = !currentVal.equals(beforeVal);
+                                    } else {
+                                        if (beforeVal != null) {
+                                            changed = !beforeVal.equals(currentVal);
+                                        }
                                     }
                                 }
-                                if (changed) changedVo.addChangedProperty(property);
+                                changed = !changed ? allUsedPropertysChange : changed;
+
+                                if (changed) {
+                                    //添加该字段值为changed property用于更新相关值
+                                    changedVo.addChangedProperty(property);
+                                }
                                 changedVo.setVal(property, currentVal, beforeVal);
                             }
+
                             List<String> changedPropertys = changedVo.getChangedPropertys();
                             if (!changedPropertys.isEmpty()) {
                                 List<String> propertys = new ArrayList<String>(classModel.getPropertyColumnMap().keySet());
