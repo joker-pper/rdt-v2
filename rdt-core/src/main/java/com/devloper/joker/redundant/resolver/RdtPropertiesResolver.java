@@ -88,6 +88,22 @@ public class RdtPropertiesResolver {
     }
 
     private void builderClassAfter(ClassModel classModel) {
+
+
+        if (classModel.getBaseClass()) {
+            if (StringUtils.isEmpty(classModel.getPrimaryId())) {
+                if (classModel.getPropertyFieldMap().keySet().contains(properties.getDefaultIdKey())) {
+                    classModel.setPrimaryId(properties.getDefaultIdKey());
+                }
+
+                if (StringUtils.isEmpty(classModel.getPrimaryId())) {
+                    throw new IllegalArgumentException(classModel.getClassName() + " is base class, but has no primary id");
+                } else {
+                    logger.info(classModel.getClassName() + " is base class, but not found primary id, so use default primary id : " + classModel.getPrimaryId());
+                }
+            }
+        }
+
         Map<String, Map<Integer, RdtRelyModel>> propertyRelyDataMap = classModel.getPropertyRelyDataMap();
         if (!propertyRelyDataMap.isEmpty()) {
             builderModifyRelyDescribe(classModel, true);

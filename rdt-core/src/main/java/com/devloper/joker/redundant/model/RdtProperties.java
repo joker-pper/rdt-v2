@@ -11,25 +11,60 @@ public class RdtProperties {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private String basePackage;  //扫描的包
+    /**
+     * 扫描的包
+     */
+    private String basePackage;
 
-    private Boolean enableColumnName = false;  //是否启用获取列名
+    /**
+     * 是否启用获取列名
+     */
+    private Boolean enableColumnName = false;
 
-    private Boolean enableEntityName = false;  //是否启用获取表名
+    /**
+     * 是否启用获取表名
+     */
+    private Boolean enableEntityName = false;
 
-    private Boolean deepCloneChangedModify = false; //是否深度克隆修改列和修改条件数据
+    /**
+     * 是否深度克隆修改列和修改条件数据
+     */
+    private Boolean deepCloneChangedModify = false;
 
-    private Long pageSize = -1L;  //如果要用查询数据时的数量,-1为全部
+    /**
+     * 如果更新需要用到查询数据时的分页数量,-1为全部
+     */
+    private Long pageSize = -1L;
 
-    private Boolean complexBySaveAll = true;  //复杂对象的数据是否使用saveAll方法保存(mongo)
+    /**
+     * 是否使用saveAll方法还是通过update语句更新(用于mongo子文档数组数据的更新操作)
+     */
+    private Boolean complexBySaveAll = true;
 
-    private Map<Class, ClassModel> classModelMap = new LinkedHashMap<Class, ClassModel>();  //当前类的数据
+    /**
+     * base类未找到primary id时默认使用该字段
+     */
+    private String defaultIdKey = "id";
 
-    private List<Class> packageClassList = new ArrayList<Class>();
+    /**
+     * 当前类的数据
+     */
+    private Map<Class, ClassModel> classModelMap = new LinkedHashMap<Class, ClassModel>(16);
 
-    private Set<Class> extraClassSet = new HashSet<Class>();//target class不在指定包的数据
+    /**
+     * 在指定包的class列表
+     */
+    private List<Class> packageClassList = new ArrayList<Class>(16);
 
-    private Map<Class, List<ComplexModel>> classComplexModelsMap = new LinkedHashMap<Class, List<ComplexModel>>();  //关联类所对应的多个关联信息
+    /**
+     * target class不在指定包的数据
+     */
+    private Set<Class> extraClassSet = new HashSet<Class>(16);
+
+    /**
+     * 关联类所对应的多个关联信息
+     */
+    private Map<Class, List<ComplexModel>> classComplexModelsMap = new LinkedHashMap<Class, List<ComplexModel>>(16);
 
     public RdtProperties() {
         super();
@@ -105,6 +140,14 @@ public class RdtProperties {
 
     public void setComplexBySaveAll(Boolean complexBySaveAll) {
         this.complexBySaveAll = complexBySaveAll;
+    }
+
+    public String getDefaultIdKey() {
+        return defaultIdKey;
+    }
+
+    public void setDefaultIdKey(String defaultIdKey) {
+        this.defaultIdKey = defaultIdKey;
     }
 
     public Map<Class, ClassModel> getClassModelMap() {

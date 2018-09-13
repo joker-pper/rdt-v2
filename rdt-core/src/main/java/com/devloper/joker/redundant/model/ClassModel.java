@@ -15,7 +15,7 @@ public class ClassModel {
     private Boolean baseClass;  //是否为基本类(类有注解@RdtBaseEntity或通过实现方法进行判断)
     private String primaryId;  //当前类的id字段(基本类时)
 
-    private List<Field> fieldList = new ArrayList<Field>();
+    private List<Field> fieldList = new ArrayList<Field>(16);
     private Map<String, Field> propertyFieldMap = new HashMap<String, Field>(16);
     private Map<String, String> aliasPropertyMap = new LinkedHashMap<String, String>(16);  //该类属性别名对应的该类属性名称
     private Map<String, Column> propertyColumnMap = new LinkedHashMap<String, Column>(16);  //该类属性所对应的信息
@@ -26,7 +26,7 @@ public class ClassModel {
     private Map<String, Map<Column, Map<Integer, RdtRelyTargetColumnModel>>> propertyTargetRelyMap = new LinkedHashMap<String, Map<Column, Map<Integer, RdtRelyTargetColumnModel>>>(16);
     private Map<String, Map<Column, Map<Integer, RdtRelyTargetColumnModel>>> propertyTargetConditionRelyMap = new LinkedHashMap<String, Map<Column, Map<Integer, RdtRelyTargetColumnModel>>>(16);
 
-    private Set<String> usedPropertySet = new HashSet<String>();  //被使用的冗余字段
+    private Set<String> usedPropertySet = new HashSet<String>(16);  //被使用的冗余字段
 
     //当前类数据修改后所要修改的基本类列表(该类属性做为直接冗余字段的相关基本类,即target class为当前类的类列表)
     private Set<Class> changedRelaxedClassSet = new LinkedHashSet<Class>();
@@ -37,9 +37,9 @@ public class ClassModel {
     //当前类中存在依赖列字段下的target class所对应的修改信息 (integer key 对应的为 group)
     private Map<Class, Map<Column, Map<Integer, List<ModifyRelyDescribe>>>> targetClassModifyRelyDescribeMap = new LinkedHashMap<Class, Map<Column, Map<Integer, List<ModifyRelyDescribe>>>>(16) ;
 
-    private List<ComplexModel> complexModelList = new ArrayList<ComplexModel>();  //当前类拥有的关联对象列表
+    private List<ComplexModel> complexModelList = new ArrayList<ComplexModel>(16);  //当前类拥有的关联对象列表
 
-    private Set<Class> changedComplexClassSet = new LinkedHashSet<Class>();  //子数据集合(子文档)中target class为当前类的class集合
+    private Set<Class> changedComplexClassSet = new LinkedHashSet<Class>(16);  //子数据集合(子文档)中target class为当前类的class集合
 
     public Class getCurrentClass() {
         return currentClass;
