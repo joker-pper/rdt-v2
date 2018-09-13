@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ArticleProgressRepository extends BaseRepository<ArticleProgress> {
-
+    ArticleProgress findTopBy();
 }

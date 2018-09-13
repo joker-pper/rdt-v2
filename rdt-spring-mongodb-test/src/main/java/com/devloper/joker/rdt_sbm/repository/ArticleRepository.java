@@ -9,4 +9,6 @@ public interface ArticleRepository extends BaseRepository<Article> {
 
     Article findTopBy();
 
+    Article findTopByType(Integer type);
+
 }

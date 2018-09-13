@@ -17,7 +17,7 @@ import java.util.List;
 @Document
 public class Article {
 
-    @Id
+    //@Id
     private String id;
 
     @RdtField(target = User.class, property = "username")

@@ -3,22 +3,20 @@ package com.devloper.joker.rdt_sbm;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.devloper.joker.rdt_sbm.domain.Article;
+import com.devloper.joker.rdt_sbm.domain.ArticleProgress;
 import com.devloper.joker.rdt_sbm.domain.User;
 import com.devloper.joker.rdt_sbm.repository.ArticleProgressRepository;
 import com.devloper.joker.rdt_sbm.repository.ArticleRepository;
 import com.devloper.joker.rdt_sbm.repository.UserRepository;
 import com.devloper.joker.redundant.operation.MongoRdtOperation;
-import com.devloper.joker.redundant.support.Prototype;
-import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class DataTests extends ApplicationTests {
 
@@ -68,6 +66,9 @@ public class DataTests extends ApplicationTests {
 
     }
 
+
+
+
     /**
      * 直接更新该数据的全部属性
      */
@@ -110,5 +111,46 @@ public class DataTests extends ApplicationTests {
 
     }
 
+
+    @Test
+    public void updateByBeforeData() {
+        Optional<User> userOptional = userRepository.findById("1");
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            user.setUserName("joker" + "_" + "yyc(power by " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + ")");
+            Map<Object, Object> beforeMap = rdtOperation.getBeforeData(user);
+            userRepository.save(user);
+            rdtOperation.updateRelevant(user, beforeMap);
+        }
+    }
+
+    /**
+     * 通过getBeforeData获取之前的数据,用于更新实体(当前实体未存在被使用的冗余字段,将会减少查询操作)
+     */
+    @Test
+    public void updateByBeforeDataAndNotUsedProperty() {
+        ArticleProgress articleProgress = articleProgressRepository.findTopBy();
+        if (articleProgress != null) {
+            Map<Object, Object> beforeMap = rdtOperation.getBeforeData(articleProgress);
+            articleProgressRepository.save(articleProgress);
+            rdtOperation.updateRelevant(articleProgress, beforeMap);
+        }
+    }
+
+    /**
+     * 更新type为4的数据,将会修改对应article表中的相关数据
+     */
+    @Test
+    public void updateArticleWithType() {
+        Article model = articleRepository.findTopByType(4);
+        if (model != null) {
+            int random = new Random().nextInt(userIds.length);
+            model.setAuthor(userNames[random]);
+            model.setUserId(userIds[random]);
+            model.setContent(userAges[random] + "_更新");
+            articleRepository.save(model);
+            rdtOperation.updateMulti(model);
+        }
+    }
 
 }
