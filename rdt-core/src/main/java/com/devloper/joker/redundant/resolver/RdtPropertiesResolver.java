@@ -99,7 +99,7 @@ public class RdtPropertiesResolver {
                 if (StringUtils.isEmpty(classModel.getPrimaryId())) {
                     throw new IllegalArgumentException(classModel.getClassName() + " is base class, but has no primary id");
                 } else {
-                    logger.info(classModel.getClassName() + " is base class, but not found primary id, so use default primary id : " + classModel.getPrimaryId());
+                    logger.warn("rdt base class --- " + classModel.getClassName() + " not found primary id, so use default primary id : " + classModel.getPrimaryId() + ", please make sure no problem.");
                 }
             }
         }
