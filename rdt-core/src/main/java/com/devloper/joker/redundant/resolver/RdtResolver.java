@@ -2,7 +2,6 @@ package com.devloper.joker.redundant.resolver;
 
 import com.devloper.joker.redundant.annotation.base.RdtBaseEntity;
 import com.devloper.joker.redundant.annotation.base.RdtBaseField;
-import com.devloper.joker.redundant.annotation.field.RdtField;
 import com.devloper.joker.redundant.model.ClassModel;
 import com.devloper.joker.redundant.model.Column;
 import com.devloper.joker.redundant.utils.*;
@@ -100,27 +99,13 @@ public abstract class RdtResolver {
         String columnName = null;
         String columnNameTemp = null;
         RdtBaseField rdtBaseField = getAnnotation(field, RdtBaseField.class);
-        RdtField rdtField = getAnnotation(field, RdtField.class);
         if (rdtBaseField != null) {
             columnNameTemp = rdtBaseField.columnName();
             if (!columnNameTemp.isEmpty()) {
                 columnName = columnNameTemp;
             }
         }
-        if (rdtField != null) {
-            columnNameTemp = rdtField.columnName();
-            if (!columnNameTemp.isEmpty()) {
-                //比较列名是否一致
-                if (columnName != null) {
-                    if (!columnNameTemp.equals(columnName)) {
-                        throw new IllegalArgumentException(PojoUtils.getFieldLocalityClass(field).getName()
-                                + " property: " + field.getName() + "'s column value not eq, value: " + columnName + ", " + columnNameTemp);
-                    }
-                } else {
-                    columnName = columnNameTemp;
-                }
-            }
-        }
+
         if (StringUtils.isEmpty(columnName)) {
             String[] annotations = new String[]{"javax.persistence.Column", "org.springframework.data.mongodb.core.mapping.Field"};
             String[] annotationPropertys = new String[]{"name", "value"};
@@ -151,7 +136,6 @@ public abstract class RdtResolver {
 
                 }
             }
-
 
         }
         return columnName;

@@ -6,12 +6,27 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 修改冗余字段的条件
+ * 用于更新列值的条件注解
  */
 @Retention(RetentionPolicy.RUNTIME)   //在运行时可以获取
 @Target({ElementType.FIELD})  //作用到类/接口上
 public @interface RdtFieldCondition {
-    String property() default "";  //比较的属性,别名,相等时可修改
-    Class target();  //基于哪个修改的类
-    int index() default 0;  //第几个
+
+    /**
+     * 对应修改类的属性别名(如果与属性别名一致可不填写)
+     * @return
+     */
+    String property() default "";
+
+    /**
+     * 基于哪个修改类
+     * @return
+     */
+    Class target();
+
+    /**
+     * 所属target的第几组
+     * @return
+     */
+    int index() default 0;
 }
