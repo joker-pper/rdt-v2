@@ -46,14 +46,12 @@ public abstract class RdtOperationResolver {
     }
 
     /**
-     * 获取之前的model数据
-     *
+     * 获取之前的model数据,且仅当classModel为base class及存在use property时查询
      * @param entity
      * @return key: id, val: entity
      */
-
-    public Map<Object, Object> getBeforeEntitys(Object entity) {
-        Map<Object, Object> result = new HashMap<Object, Object>();
+    public Map<Object, Object> getBeforeData(Object entity) {
+        Map<Object, Object> result = new HashMap<Object, Object>(16);
         if (entity != null) {
             entity = parseEntityData(entity);
 
@@ -76,20 +74,36 @@ public abstract class RdtOperationResolver {
                     classModel = getClassModel(entityClass);
                     if (classModel != null) flag = classModel.getBaseClass();
                 }
-                if (flag) {
-                    //获取idKey
-                    idKey = classModel.getPrimaryId();
-                    Object idKeyVal = rdtResolver.getPropertyValue(current, idKey);
-                    result.put(idKeyVal, null);
-                } else break;
+                if (!flag) {
+                    break;
+                }
+
+                //获取idKey
+                idKey = classModel.getPrimaryId();
+                Object idKeyVal = rdtResolver.getPropertyValue(current, idKey);
+                result.put(idKeyVal, null);
             }
 
             if (classModel != null) {
-                Collection<Object> dataList = findByIdIn(entityClass, idKey, result.keySet());
-                if (dataList != null) {
-                    for (Object data : dataList) {
-                        Object idKeyVal = rdtResolver.getPropertyValue(data, idKey);
-                        result.put(idKeyVal, data);
+                if (classModel.getUsedPropertySet().isEmpty()) {
+                    logger.debug("{} has no used property, so not to get before data", classModel.getClassName());
+                } else {
+                    //仅当存在使用的property时查找之前的数据
+                    Collection<Object> dataList = null;
+                    Set<Object> resultKeys = result.keySet();
+                    if (!resultKeys.isEmpty()) {
+                        if (resultKeys.size() > 1) {
+                            dataList = findByIdIn(entityClass, idKey, result.keySet());
+                        } else {
+                            dataList = new ArrayList<Object>();
+                            dataList.add(findById(entityClass, resultKeys.iterator().next()));
+                        }
+                    }
+                    if (dataList != null) {
+                        for (Object data : dataList) {
+                            Object idKeyVal = rdtResolver.getPropertyValue(data, idKey);
+                            result.put(idKeyVal, data);
+                        }
                     }
                 }
             }
@@ -207,14 +221,17 @@ public abstract class RdtOperationResolver {
             } else {
                 String idKey = classModel.getPrimaryId();
                 Object idKeyVal = rdtResolver.getPropertyValue(current, idKey);
-                if (before == null) {
-                    logger.debug("{} 【{}】not exist before data, continue modify", entityClassName, idKeyVal);
+                Set<String> usedPropertys = classModel.getUsedPropertySet();
+                if (usedPropertys.isEmpty()) {
+                    logger.debug("{} 【{}】has no used property, continue modify", entityClassName, idKeyVal);
                 } else {
-                    if (!before.getClass().equals(entityClass)) {
-                        logger.warn("{} 【{}】 before data type is {}, continue modify", entityClassName, idKeyVal, before.getClass().getName());
+                    if (before == null) {
+                        logger.debug("{} 【{}】not exist before data, continue modify", entityClassName, idKeyVal);
                     } else {
-                        Set<String> usedPropertys = classModel.getUsedPropertySet();
-                        if (!usedPropertys.isEmpty()) {
+                        if (!before.getClass().equals(entityClass)) {
+                            logger.warn("{} 【{}】 before data type is {}, continue modify", entityClassName, idKeyVal, before.getClass().getName());
+                        } else {
+
                             //获取当前实体所使用的字段中发生改变的数据
                             ChangedVo changedVo = new ChangedVo();
                             changedVo.setBefore(before);
@@ -267,6 +284,7 @@ public abstract class RdtOperationResolver {
                         }
                     }
                 }
+
             }
         }
 
