@@ -101,7 +101,10 @@ public abstract class RdtOperationResolver {
                             dataList = findByIdIn(entityClass, idKey, result.keySet());
                         } else {
                             dataList = new ArrayList<Object>();
-                            dataList.add(findById(entityClass, resultKeys.iterator().next()));
+                            Object modelData = findById(entityClass, resultKeys.iterator().next());
+                            if (modelData != null) {
+                                dataList.add(modelData);
+                            }
                         }
                     }
                     if (dataList != null) {

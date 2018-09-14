@@ -340,11 +340,14 @@ public abstract class RdtResolver {
     }
 
     public Object getPropertyValue(Object obj, String property) {
+        if (obj == null) {
+            throw new IllegalArgumentException("rdt get object property value error, cause by object is null");
+        }
         try {
             if (obj instanceof Map) return ((Map) obj).get(property);
             return getPropertyValue(getField(obj.getClass(), property), obj);
         } catch (Exception e) {
-            throw new IllegalArgumentException(e.getMessage());
+            throw new IllegalArgumentException(e);
         }
     }
 
