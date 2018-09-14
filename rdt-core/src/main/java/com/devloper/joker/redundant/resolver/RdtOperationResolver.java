@@ -45,50 +45,55 @@ public abstract class RdtOperationResolver {
         return classModel.getPrimaryId();
     }
 
+    public Map<Object, Object> getBeforeData(Object entity) {
+        return getBeforeData(entity, true);
+    }
+
+
     /**
-     * 获取之前的model数据,且仅当classModel为base class及存在use property时查询
+     * 获取base class之前的数据
      * @param entity
+     * @param check 如果为true时仅在use property时查询
      * @return key: id, val: entity
      */
-    public Map<Object, Object> getBeforeData(Object entity) {
+    public Map<Object, Object> getBeforeData(Object entity, boolean check) {
         Map<Object, Object> result = new HashMap<Object, Object>(16);
         if (entity != null) {
             entity = parseEntityData(entity);
-
             Class entityClass = null;
             boolean flag = false;
-
             String idKey = null;
             ClassModel classModel = null;
 
             for (Object current : (Collection) entity) {
-                if (current == null) continue;
-                if (entityClass == null) entityClass = current.getClass();
-                else {
+                if (current == null) {
+                    continue;
+                }
+                if (entityClass == null) {
+                    entityClass = current.getClass();
+                } else {
                     if (!entityClass.equals(current.getClass())) {
                         throw new IllegalArgumentException("the entity object args must be the same class type");
                     }
                 }
                 //判断class是否为base class
-                if (classModel == null) {
-                    classModel = getClassModel(entityClass);
-                    if (classModel != null) flag = classModel.getBaseClass();
-                }
+                classModel = classModel == null ? getClassModel(entityClass) : classModel;
+                flag = classModel != null ? classModel.getBaseClass() : flag;
+                //不是base class时停止
                 if (!flag) {
                     break;
                 }
-
                 //获取idKey
-                idKey = classModel.getPrimaryId();
+                idKey = idKey == null ? classModel.getPrimaryId() : idKey;
                 Object idKeyVal = rdtResolver.getPropertyValue(current, idKey);
                 result.put(idKeyVal, null);
             }
 
-            if (classModel != null) {
-                if (classModel.getUsedPropertySet().isEmpty()) {
-                    logger.debug("{} has no used property, so not to get before data", classModel.getClassName());
+            if (flag) {
+                if (check && classModel.getUsedPropertySet().isEmpty()) {
+                    logger.debug("{} has no used property, and use check so not to load before data", classModel.getClassName());
                 } else {
-                    //仅当存在使用的property时查找之前的数据
+                    //查找之前的数据
                     Collection<Object> dataList = null;
                     Set<Object> resultKeys = result.keySet();
                     if (!resultKeys.isEmpty()) {
@@ -172,10 +177,18 @@ public abstract class RdtOperationResolver {
     public void updateRelevant(Object entity, Map<Object, Object> beforeKeyDataMap) {
         Collection<Object> dataList = parseEntityData(entity);
         String idKey = null;
+
+        boolean isLoad = beforeKeyDataMap != null && !beforeKeyDataMap.isEmpty();
         for (Object data : dataList) {
+            if (data == null) {
+                continue;
+            }
             Object before = null;
-            if (beforeKeyDataMap != null && !beforeKeyDataMap.isEmpty()) {
-                if (idKey == null) idKey = getPrimaryId(data.getClass());
+            if (isLoad) {
+                if (idKey == null) {
+                    Class dataClass = data.getClass();
+                    idKey = getPrimaryId(dataClass);
+                }
                 Object idVal = rdtResolver.getPropertyValue(data, idKey);
                 before = beforeKeyDataMap.get(idVal);
             }
@@ -377,7 +390,7 @@ public abstract class RdtOperationResolver {
     protected abstract void updateModifyDescribeSimpleImpl(final ClassModel classModel, final ClassModel modifyClassModel, final ModifyDescribe describe, final ChangedVo vo, final Map<String, Object> conditionValMap, final Map<String, Object> updateValMap);
 
 
-   
+
     private void updateModifyRelyDescribeSimple(final ClassModel classModel, final ChangedVo vo) {
         Set<Class> changedRelaxedClassSet = classModel.getChangedRelaxedClassSet();
 
@@ -399,7 +412,7 @@ public abstract class RdtOperationResolver {
     }
 
     /**
-     * 处理当前保存实体值变化时所要修改相关实体类的字段数据的业务逻辑(存在依赖时) 
+     * 处理当前保存实体值变化时所要修改相关实体类的字段数据的业务逻辑(存在依赖时)
      * @param classModel
      * @param modifyClassModel
      * @param vo
@@ -459,7 +472,7 @@ public abstract class RdtOperationResolver {
 
 
     /**
-     * 处理当前保存实体值变化时所要修改相关实体类的字段数据的业务逻辑的实现(存在依赖时) 
+     * 处理当前保存实体值变化时所要修改相关实体类的字段数据的业务逻辑的实现(存在依赖时)
      * @param classModel
      * @param modifyClassModel
      * @param vo

@@ -1,11 +1,9 @@
 package com.devloper.joker.rdt_sbm.rdt;
 
-import com.alibaba.fastjson.JSONObject;
 import com.devloper.joker.redundant.model.RdtProperties;
 import com.devloper.joker.redundant.model.RdtSupport;
 import com.devloper.joker.redundant.operation.MongoRdtOperation;
 import com.devloper.joker.redundant.resolver.RdtResolver;
-import com.mongodb.util.JSON;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
