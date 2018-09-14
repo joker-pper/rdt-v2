@@ -65,6 +65,12 @@ public class Article {
     @RdtOne
     private ComplexVo complex;//复杂对象
 
+    public Article() {
+    }
+
+    public Article(String id) {
+        this.id = id;
+    }
 
     public String getId() {
         return id;

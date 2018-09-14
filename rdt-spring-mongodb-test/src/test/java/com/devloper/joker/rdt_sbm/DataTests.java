@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -135,6 +134,15 @@ public class DataTests extends ApplicationTests {
             articleProgressRepository.save(articleProgress);
             rdtOperation.updateRelevant(articleProgress, beforeMap);
         }
+    }
+
+    @Test
+    public void getBeforeDataTest() {
+        rdtOperation.getBeforeData(new User("1"));
+        rdtOperation.getBeforeData(new User("12333"));
+        rdtOperation.getBeforeData(new Article("123123"));
+        rdtOperation.getBeforeData(new ArticleProgress("123123123"));
+
     }
 
     /**

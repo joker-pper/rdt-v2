@@ -27,6 +27,13 @@ public class ArticleProgress {
     )
     private String author;
 
+    public ArticleProgress() {
+    }
+
+    public ArticleProgress(String id) {
+        this.id = id;
+    }
+
     public String getId() {
         return id;
     }

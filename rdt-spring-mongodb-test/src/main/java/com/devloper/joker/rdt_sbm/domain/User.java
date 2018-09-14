@@ -21,6 +21,13 @@ public class User {
     @Transient
     private String userAgeText;
 
+    public User() {
+    }
+
+    public User(String id) {
+        this.id = id;
+    }
+
     public String getId() {
         return id;
     }
