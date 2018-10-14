@@ -49,7 +49,7 @@ public class DataTests extends ApplicationTests {
     }
 
     @Test
-    public void updateUserNameWithChanged() {
+    public void updateUserNameWithChanged() throws Exception {
         Optional<User> userOptional = userRepository.findById("1");
         if (userOptional.isPresent()) {
             User before = userOptional.get();
@@ -72,7 +72,7 @@ public class DataTests extends ApplicationTests {
      * 直接更新该数据的全部属性
      */
     @Test
-    public void updateUserPropertyAll() {
+    public void updateUserPropertyAll() throws Exception {
         Optional<User> userOptional = userRepository.findById("1");
         if (userOptional.isPresent()) {
             User before = userOptional.get();
@@ -90,7 +90,7 @@ public class DataTests extends ApplicationTests {
     }
 
     @Test
-    public void updateArticleFirst() {
+    public void updateArticleFirst() throws Exception {
         Article first = articleRepository.findTopBy();
         if (first != null) {
             Article before = articleRepository.findTopBy();
@@ -112,7 +112,7 @@ public class DataTests extends ApplicationTests {
 
 
     @Test
-    public void updateByBeforeData() {
+    public void updateByBeforeData() throws Exception {
         Optional<User> userOptional = userRepository.findById("1");
         if (userOptional.isPresent()) {
             User user = userOptional.get();
@@ -127,7 +127,7 @@ public class DataTests extends ApplicationTests {
      * 通过getBeforeData获取之前的数据,用于更新实体(当前实体未存在被使用的冗余字段,将会减少查询操作)
      */
     @Test
-    public void updateByBeforeDataAndNotUsedProperty() {
+    public void updateByBeforeDataAndNotUsedProperty() throws Exception {
         ArticleProgress articleProgress = articleProgressRepository.findTopBy();
         if (articleProgress != null) {
             Map<Object, Object> beforeMap = rdtOperation.getBeforeData(articleProgress);
@@ -137,7 +137,7 @@ public class DataTests extends ApplicationTests {
     }
 
     @Test
-    public void getBeforeDataTest() {
+    public void getBeforeDataTest() throws Exception {
         rdtOperation.getBeforeData(new User("1"));
         rdtOperation.getBeforeData(new User("12333"));
         rdtOperation.getBeforeData(new Article("123123"));
@@ -149,7 +149,7 @@ public class DataTests extends ApplicationTests {
      * 更新type为4的数据,将会修改对应article表中的相关数据
      */
     @Test
-    public void updateArticleWithType() {
+    public void updateArticleWithType() throws Exception {
         Article model = articleRepository.findTopByType(4);
         if (model != null) {
             int random = new Random().nextInt(userIds.length);

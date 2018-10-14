@@ -232,10 +232,10 @@ public class RdtSupport {
          * @param group group index
          * @param describe
          */
-        public abstract void execute(ClassModel classModel, ClassModel currentClassModel, Column relyColumn, int group, ModifyRelyDescribe describe);
+        public abstract void execute(ClassModel classModel, ClassModel currentClassModel, Column relyColumn, int group, ModifyRelyDescribe describe) throws Exception;
     }
 
-    public void doModifyRelyDescribeHandle(ClassModel classModel, ClassModel currentClassModel, ModifyRelyDescribeCallBack callBack) {
+    public void doModifyRelyDescribeHandle(ClassModel classModel, ClassModel currentClassModel, ModifyRelyDescribeCallBack callBack) throws Exception {
         Class entityClass = classModel.getCurrentClass();
         Map<Class, Map<Column, Map<Integer, List<ModifyRelyDescribe>>>> describeMap = currentClassModel.getTargetClassModifyRelyDescribeMap();
         //获取当前实体所相关的依赖列及修改相关的数据
@@ -264,10 +264,10 @@ public class RdtSupport {
          * @param currentClassModel 当前处理的classModel
          * @param describe
          */
-        public abstract void execute(ClassModel classModel, ClassModel currentClassModel, ModifyDescribe describe);
+        public abstract void execute(ClassModel classModel, ClassModel currentClassModel, ModifyDescribe describe) throws Exception;
     }
 
-    public void doModifyDescribeHandle(ClassModel classModel, ClassModel currentClassModel, ModifyDescribeCallBack callBack) {
+    public void doModifyDescribeHandle(ClassModel classModel, ClassModel currentClassModel, ModifyDescribeCallBack callBack) throws Exception {
         Class entityClass = classModel.getCurrentClass();
         List<ModifyDescribe> modifyDescribeList = getModifyDescribeData(currentClassModel, entityClass); //获取currentClassModel中关于classModel的modifyDescribe信息
         if (!modifyDescribeList.isEmpty()) {

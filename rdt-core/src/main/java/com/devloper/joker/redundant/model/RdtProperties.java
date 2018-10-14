@@ -47,6 +47,11 @@ public class RdtProperties {
     private String defaultIdKey = "id";
 
     /**
+     * 保存操作出错时是否抛出异常
+     */
+    private Boolean throwException = false;
+
+    /**
      * 当前类的数据
      */
     private Map<Class, ClassModel> classModelMap = new LinkedHashMap<Class, ClassModel>(16);
@@ -148,6 +153,14 @@ public class RdtProperties {
 
     public void setDefaultIdKey(String defaultIdKey) {
         this.defaultIdKey = defaultIdKey;
+    }
+
+    public Boolean getThrowException() {
+        return throwException;
+    }
+
+    public void setThrowException(Boolean throwException) {
+        this.throwException = throwException;
     }
 
     public Map<Class, ClassModel> getClassModelMap() {

@@ -1,5 +1,6 @@
 package com.devloper.joker.rdt_sbm.rdt;
 
+import com.devloper.joker.redundant.model.RdtSupport;
 import com.devloper.joker.redundant.operation.MongoRdtOperation;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -7,6 +8,10 @@ import org.springframework.data.domain.Pageable;
 import java.util.Collection;
 
 public class MongoRdtOperationImpl extends MongoRdtOperation {
+
+    public MongoRdtOperationImpl(RdtSupport rdtSupport) {
+        super(rdtSupport);
+    }
 
     @Override
     protected Pageable getPageable(long page, long size) {

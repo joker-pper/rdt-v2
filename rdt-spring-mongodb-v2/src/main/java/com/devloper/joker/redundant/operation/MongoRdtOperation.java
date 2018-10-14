@@ -17,6 +17,10 @@ public abstract class MongoRdtOperation extends RdtOperationResolver {
 
     protected MongoTemplate mongoTemplate;
 
+    public MongoRdtOperation(RdtSupport rdtSupport) {
+        super(rdtSupport);
+    }
+
     public void setMongoTemplate(MongoTemplate mongoTemplate) {
         this.mongoTemplate = mongoTemplate;
     }

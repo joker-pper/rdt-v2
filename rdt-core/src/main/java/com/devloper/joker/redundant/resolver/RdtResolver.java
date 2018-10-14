@@ -55,7 +55,7 @@ public abstract class RdtResolver {
 
 
     public List<Class> getClasses(String packageName) {
-        return PackageClassUtils.getClasses(packageName);
+        return PackageClassUtils.getClassList(packageName);
     }
 
     /**

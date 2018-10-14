@@ -1,8 +1,10 @@
 package com.devloper.joker.redundant.utils;
 
 import org.junit.Test;
+
+import java.net.URL;
 import java.util.List;
-import static org.junit.Assert.*;
+import java.util.Set;
 
 public class PackageClassUtilsTest {
 
@@ -10,15 +12,16 @@ public class PackageClassUtilsTest {
     private String jarFilePath = userDir + "/target/" + "rdt-core-1.0.jar";
 
     @Test
-    public void getClasses() throws Exception {
-        System.out.println(PackageClassUtils.getClasses("*"));
-        System.out.println(PackageClassUtils.getClasses("com.devloper.joker.redundant.utils"));
+    public void getClassList() throws Exception {
+        System.out.println(PackageClassUtils.getClassList("*"));
+        System.out.println(PackageClassUtils.getClassList("com.devloper.joker.redundant.utils"));
     }
 
     @Test
     public void getPackageNamePaths() {
         System.out.println(PackageClassUtils.getPackageNamePaths(userDir,"*"));
     }
+
 
     @Test
     public void getPackageNamePathsByJar() {
@@ -32,6 +35,13 @@ public class PackageClassUtilsTest {
     @Test
     public void getJarClassNames() {
         List<String> classList = PackageClassUtils.getJarClassNames(jarFilePath, "com");
+        System.out.println(classList);
+    }
+
+
+    @Test
+    public void ss() {
+        List<String> classList = PackageClassUtils.getJarClassNames("D:\\IdeaProjects\\rdt-v2\\rdt-spring-mongodb-test\\target\\rdt-spring-mongodb-test-0.0.1-SNAPSHOT.jar", "com.devloper.joker.rdt_sbm");
         System.out.println(classList);
     }
 }

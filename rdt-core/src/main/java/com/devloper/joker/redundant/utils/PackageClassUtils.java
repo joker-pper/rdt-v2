@@ -18,14 +18,15 @@ public class PackageClassUtils {
     private static final String separator = File.separator;
 
     //获取该包下的所有class
-    public static List<Class> getClasses(String packageName) {
+    public static List<Class> getClassList(String packageName) {
         Set<Class> classSet = new LinkedHashSet<Class>();
         Set<String> packageNames = new HashSet<String>();//最终匹配到的全部的包
-
         Set<URL> urls = getClassPathUrl();
+        Set<String> jarPaths = new HashSet<String>();
+        Set<String> filePaths = new HashSet<String>();
         for (URL url : urls) {
             String urlPath = url.getPath();
-            String jarPath = getJarPath(urlPath);
+            String jarPath = getJarPath(url);
             List<String> currents;
             if (jarPath != null) {
                 currents = getPackageNamesByJar(jarPath, packageName);
@@ -33,17 +34,30 @@ public class PackageClassUtils {
                 currents = getPackageNamePaths(urlPath, packageName);
             }
             if (!currents.isEmpty()) {
+                if (jarPath != null) {
+                    jarPaths.add(jarPath);
+                } else {
+                    filePaths.add(urlPath);
+                }
                 for (String current : currents) {
-                    packageNames.add(current.replace(urlPath, "").replace("/", "."));
+                    if (separator.equals("\\") && urlPath.startsWith("/")) {
+                        //windows
+                        urlPath = urlPath.substring(1).replace("/", separator);
+                    }
+                    String actualPackageName = current.replace(urlPath, "").replace(separator, ".");
+                    packageNames.add(actualPackageName);
                 }
             }
         }
-        for (URL url : urls) {
-            String urlPath = url.getPath();
-            for (String val : packageNames) {
-                classSet.addAll(getClassesHandle(urlPath, val));
+        for (String actualPackageName : packageNames) {
+            for (String jarPath : jarPaths) {
+                classSet.addAll(classNamesToClassList(getJarClassNames(jarPath, actualPackageName)));
+            }
+            for (String filePath : filePaths) {
+                classSet.addAll(getClassList(filePath, actualPackageName));
             }
         }
+
         if (log.isDebugEnabled()) {
             if (packageName.contains("*")) {
                 log.debug("read package({}-{}) all class: {}", packageName, packageNames, classSet);
@@ -52,6 +66,60 @@ public class PackageClassUtils {
             }
         }
         return new ArrayList<Class>(classSet);
+    }
+
+
+
+    /**
+     * 获取该路径下关于包名的全部class列表
+     * @param filePath  文件夹路径
+     * @param packageName 具体包名
+     * @return
+     */
+    public  static List<Class> getClassList(String filePath, String packageName) {
+        if (filePath == null || "".equals(filePath)) {
+            throw new IllegalArgumentException("file path can't blank");
+        }
+        List<Class> classes = new ArrayList<Class>();
+        String packageDirName;
+        if (packageName == null || "".equals(packageName.trim())) {
+            packageName = null;
+            packageDirName = "";
+        } else {
+            packageName = packageName.trim();
+            packageDirName = packageName.replace(".", separator);
+        }
+
+        File file = new File(filePath + packageDirName);
+        String currentFileName;
+        String[] allFileNames = file.list();
+        if (allFileNames != null) {
+            int size = allFileNames.length;
+            for (int i = 0; i < size; ++i) {
+                currentFileName = allFileNames[i];
+                File currentFile = new File(file, currentFileName);
+                if (currentFile.isDirectory()) {
+                    String currPath;
+                    if (packageName != null) {
+                        currPath = packageName + "." + currentFileName;
+                    } else {
+                        currPath = currentFileName;
+                    }
+                    List<Class> currentClasses = getClassList(filePath, currPath);
+                    if (currentClasses != null && !currentClasses.isEmpty()) {
+                        classes.addAll(currentClasses);
+                    }
+                } else if (currentFile.isFile() && currentFileName.endsWith(".class")) {
+                    String className = packageName + "." + currentFileName.substring(0, currentFileName.length() - 6);
+                    try {
+                        classes.add(Class.forName(className));
+                    } catch (ClassNotFoundException e) {
+                        log.debug(className + " not found");
+                    }
+                }
+            }
+        }
+        return classes;
     }
 
 
@@ -128,7 +196,7 @@ public class PackageClassUtils {
                                 if (regex.startsWith(".*")) temp = regex.substring(2);
                                 int index = temp.indexOf(".*");
                                 if (index > -1) temp = temp.substring(0, index);
-                                String currentPackageName = entryName.replace(separator, ".");
+                                String currentPackageName = entryName.replace("/", ".");
                                 result.add(currentPackageName.substring(currentPackageName.indexOf(temp)));
                             }
 
@@ -157,7 +225,7 @@ public class PackageClassUtils {
                 for (File currFile : file.listFiles()) {
                     if (!currFile.isDirectory()) continue;
                     String currentPath = currFile.getPath();
-                    String current = currentPath.replace("/", ".");
+                    String current = currentPath.replace(separator, ".");
                     String regex = ".*";
                     if (packageName != null && !packageName.trim().equals("") && !packageName.trim().equals("*")) {
                         regex += packageName;
@@ -186,91 +254,50 @@ public class PackageClassUtils {
         return result;
     }
 
-    private static String getJarPath(String path) {
+    /**
+     * 获取jar文件的具体路径
+     * @param urlPath
+     * @return
+     */
+    public static String getJarPath(String urlPath) {
         String jarFilePath = null;
-        if (path != null && path.contains("!") && BY_JAR) {
-            String[] allFileNames = path.split("!");
+        if (urlPath != null && urlPath.contains("!") && BY_JAR) {
+            String[] allFileNames = urlPath.split("!");
             if (allFileNames.length >= 2) {
-                jarFilePath = allFileNames[0].substring(allFileNames[0].indexOf(File.separator));
+                String fileName = allFileNames[0];
+                int index = fileName.indexOf("/");
+                if (index >= 0) {
+                    if (separator.equals("\\")) {
+                        index ++;
+                    }
+                    jarFilePath = fileName.substring(index);
+                }
             }
         }
         return jarFilePath;
     }
 
-    /**
-     * 获取当前class路径下的packageName的class集合
-     *
-     * @param classPath
-     * @param packageName
-     * @return
-     */
-    private static List<Class> getClassesHandle(String classPath, String packageName) {
-        if (classPath == null || "".equals(classPath)) {
-            throw new IllegalArgumentException("class path can't blank");
-        }
-        List<Class> classes = new ArrayList<Class>();
-        String packageDirName;
-        if (packageName == null || "".equals(packageName.trim())) {
-            packageName = null;
-            packageDirName = "";
-        } else {
-            packageName = packageName.trim();
-            packageDirName = packageName.replace(".", separator);
-        }
-        String path = classPath + packageDirName;
-        try {
-            String jarFilePath = getJarPath(path);
-            if (jarFilePath != null) {
-                List<String> classNames = getJarClassNames(jarFilePath, packageName);
-                for (String className : classNames) {
-                    try {
-                        classes.add(Class.forName(className));
-                    } catch (Exception e) {
-                        log.debug(className + " not found");
-                    }
-                }
-            } else {
-                File file = new File(path);
-                String[] allFileNames;
-                String currentFileName;
-
-                allFileNames = file.list();
-                if (allFileNames != null) {
-                    int size = allFileNames.length;
-                    for (int i = 0; i < size; ++i) {
-                        currentFileName = allFileNames[i];
-                        File currentFile = new File(file, currentFileName);
-                        if (currentFile.isDirectory()) {
-                            String currPath;
-                            if (packageName != null) {
-                                currPath = packageName + "." + currentFileName;
-                            } else {
-                                currPath = currentFileName;
-                            }
-                            List<Class> currentClasses = getClassesHandle(classPath, currPath);
-                            if (currentClasses != null && !currentClasses.isEmpty()) {
-                                classes.addAll(currentClasses);
-                            }
-                        } else if (currentFile.isFile() && currentFileName.endsWith(".class")) {
-                            String className = packageName + "." + currentFileName.substring(0, currentFileName.length() - 6);
-                            try {
-                                classes.add(Class.forName(className));
-                            } catch (ClassNotFoundException e) {
-                                log.debug(className + " not found");
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-        }
-        return classes;
+    public static String getJarPath(URL url) {
+       return getJarPath(url.getPath());
     }
 
+    public static List<Class> classNamesToClassList(Collection<String> classNames) {
+        List<Class> classList = new ArrayList<Class>(16);
+        if (classNames != null) {
+            for (String className : classNames) {
+                try {
+                    classList.add(Class.forName(className));
+                } catch (Exception e) {
+                    log.debug(className + " not found");
+                }
+            }
+        }
+        return classList;
+    }
 
     /**
      * 获取jar文件中指定包名的所有类名
-     * @param jarPath
+     * @param jarPath jar所在具体路径
      * @param packageName 具体包名 e.g com.devloper
      * @return
      */
@@ -280,19 +307,20 @@ public class PackageClassUtils {
             if (jarPath != null) {
                 JarFile jarFile = new JarFile(jarPath);
                 Enumeration entrys = jarFile.entries();
-                String packageDirectory = packageName.replace(".", separator);
+                String packageDirectory = packageName.replace(".", "/");
                 while (entrys.hasMoreElements()) {
                     JarEntry jarEntry = (JarEntry) entrys.nextElement();
                     String entryName = jarEntry.getName();
 
                     if (entryName.contains(packageDirectory) && entryName.endsWith(".class")) {
-                        String className = entryName.substring(entryName.indexOf(packageDirectory)).replace(".class", "").replace(separator, ".");
+                        String className = entryName.substring(entryName.indexOf(packageDirectory)).replace(".class", "").replace("/", ".");
                         classNames.add(className);
                     }
                 }
 
             }
         } catch (Exception e) {
+            log.warn("", e);
         }
         return classNames;
     }

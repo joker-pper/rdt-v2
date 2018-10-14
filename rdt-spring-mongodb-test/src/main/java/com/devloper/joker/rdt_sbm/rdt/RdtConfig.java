@@ -87,8 +87,7 @@ public class RdtConfig {
 
     @Bean
     public MongoRdtOperation mongoRdtOperation() {
-        MongoRdtOperationImpl operation = new MongoRdtOperationImpl();
-        operation.setRdtSupport(rdtSupport());
+        MongoRdtOperationImpl operation = new MongoRdtOperationImpl(rdtSupport());
         operation.setMongoTemplate(mongoTemplate);
         return operation;
     }
