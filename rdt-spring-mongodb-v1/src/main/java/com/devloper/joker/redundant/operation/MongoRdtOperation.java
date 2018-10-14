@@ -1,7 +1,7 @@
 package com.devloper.joker.redundant.operation;
 
 import com.devloper.joker.redundant.model.*;
-import com.devloper.joker.redundant.resolver.RdtOperationResolver;
+import com.devloper.joker.redundant.resolver.AbstractMongoOperationResolver;
 import com.devloper.joker.redundant.support.DataSupport;
 import com.devloper.joker.redundant.support.Prototype;
 import org.springframework.data.domain.Pageable;
@@ -13,7 +13,7 @@ import org.springframework.data.mongodb.core.query.Update;
 import java.lang.reflect.Field;
 import java.util.*;
 
-public abstract class MongoRdtOperation extends RdtOperationResolver {
+public abstract class MongoRdtOperation extends AbstractMongoOperationResolver {
 
     protected MongoTemplate mongoTemplate;
 
@@ -57,6 +57,14 @@ public abstract class MongoRdtOperation extends RdtOperationResolver {
         }
     }
 
+    /**
+     * 获取Pageable对象
+     * @param page
+     * @param size
+     * @return
+     */
+    protected abstract Pageable getPageable(long page, long size);
+
     @Override
     public <T> Collection<T> findByIdIn(Class<T> entityClass, String idKey, Collection<Object> ids) {
         Query query = new Query(Criteria.where(idKey).in(ids));
@@ -82,7 +90,6 @@ public abstract class MongoRdtOperation extends RdtOperationResolver {
         updateMulti(criteria, update, modifyClassModel.getCurrentClass());
     }
 
-
     @Override
     protected void updateModifyRelyDescribeSimpleImpl(ClassModel classModel, ClassModel modifyClassModel, ChangedVo vo, Map<String, Object> conditionValMap, Map<String, Object> updateValMap, Column relyCoumn, int group, ModifyRelyDescribe describe, RdtLog rdtLog) {
         Criteria criteria = new Criteria();
@@ -106,21 +113,6 @@ public abstract class MongoRdtOperation extends RdtOperationResolver {
     }
 
     @Override
-    protected ClassModel getModifyDescribeOneModifyClassModel(ClassModel complexClassModel, ComplexAnalysis complexAnalysis) {
-        return getClassModel(complexAnalysis.getRootClass());
-    }
-
-    @Override
-    protected String getModifyDescribeOneProperty(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ModifyCondition modifyCondition) {
-        return complexAnalysis.getPrefix() + "." + modifyCondition.getProperty();
-    }
-
-    @Override
-    protected String getModifyDescribeOneProperty(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, Column column) {
-        return complexAnalysis.getPrefix() + "." + column.getProperty();
-    }
-
-    @Override
     protected void updateModifyDescribeOneImpl(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ClassModel modifyClassModel, ModifyDescribe describe, ChangedVo vo, Map<String, Object> conditionValMap, Map<String, Object> updateValMap) {
         Criteria criteria = new Criteria();
         Update update = new Update();
@@ -132,22 +124,6 @@ public abstract class MongoRdtOperation extends RdtOperationResolver {
             update.set(property, updateValMap.get(property));
         }
         updateMulti(criteria, update, modifyClassModel.getCurrentClass());
-    }
-
-
-    @Override
-    protected ClassModel getModifyRelyDescribeOneModifyClassModel(ClassModel complexClassModel, ComplexAnalysis complexAnalysis) {
-        return getModifyDescribeOneModifyClassModel(complexClassModel, complexAnalysis);
-    }
-
-    @Override
-    protected String getModifyRelyDescribeOneProperty(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ModifyCondition modifyCondition) {
-        return getModifyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, modifyCondition);
-    }
-
-    @Override
-    protected String getModifyRelyDescribeOneProperty(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, Column column) {
-        return getModifyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, column);
     }
 
     @Override
@@ -169,14 +145,7 @@ public abstract class MongoRdtOperation extends RdtOperationResolver {
         for (String property: updateValMap.keySet()) {
             update.set(property, updateValMap.get(property));
         }
-
         updateMulti(criteria, update, modifyClassModel.getCurrentClass());
-    }
-
-
-    @Override
-    protected ClassModel getModifyDescribeManyModifyClassModel(ClassModel complexClassModel, ComplexAnalysis complexAnalysis) {
-        return getModifyDescribeOneModifyClassModel(complexClassModel, complexAnalysis);
     }
 
 
@@ -238,19 +207,6 @@ public abstract class MongoRdtOperation extends RdtOperationResolver {
         //设置log
         rdtLog.setCondition(conditionLogMap);
         rdtLog.setUpdate(updateLogMap);
-    }
-
-    /**
-     * 获取Pageable对象
-     * @param page
-     * @param size
-     * @return
-     */
-    protected abstract Pageable getPageable(long page, long size);
-
-    @Override
-    protected ClassModel getModifyRelyDescribeManyModifyClassModel(ClassModel complexClassModel, ComplexAnalysis complexAnalysis) {
-        return getModifyDescribeManyModifyClassModel(complexClassModel, complexAnalysis);
     }
 
     @Override
