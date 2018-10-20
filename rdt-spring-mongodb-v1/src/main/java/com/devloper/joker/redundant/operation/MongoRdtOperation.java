@@ -34,6 +34,20 @@ public abstract class MongoRdtOperation extends AbstractMongoOperationResolver {
         mongoTemplate.updateMulti(query, update, entityClass);
     }
 
+    protected Criteria criteriaIn(Criteria criteria, Collection<?> vals) {
+        if (vals != null && vals.size() == 1) {
+            return criteria.is(vals.iterator().next());
+        }
+        return criteria.in(vals);
+    }
+
+    protected Criteria criteriaNotIn(Criteria criteria, Collection<?> vals) {
+        if (vals != null && vals.size() == 1) {
+            return criteria.ne(vals.iterator().next());
+        }
+        return criteria.nin(vals);
+    }
+
     /**
      * 添加为对应类的条件(即对应的属性字段为哪些符合的条件)
      * @param describe
@@ -46,13 +60,13 @@ public abstract class MongoRdtOperation extends AbstractMongoOperationResolver {
 
         if (!valList.isEmpty()) {
             if (unknowNotExistValList.isEmpty()) {
-                criteria.and(relyProperty).in(valList);
+                criteriaIn(criteria.and(relyProperty), valList);
             } else { //满足在valList 或 非unknowNotExistValList时
-                criteria.orOperator(Criteria.where(relyProperty).in(valList), Criteria.where(relyProperty).nin(unknowNotExistValList));
+                criteria.orOperator(criteriaIn(Criteria.where(relyProperty), valList), criteriaNotIn(Criteria.where(relyProperty), unknowNotExistValList));
             }
         } else {
             if (!unknowNotExistValList.isEmpty()) {
-                criteria.and(relyProperty).nin(unknowNotExistValList);
+                criteriaNotIn(criteria.and(relyProperty), unknowNotExistValList);
             }
         }
     }
@@ -67,7 +81,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperationResolver {
 
     @Override
     public <T> Collection<T> findByIdIn(Class<T> entityClass, String idKey, Collection<Object> ids) {
-        Query query = new Query(Criteria.where(idKey).in(ids));
+        Query query = new Query(criteriaIn(Criteria.where(idKey), ids));
         List<T> list = mongoTemplate.find(query, entityClass);
         return list;
     }

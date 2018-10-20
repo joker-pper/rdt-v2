@@ -161,4 +161,13 @@ public class DataTests extends ApplicationTests {
         }
     }
 
+    @Test
+    public void findByIdIn() throws Exception {
+        Collection<User> results = rdtOperation.findByIdIn(User.class, Arrays.asList(userIds[0]));
+        log.info("results: {}", JSON.toJSONString(results));
+
+        results = rdtOperation.findByIdIn(User.class, Arrays.asList(userIds));
+        log.info("results: {}", JSON.toJSONString(results));
+    }
+
 }

@@ -9,7 +9,7 @@ import java.util.*;
 
 public abstract class AbstractOperationResolver {
 
-    protected final static Logger logger = LoggerFactory.getLogger(AbstractOperationResolver.class);
+    protected final Logger logger = LoggerFactory.getLogger(getClass());
 
     protected RdtProperties properties;
 
@@ -33,6 +33,10 @@ public abstract class AbstractOperationResolver {
         this.throwException = this.properties.getThrowException();
     }
 
+    public RdtResolver getRdtResolver() {
+        return rdtResolver;
+    }
+
     public abstract Object findById(Class entityClass, Object id);
 
     public abstract <T> Collection<T> findByIdIn(Class<T> entityClass, String idKey, Collection<Object> ids);
@@ -54,6 +58,10 @@ public abstract class AbstractOperationResolver {
 
     public Map<Object, Object> getBeforeData(Object entity) {
         return getBeforeData(entity, true);
+    }
+
+    public <T> Collection<T> findByIdIn(Class<T> entityClass, Collection<Object> ids) {
+        return findByIdIn(entityClass, getPrimaryId(entityClass), ids);
     }
 
 
@@ -293,9 +301,9 @@ public abstract class AbstractOperationResolver {
                                     Object beforeVal = rdtResolver.getPropertyValue(before, property);
                                     changedVo.setVal(property, currentVal, beforeVal);
                                 }
-
                                 logger.info("{} 【{}={}】changed propertys {}, will to modify", entityClassName, idKey, idKeyVal, changedPropertys);
-                                updateMulti(classModel, changedVo);
+                                updateMultiCore(classModel, changedVo);
+                            } else {
                                 logger.debug("{} 【{}={}】has no changed propertys, continue modify", entityClassName, idKey, idKeyVal);
                             }
                         }
@@ -307,7 +315,7 @@ public abstract class AbstractOperationResolver {
 
     }
 
-    protected void updateMulti(ClassModel classModel, ChangedVo changedVo) throws Exception {
+    protected void updateMultiCore(ClassModel classModel, ChangedVo changedVo) throws Exception {
         updateModifyDescribeSimple(classModel, changedVo);
         updateModifyRelyDescribeSimple(classModel, changedVo);
     }
@@ -323,16 +331,15 @@ public abstract class AbstractOperationResolver {
         final List<String> changedPropertys = vo.getChangedPropertys();
         for (Class relaxedClass : changedRelaxedClassSet) {
             ClassModel currentClassModel = properties.getClassModel(relaxedClass); //要修改的classModel
-            RdtSupport.ModifyDescribeCallBack callBack = new RdtSupport.ModifyDescribeCallBack() {
+            rdtSupport.doModifyDescribeHandle(classModel, currentClassModel, new RdtSupport.ModifyDescribeCallBack() {
                 @Override
                 public void execute(ClassModel classModel, ClassModel currentClassModel, ModifyDescribe describe) throws Exception {
                     ModifyDescribe currentDescribe = rdtSupport.getModifyDescribe(describe, changedPropertys); //获取当前的修改条件
                     if (currentDescribe != null) {
-                        updateModifyDescribeSimple(classModel, currentClassModel, null, vo);
+                        updateModifyDescribeSimple(classModel, currentClassModel, currentDescribe, vo);
                     }
                 }
-            };
-            rdtSupport.doModifyDescribeHandle(classModel, currentClassModel, callBack);
+            });
         }
     }
 

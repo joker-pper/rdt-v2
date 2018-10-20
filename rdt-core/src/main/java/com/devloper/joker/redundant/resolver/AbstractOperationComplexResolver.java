@@ -1,10 +1,7 @@
 package com.devloper.joker.redundant.resolver;
 
 import com.devloper.joker.redundant.model.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Array;
 import java.util.*;
 
 public abstract class AbstractOperationComplexResolver extends AbstractOperationResolver {
@@ -14,8 +11,8 @@ public abstract class AbstractOperationComplexResolver extends AbstractOperation
     }
 
     @Override
-    protected void updateMulti(ClassModel classModel, ChangedVo changedVo) throws Exception {
-        super.updateMulti(changedVo, changedVo);
+    protected void updateMultiCore(ClassModel classModel, ChangedVo changedVo) throws Exception {
+        super.updateMultiCore(classModel, changedVo);
         updateModifyComplex(classModel, changedVo);
     }
 
