@@ -1,0 +1,32 @@
+spring:
+  output:
+    ansi:
+      enabled: always
+  jpa:
+    database: MYSQL
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+          hibernate:
+            format_sql: true
+  datasource:
+    url: jdbc:mysql://localhost:3306/rdt-v2-jpa?serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8&useSSL=false
+    username: root
+    password: 123456
+    driverClassName: com.mysql.jdbc.Driver
+
+rdt:
+  domain:
+    basePackage: com.devloper.joker.*.domain
+
+logging:
+  level:
+    root: INFO
+    org.springframework.data: debug
+    com.devloper.joker: debug
+
+server:
+  tomcat.uri-encoding: UTF-8
+  port: 8281
+  connectionTimeout: 8000

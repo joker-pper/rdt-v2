@@ -37,7 +37,7 @@ public abstract class AbstractOperationResolver {
         return rdtResolver;
     }
 
-    public abstract Object findById(Class entityClass, Object id);
+    public abstract <T> T findById(Class<T> entityClass, Object id);
 
     public abstract <T> Collection<T> findByIdIn(Class<T> entityClass, String idKey, Collection<Object> ids);
 
@@ -69,7 +69,7 @@ public abstract class AbstractOperationResolver {
      * 获取base class之前的数据
      * @param entity
      * @param check 如果为true时仅在use property时查询
-     * @return key: id, val: entity
+     * @return key: id, val: domain
      */
     public Map<Object, Object> getBeforeData(Object entity, boolean check) {
         Map<Object, Object> result = new HashMap<Object, Object>(16);
@@ -88,7 +88,7 @@ public abstract class AbstractOperationResolver {
                     entityClass = current.getClass();
                 } else {
                     if (!entityClass.equals(current.getClass())) {
-                        throw new IllegalArgumentException("the entity object args must be the same class type");
+                        throw new IllegalArgumentException("the domain object args must be the same class type");
                     }
                 }
                 //判断class是否为base class

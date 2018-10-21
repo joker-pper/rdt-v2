@@ -1,0 +1,82 @@
+package com.devloper.joker.rdt_jpa_test.rdt;
+
+import com.devloper.joker.rdt_jpa_test.support.JsonUtils;
+import com.devloper.joker.redundant.model.RdtProperties;
+import com.devloper.joker.redundant.model.RdtSupport;
+import com.devloper.joker.redundant.resolver.RdtResolver;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.annotation.Transient;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import java.lang.reflect.Field;
+
+@Configuration
+public class RdtConfig {
+
+    @Value("${rdt.domain.basePackage}")
+    private String basePackage;
+
+    @Bean
+    public RdtResolver rdtResolver() {
+        return new RdtResolver() {
+
+            @Override
+            protected Class<?>[] customBaseEntityAnnotations() {
+                return new Class[] {Entity.class};
+            }
+
+            @Override
+            protected boolean isBaseClassByAnalysis(Class entityClass) {
+                return false;
+            }
+
+            @Override
+            protected String getColumnNameByAnalysis(Class<?> entityClass, Field field) {
+                return null;
+            }
+
+            @Override
+            protected String getEntityNameByAnalysis(Class<?> entityClass) {
+                return null;
+            }
+
+            @Override
+            protected Class<?>[] primaryIdAnnotations() {
+                return new Class[]{Id.class};
+            }
+
+            @Override
+            protected String getPrimaryIdByAnalysis(Class aClass, Field field) {
+                return null;
+            }
+
+            @Override
+            protected Class<?>[] columnTransientAnnotations() {
+                return new Class[] {Transient.class};
+            }
+
+            @Override
+            public String toJson(Object o) {
+                return JsonUtils.toJson(o);
+            }
+        };
+    }
+
+    @Bean
+    public RdtProperties rdtProperties() {
+        RdtProperties properties = new RdtProperties();
+        properties.setBasePackage(basePackage);
+        properties.setDeepCloneChangedModify(false);
+        properties.setThrowException(true);
+        return properties;
+    }
+
+    @Bean
+    public RdtSupport rdtSupport() {
+        return rdtProperties().builder(rdtResolver());
+    }
+
+
+}

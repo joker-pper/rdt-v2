@@ -87,7 +87,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperationResolver {
     }
 
     @Override
-    public Object findById(Class entityClass, Object id) {
+    public <T> T findById(Class<T> entityClass, Object id) {
         return mongoTemplate.findById(id, entityClass);
     }
 
@@ -105,9 +105,9 @@ public abstract class MongoRdtOperation extends AbstractMongoOperationResolver {
     }
 
     @Override
-    protected void updateModifyRelyDescribeSimpleImpl(ClassModel classModel, ClassModel modifyClassModel, ChangedVo vo, Map<String, Object> conditionValMap, Map<String, Object> updateValMap, Column relyCoumn, int group, ModifyRelyDescribe describe, RdtLog rdtLog) {
+    protected void updateModifyRelyDescribeSimpleImpl(ClassModel classModel, ClassModel modifyClassModel, ChangedVo vo, Map<String, Object> conditionValMap, Map<String, Object> updateValMap, Column relyColumn, int group, ModifyRelyDescribe describe, RdtLog rdtLog) {
         Criteria criteria = new Criteria();
-        String relyProperty = relyCoumn.getProperty();
+        String relyProperty = relyColumn.getProperty();
 
         modelTypeCriteriaProcessing(describe, criteria, relyProperty);
 
@@ -141,11 +141,11 @@ public abstract class MongoRdtOperation extends AbstractMongoOperationResolver {
     }
 
     @Override
-    protected void updateModifyRelyDescribeOneImpl(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ClassModel modifyClassModel, ModifyRelyDescribe describe, ChangedVo vo, Map<String, Object> conditionValMap, Map<String, Object> updateValMap, Column relyCoumn, int group, RdtLog rdtLog) {
+    protected void updateModifyRelyDescribeOneImpl(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ClassModel modifyClassModel, ModifyRelyDescribe describe, ChangedVo vo, Map<String, Object> conditionValMap, Map<String, Object> updateValMap, Column relyColumn, int group, RdtLog rdtLog) {
         Criteria criteria = new Criteria();
 
         Update update = new Update();
-        String relyProperty = getModifyRelyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, relyCoumn);
+        String relyProperty = getModifyRelyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, relyColumn);
 
         modelTypeCriteriaProcessing(describe, criteria, relyProperty);
 

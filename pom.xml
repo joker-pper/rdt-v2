@@ -12,6 +12,7 @@
         <module>rdt-core</module>
         <module>rdt-spring-mongodb-v1</module>
         <module>rdt-spring-mongodb-v2</module>
+        <module>rdt-jpa</module>
     </modules>
 
     <properties>
