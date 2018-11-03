@@ -42,7 +42,7 @@ public class RdtProperties {
     private Boolean complexBySaveAll = true;
 
     /**
-     * base类未找到primary id时默认使用该字段
+     * 未找到primary id时默认使用该字段
      */
     private String defaultIdKey = "id";
 

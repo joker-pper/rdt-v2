@@ -1,4 +1,4 @@
-package com.devloper.joker.redundant.resolver;
+package com.devloper.joker.redundant.operation;
 
 import com.devloper.joker.redundant.model.*;
 

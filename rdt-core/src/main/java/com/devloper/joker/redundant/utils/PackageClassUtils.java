@@ -89,7 +89,9 @@ public class PackageClassUtils {
             packageName = packageName.trim();
             packageDirName = packageName.replace(".", separator);
         }
-
+        if (!filePath.endsWith(separator)) {
+            filePath += separator;
+        }
         File file = new File(filePath + packageDirName);
         String currentFileName;
         String[] allFileNames = file.list();
@@ -131,7 +133,12 @@ public class PackageClassUtils {
      * @return 只包含文件夹名称 e.g com/devloper
      */
     public static List<String> getPackageNamePathsByJar(String jarPath, String packageName) {
-        return getPackageResultByJar(jarPath, packageName, true);
+        String[] packageNames = packageName.split(",", -1);
+        Set<String> set = new LinkedHashSet<String>();
+        for (String result : packageNames) {
+            set.addAll(getPackageResultByJar(jarPath, result, true));
+        }
+        return new ArrayList<String>(set);
     }
 
     /**
@@ -141,7 +148,12 @@ public class PackageClassUtils {
      * @return
      */
     public static List<String> getPackageNamesByJar(String jarPath, String packageName) {
-        return getPackageResultByJar(jarPath, packageName, false);
+        String[] packageNames = packageName.split(",", -1);
+        Set<String> set = new LinkedHashSet<String>();
+        for (String result : packageNames) {
+            set.addAll(getPackageResultByJar(jarPath, result, false));
+        }
+        return new ArrayList<String>(set);
     }
 
     /**
@@ -213,7 +225,7 @@ public class PackageClassUtils {
     /**
      * 通过包名匹配到对应的路径
      *
-     * @param path
+     * @param path 指定文件夹路径
      * @param packageName e.g ["",com.devloper.*.*.annotation]
      * @return 文件夹所在的具体路径 e.g xx/target/classes/com/devloper
      */
@@ -226,28 +238,45 @@ public class PackageClassUtils {
                     if (!currFile.isDirectory()) continue;
                     String currentPath = currFile.getPath();
                     String current = currentPath.replace(separator, ".");
-                    String regex = ".*";
+                    String allRegex = ".*";
+
+                    Set<String> regexSet = new LinkedHashSet<String>();
                     if (packageName != null && !packageName.trim().equals("") && !packageName.trim().equals("*")) {
-                        regex += packageName;
-                        //移除末尾的.*
-                        StringBuilder sb = new StringBuilder(regex);
-                        for (int len = sb.length(); len > 2 && sb.lastIndexOf(".*") == len - 2; ) {
-                            sb.delete(len - 2, len);
+                        String[] packageNames = packageName.split(",", -1);
+                        for (String currentPackageName: packageNames) {
+                            if ("".equals(currentPackageName)) continue;
+                            if ("*".equals(currentPackageName)) {
+                                regexSet.clear();
+                                regexSet.add(allRegex);
+                                break;
+                            } else {
+                                StringBuilder sb = new StringBuilder();
+                                sb.append(allRegex + currentPackageName);
+                                //移除当前末尾的.*
+                                for (int len = sb.length(); len > 2 && sb.lastIndexOf(allRegex) == len - 2; ) {
+                                    sb.delete(len - 2, len);
+                                }
+                                regexSet.add(sb.toString());
+                            }
                         }
-                        regex = sb.toString();
+                    } else {
+                        regexSet.add(allRegex);
                     }
-                    boolean flag = regex.equals(".*");
-                    if (!flag) {
-                        if (current.matches(regex)) {
-                            //比较后缀是否一致
-                            String suffix = current.substring(current.lastIndexOf(".") + 1);  //当前后缀
-                            int index = regex.lastIndexOf(".");
-                            if (index == 0) index = 1;
-                            flag = suffix.equals(regex.substring(index + 1));
-                        }
+                    StringBuilder sb = new StringBuilder();
+                    for (String regex : regexSet) {
+                        sb.append(regex + "|");
                     }
-                    if (!flag) result.addAll(getPackageNamePaths(currentPath, packageName));
-                    else result.add(currentPath);
+                    int len = sb.length();
+                    sb.delete(len - 1, len);
+                    String regex = sb.toString();
+
+                    if (regex.equals(allRegex)) {
+                        result.add(currentPath);
+                    } else if (current.matches(regex)) {
+                        result.add(currentPath);
+                    } else {
+                        result.addAll(getPackageNamePaths(currentPath, packageName));
+                    }
                 }
             }
         }

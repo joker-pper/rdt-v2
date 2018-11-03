@@ -37,6 +37,8 @@ public class RdtPropertiesResolver {
     public void builderClass(Class currentClass) {
         ClassModel classModel = getClassModel(currentClass);
 
+        Boolean isBaseClass = classModel.getBaseClass();
+
         List<Field> fieldList = classModel.getFieldList();
         List<Class<? extends Annotation>> sortAnnotationClassList = Arrays.asList(
                 RdtFieldConditions.class, RdtFields.class,
@@ -48,10 +50,12 @@ public class RdtPropertiesResolver {
         Map<Class, Map<Field, Annotation>> sortAnnotationClassMap = new LinkedHashMap<Class, Map<Field, Annotation>>(16);
 
         for (Field field : fieldList) {
-            if (classModel.getBaseClass() && StringUtils.isEmpty(classModel.getPrimaryId())) {
+            if (StringUtils.isEmpty(classModel.getPrimaryId())) {
                 classModel.setPrimaryId(rdtResolver.getPrimaryId(currentClass, field));  //设置PrimaryId
             }
-            getColumn(classModel, field);  //初始化列数据
+
+            //初始化列数据
+            initColumn(classModel, field);
 
             List<Annotation> annotationList = rdtResolver.getAnnotations(field);
             if (!annotationList.isEmpty()) {
@@ -76,6 +80,22 @@ public class RdtPropertiesResolver {
             }
         }
 
+        if (StringUtils.isEmpty(classModel.getPrimaryId())) {
+            String defaultIdKey = properties.getDefaultIdKey();
+            if (classModel.getPropertyFieldMap().keySet().contains(defaultIdKey)) {
+                classModel.setPrimaryId(defaultIdKey);
+                Column column = getColumn(classModel, defaultIdKey, false);
+                column.setIsPrimaryId(true);
+                logger.warn("rdt " + (isBaseClass ? " base " : "") + "class --- {} not found primary id, so use default primary id : {}, please make sure no problem.", classModel.getClassName(), defaultIdKey);
+            }
+        }
+
+        if (isBaseClass) {
+            if (StringUtils.isEmpty(classModel.getPrimaryId())) {
+                throw new IllegalArgumentException(classModel.getClassName() + " is base class, but has no primary id");
+            }
+        }
+
         for (Class annotationClass : sortAnnotationClassMap.keySet()) {
             Map<Field, Annotation> fieldAnnotationMap = sortAnnotationClassMap.get(annotationClass);
 
@@ -88,21 +108,6 @@ public class RdtPropertiesResolver {
     }
 
     private void builderClassAfter(ClassModel classModel) {
-
-
-        if (classModel.getBaseClass()) {
-            if (StringUtils.isEmpty(classModel.getPrimaryId())) {
-                if (classModel.getPropertyFieldMap().keySet().contains(properties.getDefaultIdKey())) {
-                    classModel.setPrimaryId(properties.getDefaultIdKey());
-                }
-
-                if (StringUtils.isEmpty(classModel.getPrimaryId())) {
-                    throw new IllegalArgumentException(classModel.getClassName() + " is base class, but has no primary id");
-                } else {
-                    logger.warn("rdt base class --- " + classModel.getClassName() + " not found primary id, so use default primary id : " + classModel.getPrimaryId() + ", please make sure no problem.");
-                }
-            }
-        }
 
         Map<String, Map<Integer, RdtRelyModel>> propertyRelyDataMap = classModel.getPropertyRelyDataMap();
         if (!propertyRelyDataMap.isEmpty()) {
@@ -533,6 +538,37 @@ public class RdtPropertiesResolver {
         return classModel;
     }
 
+    public void initColumn(ClassModel classModel, Field field) {
+        Map<String, Column> propertyColumnMap = classModel.getPropertyColumnMap();  //属性对应的column信息
+        String propertyName = field.getName();
+        Column column = propertyColumnMap.get(propertyName);
+        if (column == null) {
+            column = new Column();
+            column.setProperty(field.getName());
+            column.setField(field);
+            classModel.getPropertyFieldMap().put(column.getProperty(), field);
+
+            if (properties.getEnableColumnName()) {
+                column.setName(rdtResolver.getColumnName(classModel.getCurrentClass(), field));
+            }
+            column.setPropertyClass(PojoUtils.getFieldClass(field));
+            column.setAlias(rdtResolver.getPropertyAlias(field, column.getProperty()));  //alias
+            column.setIsTransient(rdtResolver.isColumnTransient(classModel, field));
+            column.setIsPrimaryId(column.getProperty().equals(classModel.getPrimaryId()));
+            //验证别名唯一性
+            Map<String, String> aliasPropertyMap = classModel.getAliasPropertyMap();  //该类属性别名对应的该类属性名称
+            String alias = column.getAlias();
+            String aliasProperty = aliasPropertyMap.get(alias);
+            if (StringUtils.isEmpty(aliasProperty))
+                aliasPropertyMap.put(column.getAlias(), propertyName);
+            else
+                throw new IllegalArgumentException(classModel.getClassName() + " property " + propertyName + "can't to alias named " + alias + "," +
+                        " because " + aliasProperty + " has named this alias");
+
+            propertyColumnMap.put(propertyName, column);
+        }
+    }
+
     /**
      * 加载当前classModel的field的列数据
      *
@@ -540,35 +576,9 @@ public class RdtPropertiesResolver {
      * @param field
      */
     public Column getColumn(ClassModel classModel, Field field) {
-        String propertyName = field.getName();
-        Map<String, Column> propertyColumnMap = classModel.getPropertyColumnMap();  //属性对应的column信息
-
-        Column column = propertyColumnMap.get(propertyName);
-        if (column != null) return column;
-        column = new Column();
-        column.setProperty(field.getName());
-        column.setField(field);
-        classModel.getPropertyFieldMap().put(column.getProperty(), field);
-
-        if (properties.getEnableColumnName()) {
-            column.setName(rdtResolver.getColumnName(classModel.getCurrentClass(), field));
-        }
-        column.setPropertyClass(PojoUtils.getFieldClass(field));
-        column.setAlias(rdtResolver.getPropertyAlias(field, column.getProperty()));  //alias
-        column.setIsTransient(rdtResolver.isColumnTransient(classModel, field));
-
-        //验证别名唯一性
-        Map<String, String> aliasPropertyMap = classModel.getAliasPropertyMap();  //该类属性别名对应的该类属性名称
-        String alias = column.getAlias();
-        String aliasProperty = aliasPropertyMap.get(alias);
-        if (StringUtils.isEmpty(aliasProperty))
-            aliasPropertyMap.put(column.getAlias(), propertyName);
-        else
-            throw new IllegalArgumentException(classModel.getClassName() + " property " + propertyName + "can't to alias named " + alias + "," +
-                    " because " + aliasProperty + " has named this alias");
-        propertyColumnMap.put(propertyName, column);
-
-        return column;
+        initColumn(classModel, field);
+        Map<String, Column> propertyColumnMap = classModel.getPropertyColumnMap();
+        return propertyColumnMap.get(field.getName());
     }
 
     /**
@@ -581,6 +591,13 @@ public class RdtPropertiesResolver {
         return getColumn(classModel, fieldAlias, true);
     }
 
+    /**
+     * 获取classModel的指定列
+     * @param classModel
+     * @param param 参数 别名/属性名称
+     * @param alias 是否为别名
+     * @return
+     */
     public Column getColumn(ClassModel classModel, String param, boolean alias) {
         String property;
         if (alias) {
@@ -588,12 +605,13 @@ public class RdtPropertiesResolver {
             property = aliasPropertyMap.get(param);
         } else property = param;
 
-        if (alias) {  //通过别名获取时如果property存在说明已初始化过对应的column
-            if (StringUtils.isNotBlank(property)) {
-                return classModel.getPropertyColumnMap().get(property);
-            }
+        if (alias && StringUtils.isNotBlank(property)) {
+            //通过别名获取时如果property存在说明已初始化过对应的column
+            return classModel.getPropertyColumnMap().get(property);
         }
+
         for (Field field : classModel.getFieldList()) {
+            //获取当前field对应的column信息
             Column column = getColumn(classModel, field);
             if (alias) {
                 if (column.getAlias().equals(param)) return column;
@@ -739,6 +757,7 @@ public class RdtPropertiesResolver {
         modifyColumn.setName(column.getName());
         modifyColumn.setField(column.getField());
         modifyColumn.setIsTransient(column.getIsTransient());
+        modifyColumn.setIsPrimaryId(column.getIsPrimaryId());
 
         modifyColumn.setTargetAlias(targetColumn.getAlias());
         modifyColumn.setTargetProperty(targetColumn.getProperty());
@@ -746,6 +765,7 @@ public class RdtPropertiesResolver {
         modifyColumn.setTargetName(targetColumn.getName());
         modifyColumn.setTargetField(targetColumn.getField());
         modifyColumn.setTargetIsTransient(targetColumn.getIsTransient());
+        modifyColumn.setTargetIsPrimaryId(targetColumn.getIsPrimaryId());
 
         //设置target class被使用的字段
         getClassModel(PojoUtils.getFieldLocalityClass(modifyColumn.getTargetField())).getUsedPropertySet().add(modifyColumn.getTargetProperty());
@@ -759,13 +779,16 @@ public class RdtPropertiesResolver {
         modifyCondition.setPropertyClass(column.getPropertyClass());
         modifyCondition.setName(column.getName());
         modifyCondition.setField(column.getField());
+        modifyCondition.setIsTransient(column.getIsTransient());
+        modifyCondition.setIsPrimaryId(column.getIsPrimaryId());
 
         modifyCondition.setTargetAlias(targetColumn.getAlias());
         modifyCondition.setTargetProperty(targetColumn.getProperty());
         modifyCondition.setTargetPropertyClass(targetColumn.getPropertyClass());
         modifyCondition.setTargetName(targetColumn.getName());
         modifyCondition.setTargetField(targetColumn.getField());
-
+        modifyCondition.setTargetIsTransient(targetColumn.getIsTransient());
+        modifyCondition.setTargetIsPrimaryId(targetColumn.getIsPrimaryId());
         return modifyCondition;
     }
 

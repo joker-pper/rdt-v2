@@ -1,5 +1,6 @@
 package com.devloper.joker.redundant.resolver;
 
+import com.devloper.joker.redundant.annotation.RdtId;
 import com.devloper.joker.redundant.annotation.base.RdtBaseEntity;
 import com.devloper.joker.redundant.annotation.base.RdtBaseField;
 import com.devloper.joker.redundant.model.ClassModel;
@@ -192,6 +193,7 @@ public abstract class RdtResolver {
                     classList.add(annotations);
                 }
             }
+            classList.add(RdtId.class);
             primaryIdAnnotationClassList = classList;
         }
 
@@ -286,8 +288,9 @@ public abstract class RdtResolver {
                 ") ==> [" +  targetEntityClass.getName() + " property " + targetColumn.getProperty()
                 + "(" + targetColumn.getPropertyClass().getName()   + ")]";
         if (!column.getPropertyClass().equals(targetColumn.getPropertyClass())) {  //类型应一致
-            if (condition) throw new IllegalArgumentException(hint);  //条件的类型必须一致
-            else {
+            if (condition) {
+                throw new IllegalArgumentException(hint + ", the condition property type must consistent.");  //条件的类型必须一致
+            } else {
                 logger.warn(hint + ", please make sure can cast.");
             }
         } else {

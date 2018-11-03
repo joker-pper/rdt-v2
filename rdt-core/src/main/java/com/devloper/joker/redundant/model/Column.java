@@ -12,6 +12,7 @@ public class Column implements Serializable {
     private String name;  //列名称(实际列名,即数据库列名)
     private transient Field field;
     private Boolean isTransient;
+    private Boolean isPrimaryId;
 
     public String getAlias() {
         return alias;
@@ -59,5 +60,13 @@ public class Column implements Serializable {
 
     public void setIsTransient(Boolean isTransient) {
         this.isTransient = isTransient;
+    }
+
+    public Boolean getIsPrimaryId() {
+        return isPrimaryId;
+    }
+
+    public void setIsPrimaryId(Boolean primaryId) {
+        isPrimaryId = primaryId;
     }
 }

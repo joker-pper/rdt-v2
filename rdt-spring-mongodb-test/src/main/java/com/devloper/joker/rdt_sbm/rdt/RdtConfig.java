@@ -1,5 +1,6 @@
 package com.devloper.joker.rdt_sbm.rdt;
 
+import com.alibaba.fastjson.JSON;
 import com.devloper.joker.redundant.model.RdtProperties;
 import com.devloper.joker.redundant.model.RdtSupport;
 import com.devloper.joker.redundant.operation.MongoRdtOperation;
@@ -65,7 +66,8 @@ public class RdtConfig {
 
             @Override
             public String toJson(Object o) {
-                return SerializationUtils.serializeToJsonSafely(o);
+                //return SerializationUtils.serializeToJsonSafely(o);
+                return JSON.toJSONString(o);
             }
         };
     }
@@ -76,7 +78,7 @@ public class RdtConfig {
         properties.setBasePackage(basePackage);
         //是否通过saveAll保存
         properties.setComplexBySaveAll(false);
-        properties.setDeepCloneChangedModify(false);
+        properties.setDeepCloneChangedModify(Boolean.TRUE);
         return properties;
     }
 
@@ -87,7 +89,9 @@ public class RdtConfig {
 
     @Bean
     public MongoRdtOperation mongoRdtOperation() {
-        MongoRdtOperationImpl operation = new MongoRdtOperationImpl(rdtSupport());
+        MongoRdtOperation operation = new MongoRdtOperation(rdtSupport()) {
+        };
+
         operation.setMongoTemplate(mongoTemplate);
         return operation;
     }

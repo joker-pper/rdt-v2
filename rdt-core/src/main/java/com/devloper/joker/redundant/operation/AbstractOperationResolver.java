@@ -1,6 +1,7 @@
-package com.devloper.joker.redundant.resolver;
+package com.devloper.joker.redundant.operation;
 
 import com.devloper.joker.redundant.model.*;
+import com.devloper.joker.redundant.resolver.RdtResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,11 +40,31 @@ public abstract class AbstractOperationResolver {
 
     public abstract <T> T findById(Class<T> entityClass, Object id);
 
-    public abstract <T> Collection<T> findByIdIn(Class<T> entityClass, String idKey, Collection<Object> ids);
+    public abstract <T> List<T> findByIdIn(Class<T> entityClass, String idKey, Collection<Object> ids);
 
-    public abstract Object save(Object o);
+    public <T> List<T> findByIdIn(Class<T> entityClass, Collection<Object> ids) {
+        return findByIdIn(entityClass, getPrimaryId(entityClass), ids);
+    }
 
-    public abstract Object saveAll(Collection<Object> o);
+    protected <T> T save(T entity) {
+        if (entity == null) {
+            throw new NullPointerException("entity must be not null.");
+        }
+        return save(entity, (Class<T>)entity.getClass());
+    }
+
+    protected abstract <T> T save(T entity, Class<T> entityClass);
+
+    protected  <T> Collection<T> saveAll(Collection<T> data) {
+        if (data == null || data.size() == 0) {
+            throw new IllegalArgumentException("data must be not empty.");
+        }
+        return saveAll(data, (Class<T>) data.iterator().next().getClass());
+    }
+
+    protected abstract <T> Collection<T> saveAll(Collection<T> data, Class<T> entityClass);
+
+
 
     public ClassModel getClassModel(Class entityClass) {
         return properties.getClassModel(entityClass);
@@ -60,9 +81,8 @@ public abstract class AbstractOperationResolver {
         return getBeforeData(entity, true);
     }
 
-    public <T> Collection<T> findByIdIn(Class<T> entityClass, Collection<Object> ids) {
-        return findByIdIn(entityClass, getPrimaryId(entityClass), ids);
-    }
+
+
 
 
     /**
@@ -269,7 +289,7 @@ public abstract class AbstractOperationResolver {
                             changedVo.setCurrent(current);
                             changedVo.setPrimaryId(idKey);
                             changedVo.setPrimaryIdVal(idKeyVal);
-
+                            Map<String, Object> changedPropertyValMap = new HashMap<String, Object>(16);
                             for (String property : usedPropertys) {
                                 Object currentVal = rdtResolver.getPropertyValue(current, property);
                                 Object beforeVal = rdtResolver.getPropertyValue(before, property);
@@ -288,6 +308,7 @@ public abstract class AbstractOperationResolver {
                                 if (changed) {
                                     //添加该字段值为changed property用于更新相关值
                                     changedVo.addChangedProperty(property);
+                                    changedPropertyValMap.put(property, currentVal);
                                 }
                                 changedVo.setVal(property, currentVal, beforeVal);
                             }
@@ -301,7 +322,7 @@ public abstract class AbstractOperationResolver {
                                     Object beforeVal = rdtResolver.getPropertyValue(before, property);
                                     changedVo.setVal(property, currentVal, beforeVal);
                                 }
-                                logger.info("{} 【{}={}】changed propertys {}, will to modify", entityClassName, idKey, idKeyVal, changedPropertys);
+                                logger.info("{} 【{}={}】changed propertys {} will to modify", entityClassName, idKey, idKeyVal, changedPropertyValMap);
                                 updateMultiCore(classModel, changedVo);
                             } else {
                                 logger.debug("{} 【{}={}】has no changed propertys, continue modify", entityClassName, idKey, idKeyVal);
@@ -389,7 +410,7 @@ public abstract class AbstractOperationResolver {
 
         try {
             updateModifyDescribeSimpleImpl(classModel, modifyClassModel, describe, vo, conditionDataMap, updateDataMap);
-            logger.info("{} modify about {}【{}={}】data, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
+            logger.trace("{} modify about {}【{}={}】data, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
                     describe.getIndex(), rdtResolver.toJson(conditionMap), rdtResolver.toJson(updateLogMap));
         } catch (Exception e) {
             logger.warn("{} modify about {}【{}={}】data error, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
@@ -478,7 +499,7 @@ public abstract class AbstractOperationResolver {
         try {
             updateModifyRelyDescribeSimpleImpl(classModel, modifyClassModel, vo, conditionDataMap, updateDataMap, relyColumn, group, describe, rdtLog);
 
-            logger.info("{} modify about {}【{}={}】data with rely column - 【name: {}, group: {} 】 , index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
+            logger.trace("{} modify about {}【{}={}】data with rely column - 【name: {}, group: {} 】 , index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
                     relyColumn.getProperty(), group, describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
 
         } catch (Exception e) {

@@ -1,7 +1,6 @@
 package com.devloper.joker.redundant.operation;
 
 import com.devloper.joker.redundant.model.*;
-import com.devloper.joker.redundant.resolver.AbstractOperationResolver;
 import org.springframework.data.repository.CrudRepository;
 
 import javax.persistence.EntityManager;
@@ -26,7 +25,17 @@ public abstract class AbstractRdtJpaResolver extends AbstractOperationResolver {
     public abstract CrudRepository getActualCrudRepository(Class entityClass);
 
     @Override
-    public <T> Collection<T> findByIdIn(Class<T> entityClass, String idKey, Collection<Object> ids) {
+    protected <T> T save(T entity, Class<T> entityClass) {
+        return (T)getCrudRepository(entityClass).save(entity);
+    }
+
+    @Override
+    protected <T> Collection<T> saveAll(Collection<T> data, Class<T> entityClass) {
+        return (Collection<T>)getCrudRepository(entityClass).saveAll(data);
+    }
+
+    @Override
+    public <T> List<T> findByIdIn(Class<T> entityClass, String idKey, Collection<Object> ids) {
         if (ids != null && ids.size() == 1) {
             T result = findById(entityClass, ids.iterator().next());
             List<T> dataList = new ArrayList<T>();
@@ -35,7 +44,7 @@ public abstract class AbstractRdtJpaResolver extends AbstractOperationResolver {
             }
             return dataList;
         }
-        return (Collection) getCrudRepository(entityClass).findAllById(ids);
+        return new ArrayList<T>((Collection) getCrudRepository(entityClass).findAllById(ids));
     }
 
     @Override

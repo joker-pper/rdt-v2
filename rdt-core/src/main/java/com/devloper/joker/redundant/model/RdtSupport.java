@@ -18,7 +18,9 @@ public class RdtSupport {
 
     private RdtResolver rdtResolver;
 
-    private Map<Class, List<List<ComplexModel>>> complexResultListMap = new HashMap<Class, List<List<ComplexModel>>>();
+    private Map<Class, List<List<ComplexModel>>> complexResultListMap = new HashMap<Class, List<List<ComplexModel>>>(16);
+
+    private Map<Class, List<ComplexAnalysis>> complexAnalysisResultListMap = new HashMap<Class, List<ComplexAnalysis>>(16);
 
     public RdtSupport(RdtProperties properties, RdtResolver rdtResolver) {
         this.properties = properties;
@@ -186,8 +188,31 @@ public class RdtSupport {
     }
 
     /**
-     * @param complexModelList
+     * 获取当前非base类所对应的所有关联关系数据集合
+     * @param complexClass
      * @return
+     */
+    public List<ComplexAnalysis> getComplexAnalysisList(Class complexClass) {
+        List<ComplexAnalysis> complexAnalysisList = complexAnalysisResultListMap.get(complexClass);
+        if (complexAnalysisList == null) {
+            complexAnalysisList = new ArrayList<ComplexAnalysis>(16);
+            complexAnalysisResultListMap.put(complexClass, complexAnalysisList);
+            List<List<ComplexModel>> complexResults = getComplexModelParseResult(complexClass);
+            for (List<ComplexModel> complexResult : complexResults) {
+                ComplexAnalysis complexAnalysis = getComplexAnalysis(complexResult);
+                complexAnalysisList.add(complexAnalysis);
+            }
+            //logger.warn("{} -- getComplexAnalysisList init...", complexClass.getName());
+        }
+        return complexAnalysisList;
+    }
+
+    /**
+     * 解析当前关系列表的结果,即base类的关联关系
+     * @param complexModelList
+     * @return e.g
+     *  {"currentTypeList": ["com.devloper.joker.rdt_sbm.model.Reply"],"hasMany":false,"oneList":[true],"prefix":"reply","propertyList":["reply"],"rootClass":"com.devloper.joker.rdt_sbm.domain.Article"}
+     *
      */
     public ComplexAnalysis getComplexAnalysis(List<ComplexModel> complexModelList) {
         ComplexAnalysis complexAnalysis = new ComplexAnalysis();
@@ -227,17 +252,17 @@ public class RdtSupport {
         /**
          * 回调函数
          * @param classModel 更新的实体classModel
-         * @param currentClassModel 当前处理的classModel
+         * @param modifyClassModel 当前处理的classModel
          * @param relyColumn 依赖列
          * @param group group index
          * @param describe
          */
-        public abstract void execute(ClassModel classModel, ClassModel currentClassModel, Column relyColumn, int group, ModifyRelyDescribe describe) throws Exception;
+        public abstract void execute(ClassModel classModel, ClassModel modifyClassModel, Column relyColumn, int group, ModifyRelyDescribe describe) throws Exception;
     }
 
-    public void doModifyRelyDescribeHandle(ClassModel classModel, ClassModel currentClassModel, ModifyRelyDescribeCallBack callBack) throws Exception {
+    public void doModifyRelyDescribeHandle(ClassModel classModel, ClassModel modifyClassModel, ModifyRelyDescribeCallBack callBack) throws Exception {
         Class entityClass = classModel.getCurrentClass();
-        Map<Class, Map<Column, Map<Integer, List<ModifyRelyDescribe>>>> describeMap = currentClassModel.getTargetClassModifyRelyDescribeMap();
+        Map<Class, Map<Column, Map<Integer, List<ModifyRelyDescribe>>>> describeMap = modifyClassModel.getTargetClassModifyRelyDescribeMap();
         //获取当前实体所相关的依赖列及修改相关的数据
         Map<Column, Map<Integer, List<ModifyRelyDescribe>>> entityClassRelyMap = describeMap.get(entityClass);
         if (entityClassRelyMap != null && !entityClassRelyMap.isEmpty()) {
@@ -248,7 +273,7 @@ public class RdtSupport {
                         List<ModifyRelyDescribe> modifyDescribeList = groupDescribeList.get(group);
                         if (modifyDescribeList != null && !modifyDescribeList.isEmpty()) {
                             for (ModifyRelyDescribe describe : modifyDescribeList) {
-                                callBack.execute(classModel, currentClassModel, relyColumn, group, describe);
+                                callBack.execute(classModel, modifyClassModel, relyColumn, group, describe);
                             }
                         }
                     }
@@ -261,18 +286,19 @@ public class RdtSupport {
         /**
          * 回调函数
          * @param classModel 更新的实体classModel
-         * @param currentClassModel 当前处理的classModel
+         * @param modifyClassModel 当前要修改的classModel
          * @param describe
          */
-        public abstract void execute(ClassModel classModel, ClassModel currentClassModel, ModifyDescribe describe) throws Exception;
+        public abstract void execute(ClassModel classModel, ClassModel modifyClassModel, ModifyDescribe describe) throws Exception;
     }
 
-    public void doModifyDescribeHandle(ClassModel classModel, ClassModel currentClassModel, ModifyDescribeCallBack callBack) throws Exception {
+    public void doModifyDescribeHandle(ClassModel classModel, ClassModel modifyClassModel, ModifyDescribeCallBack callBack) throws Exception {
         Class entityClass = classModel.getCurrentClass();
-        List<ModifyDescribe> modifyDescribeList = getModifyDescribeData(currentClassModel, entityClass); //获取currentClassModel中关于classModel的modifyDescribe信息
+        //获取modifyClassModel中关于classModel的modifyDescribe信息
+        List<ModifyDescribe> modifyDescribeList = getModifyDescribeData(modifyClassModel, entityClass);
         if (!modifyDescribeList.isEmpty()) {
             for (ModifyDescribe modifyDescribe : modifyDescribeList) {
-                callBack.execute(classModel, currentClassModel, modifyDescribe);
+                callBack.execute(classModel, modifyClassModel, modifyDescribe);
             }
         }
     }

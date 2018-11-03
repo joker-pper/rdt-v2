@@ -1,4 +1,4 @@
-package com.devloper.joker.redundant.resolver;
+package com.devloper.joker.redundant.operation;
 
 import com.devloper.joker.redundant.model.*;
 
@@ -24,18 +24,15 @@ public abstract class AbstractOperationComplexResolver extends AbstractOperation
      * @param vo
      */
     protected void updateModifyComplex(final ClassModel classModel, final ChangedVo vo) throws Exception {
-        Set<Class> complexClassSet = classModel.getChangedComplexClassSet(); //获取相关的子文档关联类
+        //获取classModel相关的非base关系类
+        Set<Class> complexClassSet = classModel.getChangedComplexClassSet();
         if (!complexClassSet.isEmpty()) {
             final List<String> changedPropertys = vo.getChangedPropertys();
-
             for (Class complexClass : complexClassSet) {
-                //获取要修改的复杂数据对应类的指定修改属性列表
+                //获取complexClass所拥有的复杂关系对象组合
+                List<ComplexAnalysis> complexAnalysisList = rdtSupport.getComplexAnalysisList(complexClass);
                 ClassModel complexClassModel = getClassModel(complexClass);
-                List<List<ComplexModel>> complexResults = rdtSupport.getComplexModelParseResult(complexClass);
-
-                for (List<ComplexModel> currents : complexResults) {
-                    final ComplexAnalysis complexAnalysis = rdtSupport.getComplexAnalysis(currents);
-
+                for (final ComplexAnalysis complexAnalysis : complexAnalysisList) {
                     if (complexAnalysis.getHasMany()) { //包含many时
 
                         rdtSupport.doModifyDescribeHandle(classModel, complexClassModel, new RdtSupport.ModifyDescribeCallBack() {
@@ -69,7 +66,6 @@ public abstract class AbstractOperationComplexResolver extends AbstractOperation
                                 }
                             }
                         });
-
                         rdtSupport.doModifyRelyDescribeHandle(classModel, complexClassModel, new RdtSupport.ModifyRelyDescribeCallBack() {
                             @Override
                             public void execute(ClassModel classModel, ClassModel currentClassModel, Column relyColumn, int group, ModifyRelyDescribe describe) throws Exception {
@@ -79,10 +75,8 @@ public abstract class AbstractOperationComplexResolver extends AbstractOperation
                                 }
                             }
                         });
-
                     }
                 }
-
 
             }
         }
@@ -138,7 +132,7 @@ public abstract class AbstractOperationComplexResolver extends AbstractOperation
         try {
             updateModifyDescribeOneImpl(classModel, complexClassModel, complexAnalysis, modifyClassModel, describe, vo, conditionDataMap, updateDataMap);
 
-            logger.info("{} modify about {}【{}={}】data with complex【{}】, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
+            logger.trace("{} modify about {}【{}={}】data with complex【{}】, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
                     complexAnalysis.getPrefix(), describe.getIndex(), rdtResolver.toJson(conditionLogMap), rdtResolver.toJson(updateLogMap));
         } catch (Exception e) {
             logger.warn("{} modify about {}【{}={}】data with complex【{}】 has error, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
@@ -198,7 +192,7 @@ public abstract class AbstractOperationComplexResolver extends AbstractOperation
         try {
             updateModifyRelyDescribeOneImpl(classModel, complexClassModel, complexAnalysis, modifyClassModel, describe, vo, conditionDataMap, updateDataMap, relyColumn, group, rdtLog);
 
-            logger.info("{} modify about {}【{}={}】data with complex【{}】and rely column - 【name: {}, group: {} 】 , index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
+            logger.trace("{} modify about {}【{}={}】data with complex【{}】and rely column - 【name: {}, group: {} 】 , index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
                     complexAnalysis.getPrefix(), relyColumn.getProperty(), group, describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
 
         } catch (Exception e) {
@@ -229,7 +223,7 @@ public abstract class AbstractOperationComplexResolver extends AbstractOperation
         try {
             updateModifyDescribeManyImpl(classModel, complexClassModel, complexAnalysis, modifyClassModel, describe, vo, rdtLog);
 
-            logger.info("{} modify about {}【{}={}】data with complex【{}】, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
+            logger.trace("{} modify about {}【{}={}】data with complex【{}】, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
                     complexAnalysis.getPrefix(), describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
         } catch (Exception e) {
             logger.warn("{} modify about {}【{}={}】data with complex【{}】has error, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
@@ -256,7 +250,7 @@ public abstract class AbstractOperationComplexResolver extends AbstractOperation
         try {
             updateModifyRelyDescribeManyImpl(classModel, complexClassModel, complexAnalysis, modifyClassModel, describe, vo, relyColumn, group, rdtLog);
 
-            logger.info("{} modify about {}【{}={}】data with complex【{}】and rely column - 【name: {}, group: {} 】 , index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
+            logger.trace("{} modify about {}【{}={}】data with complex【{}】and rely column - 【name: {}, group: {} 】 , index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
                     complexAnalysis.getPrefix(), relyColumn.getProperty(), group, describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
 
         } catch (Exception e) {

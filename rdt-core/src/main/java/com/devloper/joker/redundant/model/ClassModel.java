@@ -13,7 +13,7 @@ public class ClassModel {
     private String simpleName;
     private String entityName;  //数据库表名
     private Boolean baseClass;  //是否为基本类(类有注解@RdtBaseEntity或通过实现方法进行判断)
-    private String primaryId;  //当前类的id字段(基本类时)
+    private String primaryId;  //当前类的id字段(基本类时必须存在)
 
     private List<Field> fieldList = new ArrayList<Field>(16);
     private Map<String, Field> propertyFieldMap = new HashMap<String, Field>(16);
@@ -37,9 +37,15 @@ public class ClassModel {
     //当前类中存在依赖列字段下的target class所对应的修改信息 (integer key 对应的为 group)
     private Map<Class, Map<Column, Map<Integer, List<ModifyRelyDescribe>>>> targetClassModifyRelyDescribeMap = new LinkedHashMap<Class, Map<Column, Map<Integer, List<ModifyRelyDescribe>>>>(16) ;
 
-    private List<ComplexModel> complexModelList = new ArrayList<ComplexModel>(16);  //当前类拥有的关联对象列表
+    /**
+     * 当前类拥有的关联对象列表,依赖于注解@RdtOne,@RdtMany用于文档型
+     */
+    private List<ComplexModel> complexModelList = new ArrayList<ComplexModel>(16);
 
-    private Set<Class> changedComplexClassSet = new LinkedHashSet<Class>(16);  //子数据集合(子文档)中target class为当前类的class集合
+    /**
+     * target class为当前类的class非base类集合
+     */
+    private Set<Class> changedComplexClassSet = new LinkedHashSet<Class>(16);
 
     public Class getCurrentClass() {
         return currentClass;

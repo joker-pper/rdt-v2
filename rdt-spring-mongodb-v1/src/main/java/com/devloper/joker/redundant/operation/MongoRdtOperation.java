@@ -1,16 +1,16 @@
 package com.devloper.joker.redundant.operation;
 
 import com.devloper.joker.redundant.model.*;
-import com.devloper.joker.redundant.resolver.AbstractMongoOperationResolver;
 import com.devloper.joker.redundant.support.DataSupport;
 import com.devloper.joker.redundant.support.Prototype;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 
-import java.lang.reflect.Field;
 import java.util.*;
 
 public abstract class MongoRdtOperation extends AbstractMongoOperationResolver {
@@ -27,6 +27,31 @@ public abstract class MongoRdtOperation extends AbstractMongoOperationResolver {
 
     public Map getCriteriaToMap(Criteria criteria) {
         return criteria.getCriteriaObject().toMap();
+    }
+
+    protected Pageable getPageable(long page, long size) {
+        return new PageRequest((int) page, (int)size);
+    }
+
+    @Override
+    protected <T> T save(T entity, Class<T> entityClass) {
+        mongoTemplate.save(entity);
+        return entity;
+    }
+
+    /**
+     * 用于批量保存子文档数据
+     * @param data
+     * @param entityClass
+     * @param <T>
+     * @return
+     */
+    @Override
+    protected <T> Collection<T> saveAll(Collection<T> data, Class<T> entityClass) {
+        for (T entity : data) {
+            mongoTemplate.save(entity);
+        }
+        return data;
     }
 
     protected void updateMulti(Criteria criteria, Update update, Class entityClass) {
@@ -71,16 +96,8 @@ public abstract class MongoRdtOperation extends AbstractMongoOperationResolver {
         }
     }
 
-    /**
-     * 获取Pageable对象
-     * @param page
-     * @param size
-     * @return
-     */
-    protected abstract Pageable getPageable(long page, long size);
-
     @Override
-    public <T> Collection<T> findByIdIn(Class<T> entityClass, String idKey, Collection<Object> ids) {
+    public <T> List<T> findByIdIn(Class<T> entityClass, String idKey, Collection<Object> ids) {
         Query query = new Query(criteriaIn(Criteria.where(idKey), ids));
         List<T> list = mongoTemplate.find(query, entityClass);
         return list;
@@ -491,10 +508,10 @@ public abstract class MongoRdtOperation extends AbstractMongoOperationResolver {
                                 }
 
                                 if (!saveAll) {
-                                    //加入标识,避免更新出错
-                                    Map<String, Field> propertyFieldMap = complexClassModel.getPropertyFieldMap();
-                                    if (propertyFieldMap.containsKey("id")) {
-                                        currentCriteria.and(usePropertyPrefix + "id").is(rdtResolver.getPropertyValue(result, "id"));
+                                    //加入id标识,避免更新出错
+                                    String primaryId = complexClassModel.getPrimaryId();
+                                    if (StringUtils.isNotEmpty(primaryId)) {
+                                        currentCriteria.and(usePropertyPrefix + primaryId).is(rdtResolver.getPropertyValue(result, primaryId));
                                     }
                                 }
                             }

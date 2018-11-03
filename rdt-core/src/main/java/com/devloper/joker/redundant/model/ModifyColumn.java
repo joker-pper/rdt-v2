@@ -1,18 +1,18 @@
 package com.devloper.joker.redundant.model;
 
-import java.io.Serializable;
 import java.lang.reflect.Field;
 
 //修改列所相关属性
-public class ModifyColumn extends Column implements Serializable {
+public class ModifyColumn extends Column {
 
     private String targetAlias; //对应的别名
     private String targetProperty;  //对应的属性名称
     private Class targetPropertyClass;  //对应的属性类型
     private String targetName;  //对应列名称(实际列名,即数据库列名)
-    private Boolean targetIsTransient;
-
     private transient Field targetField;
+
+    private Boolean targetIsTransient;
+    private Boolean targetIsPrimaryId;
 
     public String getTargetAlias() {
         return targetAlias;
@@ -60,5 +60,13 @@ public class ModifyColumn extends Column implements Serializable {
 
     public void setTargetIsTransient(Boolean targetIsTransient) {
         this.targetIsTransient = targetIsTransient;
+    }
+
+    public Boolean getTargetIsPrimaryId() {
+        return targetIsPrimaryId;
+    }
+
+    public void setTargetIsPrimaryId(Boolean targetIsPrimaryId) {
+        this.targetIsPrimaryId = targetIsPrimaryId;
     }
 }
