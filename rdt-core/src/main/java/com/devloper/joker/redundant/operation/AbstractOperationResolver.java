@@ -40,9 +40,20 @@ public abstract class AbstractOperationResolver {
 
     public abstract <T> T findById(Class<T> entityClass, Object id);
 
-    public abstract <T> List<T> findByIdIn(Class<T> entityClass, String idKey, Collection<Object> ids);
+    protected abstract <T> List<T> findByIdIn(Class<T> entityClass, String idKey, Collection<Object> ids);
 
     public <T> List<T> findByIdIn(Class<T> entityClass, Collection<Object> ids) {
+        if (ids == null || ids.size() == 0) {
+            throw new IllegalArgumentException("ids must be not empty.");
+        }
+        if (ids.size() == 1) {
+            T result = findById(entityClass, ids.iterator().next());
+            List<T> dataList = new ArrayList<T>();
+            if (result != null) {
+                dataList.add(result);
+            }
+            return dataList;
+        }
         return findByIdIn(entityClass, getPrimaryId(entityClass), ids);
     }
 
@@ -64,6 +75,22 @@ public abstract class AbstractOperationResolver {
 
     protected abstract <T> Collection<T> saveAll(Collection<T> data, Class<T> entityClass);
 
+    /**
+     * 获取以key值为key的map数据
+     * @param data
+     * @param key
+     * @param <T>
+     * @return
+     */
+    protected <T> Map<Object, T> getKeyMap(Collection<T> data, String key) {
+        Map<Object, T> result = new LinkedHashMap<Object, T>(16);
+        if (data != null && !data.isEmpty()) {
+            for (T t : data) {
+                result.put(rdtResolver.getPropertyValue(t, key), t);
+            }
+        }
+        return result;
+    }
 
 
     public ClassModel getClassModel(Class entityClass) {
@@ -383,7 +410,7 @@ public abstract class AbstractOperationResolver {
         rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
             @Override
             public void execute(ModifyCondition modifyCondition, String targetProperty, Object targetPropertyVal) {
-                String property = modifyCondition.getProperty();
+                String property = modifyCondition.getColumn().getProperty();
                 conditionDataMap.put(property, targetPropertyVal);
                 if (logDetail) {
                     conditionMap.put(property + symbol + targetProperty, targetPropertyVal);
@@ -397,7 +424,7 @@ public abstract class AbstractOperationResolver {
         rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
             @Override
             public void execute(ModifyColumn modifyColumn, String targetProperty, Object targetPropertyVal) {
-                String property = modifyColumn.getProperty();
+                String property = modifyColumn.getColumn().getProperty();
                 updateDataMap.put(property, targetPropertyVal);
                 if (logDetail) {
                     updateLogMap.put(property + symbol + targetProperty, targetPropertyVal);
@@ -472,7 +499,7 @@ public abstract class AbstractOperationResolver {
         rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
             @Override
             public void execute(ModifyCondition modifyCondition, String targetProperty, Object targetPropertyVal) {
-                String property = modifyCondition.getProperty();
+                String property = modifyCondition.getColumn().getProperty();
                 conditionDataMap.put(property, targetPropertyVal);
                 if (logDetail) {
                     conditionLogMap.put(property + symbol + targetProperty, targetPropertyVal);
@@ -485,11 +512,11 @@ public abstract class AbstractOperationResolver {
         rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
             @Override
             public void execute(ModifyColumn modifyColumn, String targetProperty, Object targetPropertyVal) {
-                updateDataMap.put(modifyColumn.getProperty(), targetPropertyVal);
+                updateDataMap.put(modifyColumn.getColumn().getProperty(), targetPropertyVal);
                 if (logDetail) {
-                    updateLogMap.put(modifyColumn.getProperty() + symbol + targetProperty, targetPropertyVal);
+                    updateLogMap.put(modifyColumn.getColumn().getProperty() + symbol + targetProperty, targetPropertyVal);
                 } else {
-                    updateLogMap.put(modifyColumn.getProperty(), targetPropertyVal);
+                    updateLogMap.put(modifyColumn.getColumn().getProperty(), targetPropertyVal);
                 }
             }
         });

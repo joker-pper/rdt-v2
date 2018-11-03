@@ -25,19 +25,22 @@ public abstract class MongoRdtOperation extends AbstractMongoOperationResolver {
         this.mongoTemplate = mongoTemplate;
     }
 
-    public Map getCriteriaToMap(Criteria criteria) {
-        return criteria.getCriteriaObject();
-    }
-
-
-    protected Pageable getPageable(long page, long size) {
-        return PageRequest.of((int) page, (int)size);
-    }
-
     @Override
     protected <T> T save(T entity, Class<T> entityClass) {
         mongoTemplate.save(entity);
         return entity;
+    }
+
+    @Override
+    public <T> List<T> findByIdIn(Class<T> entityClass, String idKey, Collection<Object> ids) {
+        Query query = new Query(criteriaIn(Criteria.where(idKey), ids));
+        List<T> list = mongoTemplate.find(query, entityClass);
+        return list;
+    }
+
+    @Override
+    public <T> T findById(Class<T> entityClass, Object id) {
+        return mongoTemplate.findById(id, entityClass);
     }
 
     /**
@@ -53,6 +56,14 @@ public abstract class MongoRdtOperation extends AbstractMongoOperationResolver {
             mongoTemplate.save(entity);
         }
         return data;
+    }
+
+    public Map getCriteriaToMap(Criteria criteria) {
+        return criteria.getCriteriaObject();
+    }
+
+    protected Pageable getPageable(long page, long size) {
+        return PageRequest.of((int) page, (int)size);
     }
 
     protected void updateMulti(Criteria criteria, Update update, Class entityClass) {
@@ -97,17 +108,6 @@ public abstract class MongoRdtOperation extends AbstractMongoOperationResolver {
         }
     }
 
-    @Override
-    public <T> List<T> findByIdIn(Class<T> entityClass, String idKey, Collection<Object> ids) {
-        Query query = new Query(criteriaIn(Criteria.where(idKey), ids));
-        List<T> list = mongoTemplate.find(query, entityClass);
-        return list;
-    }
-
-    @Override
-    public <T> T findById(Class<T> entityClass, Object id) {
-        return mongoTemplate.findById(id, entityClass);
-    }
 
     @Override
     protected void updateModifyDescribeSimpleImpl(ClassModel classModel, ClassModel modifyClassModel, ModifyDescribe describe, ChangedVo vo, Map<String, Object> conditionValMap, Map<String, Object> updateValMap) {
@@ -201,7 +201,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperationResolver {
         rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
             @Override
             public void execute(ModifyColumn modifyColumn, String targetProperty, Object targetPropertyVal) {
-                String property = modifyColumn.getProperty();
+                String property = modifyColumn.getColumn().getProperty();
                 updateValMap.put(property, targetPropertyVal);
                 if (logDetail) {
                     updateLogMap.put(analysisPrefix + property + symbol + targetProperty, targetPropertyVal);
@@ -259,7 +259,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperationResolver {
         rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
             @Override
             public void execute(ModifyColumn modifyColumn, String targetProperty, Object targetPropertyVal) {
-                String property = modifyColumn.getProperty();
+                String property = modifyColumn.getColumn().getProperty();
                 updateValMap.put(property, targetPropertyVal);
                 if (logDetail) {
                     updateLogMap.put(analysisPrefix + property + symbol + targetProperty, targetPropertyVal);
@@ -357,7 +357,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperationResolver {
         rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
             @Override
             public void execute(ModifyCondition condition, String targetProperty, Object targetPropertyVal) {
-                String property = condition.getProperty();
+                String property = condition.getColumn().getProperty();
                 conditionValMap.put(property, targetPropertyVal);//存放此对象条件属性值的信息
 
                 String currentProperty;

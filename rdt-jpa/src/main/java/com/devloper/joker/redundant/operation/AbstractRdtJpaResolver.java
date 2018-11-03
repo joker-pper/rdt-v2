@@ -35,15 +35,7 @@ public abstract class AbstractRdtJpaResolver extends AbstractOperationResolver {
     }
 
     @Override
-    public <T> List<T> findByIdIn(Class<T> entityClass, String idKey, Collection<Object> ids) {
-        if (ids != null && ids.size() == 1) {
-            T result = findById(entityClass, ids.iterator().next());
-            List<T> dataList = new ArrayList<T>();
-            if (result != null) {
-                dataList.add(result);
-            }
-            return dataList;
-        }
+    protected <T> List<T> findByIdIn(Class<T> entityClass, String idKey, Collection<Object> ids) {
         return new ArrayList<T>((Collection) getCrudRepository(entityClass).findAllById(ids));
     }
 

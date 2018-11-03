@@ -81,20 +81,22 @@ public class RdtPropertiesResolver {
         }
 
         if (StringUtils.isEmpty(classModel.getPrimaryId())) {
+
             String defaultIdKey = properties.getDefaultIdKey();
             if (classModel.getPropertyFieldMap().keySet().contains(defaultIdKey)) {
                 classModel.setPrimaryId(defaultIdKey);
-                Column column = getColumn(classModel, defaultIdKey, false);
-                column.setIsPrimaryId(true);
                 logger.warn("rdt " + (isBaseClass ? " base " : "") + "class --- {} not found primary id, so use default primary id : {}, please make sure no problem.", classModel.getClassName(), defaultIdKey);
             }
         }
 
-        if (isBaseClass) {
-            if (StringUtils.isEmpty(classModel.getPrimaryId())) {
-                throw new IllegalArgumentException(classModel.getClassName() + " is base class, but has no primary id");
-            }
+        if (StringUtils.isNotEmpty(classModel.getPrimaryId())) {
+            //设置column is primaryId
+            Column column = getColumn(classModel, classModel.getPrimaryId(), false);
+            column.setIsPrimaryId(true);
+        } else if (isBaseClass) {
+            throw new IllegalArgumentException(classModel.getClassName() + " is base class, but has no primary id");
         }
+
 
         for (Class annotationClass : sortAnnotationClassMap.keySet()) {
             Map<Field, Annotation> fieldAnnotationMap = sortAnnotationClassMap.get(annotationClass);
@@ -544,17 +546,17 @@ public class RdtPropertiesResolver {
         Column column = propertyColumnMap.get(propertyName);
         if (column == null) {
             column = new Column();
-            column.setProperty(field.getName());
+            column.setProperty(propertyName);
             column.setField(field);
-            classModel.getPropertyFieldMap().put(column.getProperty(), field);
+            classModel.getPropertyFieldMap().put(propertyName, field);
 
             if (properties.getEnableColumnName()) {
                 column.setName(rdtResolver.getColumnName(classModel.getCurrentClass(), field));
             }
             column.setPropertyClass(PojoUtils.getFieldClass(field));
-            column.setAlias(rdtResolver.getPropertyAlias(field, column.getProperty()));  //alias
+            column.setAlias(rdtResolver.getPropertyAlias(field, propertyName));  //alias
             column.setIsTransient(rdtResolver.isColumnTransient(classModel, field));
-            column.setIsPrimaryId(column.getProperty().equals(classModel.getPrimaryId()));
+            column.setIsPrimaryId(false);
             //验证别名唯一性
             Map<String, String> aliasPropertyMap = classModel.getAliasPropertyMap();  //该类属性别名对应的该类属性名称
             String alias = column.getAlias();
@@ -751,44 +753,19 @@ public class RdtPropertiesResolver {
 
     private ModifyColumn getModifyColumn(Column column, Column targetColumn) {
         ModifyColumn modifyColumn = new ModifyColumn();
-        modifyColumn.setAlias(column.getAlias());
-        modifyColumn.setProperty(column.getProperty());
-        modifyColumn.setPropertyClass(column.getPropertyClass());
-        modifyColumn.setName(column.getName());
-        modifyColumn.setField(column.getField());
-        modifyColumn.setIsTransient(column.getIsTransient());
-        modifyColumn.setIsPrimaryId(column.getIsPrimaryId());
 
-        modifyColumn.setTargetAlias(targetColumn.getAlias());
-        modifyColumn.setTargetProperty(targetColumn.getProperty());
-        modifyColumn.setTargetPropertyClass(targetColumn.getPropertyClass());
-        modifyColumn.setTargetName(targetColumn.getName());
-        modifyColumn.setTargetField(targetColumn.getField());
-        modifyColumn.setTargetIsTransient(targetColumn.getIsTransient());
-        modifyColumn.setTargetIsPrimaryId(targetColumn.getIsPrimaryId());
+        modifyColumn.setColumn(column);
+        modifyColumn.setTargetColumn(targetColumn);
 
         //设置target class被使用的字段
-        getClassModel(PojoUtils.getFieldLocalityClass(modifyColumn.getTargetField())).getUsedPropertySet().add(modifyColumn.getTargetProperty());
+        getClassModel(PojoUtils.getFieldLocalityClass(modifyColumn.getTargetColumn().getField())).getUsedPropertySet().add(modifyColumn.getTargetColumn().getProperty());
         return modifyColumn;
     }
 
     private ModifyCondition getModifyCondition(Column column, Column targetColumn) {
         ModifyCondition modifyCondition = new ModifyCondition();
-        modifyCondition.setAlias(column.getAlias());
-        modifyCondition.setProperty(column.getProperty());
-        modifyCondition.setPropertyClass(column.getPropertyClass());
-        modifyCondition.setName(column.getName());
-        modifyCondition.setField(column.getField());
-        modifyCondition.setIsTransient(column.getIsTransient());
-        modifyCondition.setIsPrimaryId(column.getIsPrimaryId());
-
-        modifyCondition.setTargetAlias(targetColumn.getAlias());
-        modifyCondition.setTargetProperty(targetColumn.getProperty());
-        modifyCondition.setTargetPropertyClass(targetColumn.getPropertyClass());
-        modifyCondition.setTargetName(targetColumn.getName());
-        modifyCondition.setTargetField(targetColumn.getField());
-        modifyCondition.setTargetIsTransient(targetColumn.getIsTransient());
-        modifyCondition.setTargetIsPrimaryId(targetColumn.getIsPrimaryId());
+        modifyCondition.setColumn(column);
+        modifyCondition.setTargetColumn(targetColumn);
         return modifyCondition;
     }
 

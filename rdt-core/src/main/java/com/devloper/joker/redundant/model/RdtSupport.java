@@ -66,7 +66,7 @@ public class RdtSupport {
         ModifyDescribe temp = null;
         List<ModifyColumn> columnList = new ArrayList<ModifyColumn>();  //当前值发生变化所要修改的列
         for (ModifyColumn modifyColumn : modifyDescribe.getColumnList()) {
-            if (changedPropertys.contains(modifyColumn.getTargetProperty())) {
+            if (changedPropertys.contains(modifyColumn.getTargetColumn().getProperty())) {
                 columnList.add(modifyColumn);
             }
         }
@@ -103,7 +103,7 @@ public class RdtSupport {
         ModifyRelyDescribe temp = null;
         List<ModifyColumn> columnList = new ArrayList<ModifyColumn>();
         for (ModifyColumn modifyColumn : describe.getColumnList()) {
-            if (changedPropertys.contains(modifyColumn.getTargetProperty())) { //值变化所要修改的列
+            if (changedPropertys.contains(modifyColumn.getTargetColumn().getProperty())) { //值变化所要修改的列
                 columnList.add(modifyColumn);
             }
         }
@@ -126,15 +126,17 @@ public class RdtSupport {
         for (int i = 0; i < clonedColumnList.size(); i++) {
             ModifyColumn column = columnList.get(i);
             ModifyColumn clonedColumn = clonedColumnList.get(i);
-            clonedColumn.setField(column.getField());
-            clonedColumn.setTargetField(column.getTargetField());
+
+            clonedColumn.getColumn().setField(column.getColumn().getField());
+            clonedColumn.getTargetColumn().setField(column.getTargetColumn().getField());
         }
 
         for (int i = 0; i < clonedConditionList.size(); i++) {
             ModifyCondition condition = conditionList.get(i);
             ModifyCondition clonedCondition = clonedConditionList.get(i);
-            clonedCondition.setField(condition.getField());
-            clonedCondition.setTargetField(condition.getTargetField());
+
+            clonedCondition.getColumn().setField(condition.getColumn().getField());
+            clonedCondition.getTargetColumn().setField(condition.getTargetColumn().getField());
         }
     }
 
@@ -320,10 +322,10 @@ public class RdtSupport {
         else if (describe instanceof ModifyRelyDescribe) modifyColumnList = ((ModifyRelyDescribe) describe).getColumnList();
         else throw new IllegalArgumentException("not allowed describe instance");
         for (ModifyColumn modifyColumn : modifyColumnList) {
-            String targetProperty = modifyColumn.getTargetProperty();
+            String targetProperty = modifyColumn.getTargetColumn().getProperty();
             Object val = vo.getCurrentVal(targetProperty);
             try {
-                val = rdtResolver.cast(val, modifyColumn.getPropertyClass()); //转换值
+                val = rdtResolver.cast(val, modifyColumn.getColumn().getPropertyClass()); //转换值
             } catch (Exception e) {
                 logger.warn("rdt cast val error", e);
             }
@@ -350,7 +352,7 @@ public class RdtSupport {
         else throw new IllegalArgumentException("not allowed describe instance");
 
         for (ModifyCondition modifyCondition : conditionList) {
-            String targetProperty = modifyCondition.getTargetProperty();
+            String targetProperty = modifyCondition.getTargetColumn().getProperty();
             Object val = vo.getCurrentVal(targetProperty);
             callBack.execute(modifyCondition, targetProperty, val);
         }

@@ -14,17 +14,15 @@ public abstract class AbstractMongoOperationResolver extends AbstractOperationCo
         return getClassModel(complexAnalysis.getRootClass());
     }
 
-
     @Override
     protected String getModifyDescribeOneProperty(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ModifyCondition modifyCondition) {
-        return complexAnalysis.getPrefix() + "." + modifyCondition.getProperty();
+        return complexAnalysis.getPrefix() + "." + modifyCondition.getColumn().getProperty();
     }
 
     @Override
-    protected String getModifyDescribeOneProperty(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, Column column) {
-        return complexAnalysis.getPrefix() + "." + column.getProperty();
+    protected String getModifyDescribeOneProperty(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ModifyColumn column) {
+        return complexAnalysis.getPrefix() + "." + column.getColumn().getProperty();
     }
-
 
     @Override
     protected ClassModel getModifyRelyDescribeOneModifyClassModel(ClassModel complexClassModel, ComplexAnalysis complexAnalysis) {
@@ -37,8 +35,13 @@ public abstract class AbstractMongoOperationResolver extends AbstractOperationCo
     }
 
     @Override
-    protected String getModifyRelyDescribeOneProperty(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, Column column) {
+    protected String getModifyRelyDescribeOneProperty(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ModifyColumn column) {
         return getModifyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, column);
+    }
+
+    @Override
+    protected String getModifyRelyDescribeOneProperty(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, Column column) {
+        return complexAnalysis.getPrefix() + "." + column.getProperty();
     }
 
     @Override
