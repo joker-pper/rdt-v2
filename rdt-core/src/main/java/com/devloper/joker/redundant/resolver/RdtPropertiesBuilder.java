@@ -139,6 +139,7 @@ public class RdtPropertiesBuilder {
                 for (Integer group : groupDataMap.keySet()) {
                     List<ModifyRelyDescribe> describeList = groupDataMap.get(group);
                     for (ModifyRelyDescribe describe : describeList) {
+                        describe.setRelyColumn(relyColumn);
                         if (describe.getConditionList().isEmpty() && !describe.getColumnList().isEmpty()) {
                             logger.warn("{} rely column {}({}) group ({}) target about [{} index ({})] has no condition, please make sure no problem.", classModel.getClassName(), relyColumn.getProperty(), relyColumn.getPropertyClass().getName(), group, targetClass.getName(), describe.getIndex());
                         }

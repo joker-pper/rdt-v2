@@ -10,6 +10,8 @@ import java.util.List;
 public class ModifyRelyDescribe implements Serializable {
 
     private int index;
+    private Column relyColumn;
+
     private Class valType;//值所对应的class,比如依赖字段为枚举类时,该值可能为int.class/String.class
     private List<Object> valList = new ArrayList<Object>();//target class所要依赖的值
 
@@ -24,6 +26,14 @@ public class ModifyRelyDescribe implements Serializable {
 
     public void setIndex(int index) {
         this.index = index;
+    }
+
+    public Column getRelyColumn() {
+        return relyColumn;
+    }
+
+    public void setRelyColumn(Column relyColumn) {
+        this.relyColumn = relyColumn;
     }
 
     public Class getValType() {

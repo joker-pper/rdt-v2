@@ -144,7 +144,7 @@ public class RdtSupport {
         if (describe != null) {
             if (properties.getDeepCloneChangedModify()) {
                 ModifyRelyDescribe cloned = Prototype.of(describe).deepClone().getModel();
-
+                cloned.getRelyColumn().setField(describe.getRelyColumn().getField());
                 List<ModifyColumn> clonedColumnList = cloned.getColumnList();
                 List<ModifyColumn> columnList = describe.getColumnList();
 
