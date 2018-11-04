@@ -8,11 +8,11 @@ import javax.persistence.Query;
 import javax.persistence.criteria.*;
 import java.util.*;
 
-public abstract class AbstractRdtJpaResolver extends AbstractOperationResolver {
+public abstract class AbstractJpaOperation extends AbstractOperation {
 
     public EntityManager entityManager;
 
-    public AbstractRdtJpaResolver(RdtSupport rdtSupport) {
+    public AbstractJpaOperation(RdtSupport rdtSupport) {
         super(rdtSupport);
     }
 

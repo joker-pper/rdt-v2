@@ -1,7 +1,7 @@
 package com.devloper.joker.redundant.model;
 
 import com.devloper.joker.redundant.resolver.RdtResolver;
-import com.devloper.joker.redundant.resolver.RdtPropertiesResolver;
+import com.devloper.joker.redundant.resolver.RdtPropertiesBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +52,11 @@ public class RdtProperties {
     private Boolean throwException = false;
 
     /**
+     * target column 是否不能为transient
+     */
+    private Boolean isTargetColumnNotTransient = true;
+
+    /**
      * 当前类的数据
      */
     private Map<Class, ClassModel> classModelMap = new LinkedHashMap<Class, ClassModel>(16);
@@ -81,7 +86,7 @@ public class RdtProperties {
 
     public RdtSupport builder(RdtResolver rdtResolver) {
         if (rdtResolver == null) throw new IllegalArgumentException("rdt resolver must be not null");
-        RdtPropertiesResolver propertiesResolver = new RdtPropertiesResolver(rdtResolver, this);
+        RdtPropertiesBuilder propertiesResolver = new RdtPropertiesBuilder(rdtResolver, this);
         //获取该包下的所有类文件
         List<Class> classList = rdtResolver.getClasses(basePackage);
         if (classList != null) packageClassList.addAll(classList);
@@ -161,6 +166,14 @@ public class RdtProperties {
 
     public void setThrowException(Boolean throwException) {
         this.throwException = throwException;
+    }
+
+    public Boolean getIsTargetColumnNotTransient() {
+        return isTargetColumnNotTransient;
+    }
+
+    public void setIsTargetColumnNotTransient(Boolean isTargetColumnNotTransient) {
+        isTargetColumnNotTransient = isTargetColumnNotTransient;
     }
 
     public Map<Class, ClassModel> getClassModelMap() {

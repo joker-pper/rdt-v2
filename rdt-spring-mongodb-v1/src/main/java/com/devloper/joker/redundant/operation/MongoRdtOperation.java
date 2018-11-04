@@ -13,7 +13,7 @@ import org.springframework.data.mongodb.core.query.Update;
 
 import java.util.*;
 
-public abstract class MongoRdtOperation extends AbstractMongoOperationResolver {
+public abstract class MongoRdtOperation extends AbstractMongoOperation {
 
     protected MongoTemplate mongoTemplate;
 

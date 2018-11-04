@@ -3,9 +3,9 @@ package com.devloper.joker.redundant.operation;
 import com.devloper.joker.redundant.model.*;
 
 
-public abstract class AbstractMongoOperationResolver extends AbstractOperationComplexResolver {
+public abstract class AbstractMongoOperation extends AbstractComplexOperation {
 
-    public AbstractMongoOperationResolver(RdtSupport rdtSupport) {
+    public AbstractMongoOperation(RdtSupport rdtSupport) {
         super(rdtSupport);
     }
 

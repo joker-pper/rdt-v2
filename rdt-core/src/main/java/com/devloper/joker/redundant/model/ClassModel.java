@@ -29,13 +29,18 @@ public class ClassModel {
     private Set<String> usedPropertySet = new HashSet<String>(16);  //被使用的冗余字段
 
     //当前类数据修改后所要修改的基本类列表(该类属性做为直接冗余字段的相关基本类,即target class为当前类的类列表)
-    private Set<Class> changedRelaxedClassSet = new LinkedHashSet<Class>();
+    private Set<Class> changedRelaxedClassSet = new LinkedHashSet<Class>(16);
 
     //当前类中存在的target class所对应的修改信息
     private Map<Class, List<ModifyDescribe>> targetClassModifyDescribeMap = new LinkedHashMap<Class, List<ModifyDescribe>>(16);
 
     //当前类中存在依赖列字段下的target class所对应的修改信息 (integer key 对应的为 group)
     private Map<Class, Map<Column, Map<Integer, List<ModifyRelyDescribe>>>> targetClassModifyRelyDescribeMap = new LinkedHashMap<Class, Map<Column, Map<Integer, List<ModifyRelyDescribe>>>>(16) ;
+
+    /**
+     * 当前类中依赖字段所对应的class列表
+     */
+    private Set<Class> targetRelyModifyClassSet = new LinkedHashSet<Class>(16);
 
     /**
      * 当前类拥有的关联对象列表,依赖于注解@RdtOne,@RdtMany用于文档型
@@ -181,6 +186,14 @@ public class ClassModel {
 
     public void setTargetClassModifyRelyDescribeMap(Map<Class, Map<Column, Map<Integer, List<ModifyRelyDescribe>>>> targetClassModifyRelyDescribeMap) {
         this.targetClassModifyRelyDescribeMap = targetClassModifyRelyDescribeMap;
+    }
+
+    public Set<Class> getTargetRelyModifyClassSet() {
+        return targetRelyModifyClassSet;
+    }
+
+    public void setTargetRelyModifyClassSet(Set<Class> targetRelyModifyClassSet) {
+        this.targetRelyModifyClassSet = targetRelyModifyClassSet;
     }
 
     public List<ComplexModel> getComplexModelList() {

@@ -21,14 +21,14 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.*;
 
-public class RdtPropertiesResolver {
+public class RdtPropertiesBuilder {
 
-    protected final static Logger logger = LoggerFactory.getLogger(RdtPropertiesResolver.class);
+    protected final static Logger logger = LoggerFactory.getLogger(RdtPropertiesBuilder.class);
 
     private RdtResolver rdtResolver;
     private RdtProperties properties;
 
-    public RdtPropertiesResolver(RdtResolver rdtResolver, RdtProperties properties) {
+    public RdtPropertiesBuilder(RdtResolver rdtResolver, RdtProperties properties) {
         this.rdtResolver = rdtResolver;
         this.properties = properties;
     }
@@ -131,6 +131,8 @@ public class RdtPropertiesResolver {
         for (Class targetClass : targetClassModifyRelyDescribeMap.keySet()) {
             Map<Column, Map<Integer, List<ModifyRelyDescribe>>> relyColumnDataMap = targetClassModifyRelyDescribeMap.get(targetClass);
             if (relyColumnDataMap == null) continue;
+            classModel.getTargetRelyModifyClassSet().add(targetClass);
+
             for (Column relyColumn : relyColumnDataMap.keySet()) {
                 Map<Integer, List<ModifyRelyDescribe>> groupDataMap = relyColumnDataMap.get(relyColumn);
                 if (groupDataMap == null) continue;
@@ -432,12 +434,14 @@ public class RdtPropertiesResolver {
         boolean propertyClassIsEnum = propertyClass.isEnum();
         Class valType = rdtRely.valType() == Void.class ? propertyClass : rdtRely.valType();
         if (propertyClassIsEnum) {
-            if (valType == propertyClass || valType != int.class || valType != String.class) throw new IllegalArgumentException(hintPrefix +
-                    " type belong to enum, should designate use ordinal type - int.class or name type - String.class");
+            if (valType != int.class && valType != String.class && valType != propertyClass) {
+                throw new IllegalArgumentException(hintPrefix +
+                        " type belong to enum, should by default or designate use ordinal type - int.class or name type - String.class");
+            }
         }
 
-        if (valType.isEnum() || ClassUtils.familyClass(valType, Collection.class)) throw  new IllegalArgumentException(hintPrefix +
-                " type not support enum and collection type");
+        if (ClassUtils.familyClass(valType, Collection.class)) throw  new IllegalArgumentException(hintPrefix +
+                " type not support collection type");
 
         Class unknowType = rdtRely.unknowType() == Void.class ? null : rdtRely.unknowType();
         Class nullType = rdtRely.nullType() == Void.class ? null : rdtRely.nullType();
@@ -468,9 +472,33 @@ public class RdtPropertiesResolver {
             String[] stringArrays = keyTarget.value();
             for (String current : stringArrays) {
                 if (StringUtils.isEmpty(current)) continue;
-                Object val;
+                Object val = null;
                 if (valType == String.class) val = current;
-                else val = rdtResolver.cast(current, valType);
+                else {
+                    if (valType.isEnum()) {
+                        //解析枚举对应的值
+                        String currentName;
+                        if (current.matches("\\d+")) {
+                            currentName = "ordinal";
+                        } else {
+                            currentName = "name";
+                        }
+                        boolean hasMatch = false;
+                        for (Object constant : valType.getEnumConstants()) {
+                            if (current.equals(rdtResolver.getPropertyValue(constant, currentName).toString())) {
+                                val = constant;
+                                hasMatch = true;
+                                break;
+                            }
+                        }
+                        if (!hasMatch) {
+                            throw new IllegalArgumentException(hintPrefix + " @KeyTarget target type " + target.getName() + " has no enum " + valType.getName() + " type val "+ current);
+                        }
+
+                    } else {
+                        val = rdtResolver.cast(current, valType);
+                    }
+                }
 
                 Class typeClass = typeValClassMap.get(val);
                 if (typeClass != null) {
@@ -833,7 +861,8 @@ public class RdtPropertiesResolver {
      * @param condition  是否为条件field
      */
     private void columnCompareVerification(Column column, Column targetColumn, ClassModel classModel, ClassModel targetClassModel, boolean condition) {
-        rdtResolver.columnCompareVerification(column, targetColumn, classModel, targetClassModel, condition);
+
+        rdtResolver.columnCompareVerification(column, targetColumn, classModel, targetClassModel, condition, properties.getIsTargetColumnNotTransient());
     }
 
     /**

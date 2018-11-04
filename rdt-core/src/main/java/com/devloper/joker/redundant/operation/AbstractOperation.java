@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Array;
 import java.util.*;
 
-public abstract class AbstractOperationResolver {
+public abstract class AbstractOperation {
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -27,7 +27,7 @@ public abstract class AbstractOperationResolver {
      */
     protected Boolean throwException;
 
-    public AbstractOperationResolver(RdtSupport rdtSupport) {
+    public AbstractOperation(RdtSupport rdtSupport) {
         this.rdtSupport = rdtSupport;
         this.rdtResolver = rdtSupport.getRdtResolver();
         this.properties = rdtSupport.getProperties();

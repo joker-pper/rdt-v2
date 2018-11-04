@@ -4,9 +4,9 @@ import com.devloper.joker.redundant.model.*;
 
 import java.util.*;
 
-public abstract class AbstractOperationComplexResolver extends AbstractOperationResolver {
+public abstract class AbstractComplexOperation extends AbstractOperation {
 
-    public AbstractOperationComplexResolver(RdtSupport rdtSupport) {
+    public AbstractComplexOperation(RdtSupport rdtSupport) {
         super(rdtSupport);
     }
 

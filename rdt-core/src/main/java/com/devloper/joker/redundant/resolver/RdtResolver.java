@@ -276,8 +276,9 @@ public abstract class RdtResolver {
      * @param classModel
      * @param targetClassModel
      * @param condition 是否为条件field
+     * @param isTargetColumnNotTransient
      */
-    public void columnCompareVerification(Column column, Column targetColumn, ClassModel classModel, ClassModel targetClassModel, boolean condition) {
+    public void columnCompareVerification(Column column, Column targetColumn, ClassModel classModel, ClassModel targetClassModel, boolean condition, boolean isTargetColumnNotTransient) {
         Class currentEntityClass = PojoUtils.getFieldLocalityClass(classModel.getPropertyFieldMap().get(column.getProperty()));
         Class targetEntityClass = PojoUtils.getFieldLocalityClass(targetClassModel.getPropertyFieldMap().get(targetColumn.getProperty()));
             /*String hint = targetEntityClass.getName() + " property " + targetColumn.getProperty()
@@ -287,9 +288,14 @@ public abstract class RdtResolver {
         String hint = "rdt column --- " + currentEntityClass.getName() + " property " + column.getProperty() + "(" + column.getPropertyClass().getName() +
                 ") ==> [" +  targetEntityClass.getName() + " property " + targetColumn.getProperty()
                 + "(" + targetColumn.getPropertyClass().getName()   + ")]";
+
+        if (isTargetColumnNotTransient && targetColumn.getIsTransient()) {
+            throw new IllegalArgumentException(hint + " has error, cause by : target column must not transient.");
+        }
+
         if (!column.getPropertyClass().equals(targetColumn.getPropertyClass())) {  //类型应一致
             if (condition) {
-                throw new IllegalArgumentException(hint + ", the condition property type must consistent.");  //条件的类型必须一致
+                throw new IllegalArgumentException(hint + " has error, cause by :  the condition property type must consistent.");  //条件的类型必须一致
             } else {
                 logger.warn(hint + ", please make sure can cast.");
             }
