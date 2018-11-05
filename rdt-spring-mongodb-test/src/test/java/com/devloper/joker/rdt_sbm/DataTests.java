@@ -184,11 +184,11 @@ public class DataTests extends ApplicationTests {
         log.info("results: {}", JSON.toJSONString(results));
     }
 
-    @Test
+    /*@Test
     public void fill() throws Exception {
         Collection<Article> results = articleRepository.findAll();
         rdtOperation.fill(results);
         log.info("results: {}", JSON.toJSONString(results));
-    }
+    }*/
 
 }
