@@ -1,7 +1,7 @@
 package com.devloper.joker.redundant.model;
 
 import com.devloper.joker.redundant.resolver.RdtResolver;
-import com.devloper.joker.redundant.resolver.RdtPropertiesBuilder;
+import com.devloper.joker.redundant.builder.RdtPropertiesBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,7 +95,7 @@ public class RdtProperties {
             propertiesResolver.builderClass(currentClass);
         }
         logger.debug("rdt load package class complete, package class size {}, extra class size {}.", packageClassList.size(), extraClassSet.size());
-        return new RdtSupport(this, rdtResolver);
+        return new RdtSupport(this, propertiesResolver, rdtResolver);
     }
 
 

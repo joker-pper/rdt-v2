@@ -1,4 +1,4 @@
-package com.devloper.joker.redundant.resolver;
+package com.devloper.joker.redundant.builder;
 
 import com.devloper.joker.redundant.annotation.RdtComplex;
 import com.devloper.joker.redundant.annotation.RdtMany;
@@ -11,6 +11,7 @@ import com.devloper.joker.redundant.annotation.rely.*;
 import com.devloper.joker.redundant.model.*;
 import com.devloper.joker.redundant.model.commons.RdtRelyModel;
 import com.devloper.joker.redundant.model.commons.RdtRelyTargetColumnModel;
+import com.devloper.joker.redundant.resolver.RdtResolver;
 import com.devloper.joker.redundant.utils.ClassUtils;
 import com.devloper.joker.redundant.utils.PojoUtils;
 import org.apache.commons.lang.StringUtils;
@@ -144,7 +145,6 @@ public class RdtPropertiesBuilder {
                 for (Integer group : groupDataMap.keySet()) {
                     List<ModifyRelyDescribe> describeList = groupDataMap.get(group);
                     for (ModifyRelyDescribe describe : describeList) {
-                        describe.setRelyColumn(relyColumn);
                         if (describe.getConditionList().isEmpty() && !describe.getColumnList().isEmpty()) {
                             logger.warn("{} rely column {}({}) group ({}) target about [{} index ({})] has no condition, please make sure no problem.", classModel.getClassName(), relyColumn.getProperty(), relyColumn.getPropertyClass().getName(), group, targetClass.getName(), describe.getIndex());
                         }
@@ -761,6 +761,7 @@ public class RdtPropertiesBuilder {
 
         if (modifyDescribe == null) {
             modifyDescribe = new ModifyRelyDescribe();
+            modifyDescribe.setRelyColumn(relyColumn);
             modifyDescribe.setIndex(index);
             findModifyDescribeRelyValue(classModel, targetClassModel, relyColumn, group, modifyDescribe);
             modifyDescribeList.add(position, modifyDescribe);

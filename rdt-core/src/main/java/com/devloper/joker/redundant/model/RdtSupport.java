@@ -1,6 +1,7 @@
 package com.devloper.joker.redundant.model;
 
 
+import com.devloper.joker.redundant.builder.RdtPropertiesBuilder;
 import com.devloper.joker.redundant.resolver.RdtResolver;
 import com.devloper.joker.redundant.support.Prototype;
 import org.slf4j.Logger;
@@ -18,13 +19,16 @@ public class RdtSupport {
 
     private RdtResolver rdtResolver;
 
+    private RdtPropertiesBuilder propertiesBuilder;
+
     private Map<Class, List<List<ComplexModel>>> complexResultListMap = new HashMap<Class, List<List<ComplexModel>>>(16);
 
     private Map<Class, List<ComplexAnalysis>> complexAnalysisResultListMap = new HashMap<Class, List<ComplexAnalysis>>(16);
 
-    public RdtSupport(RdtProperties properties, RdtResolver rdtResolver) {
+    public RdtSupport(RdtProperties properties, RdtPropertiesBuilder propertiesBuilder, RdtResolver rdtResolver) {
         this.properties = properties;
         this.rdtResolver = rdtResolver;
+        this.propertiesBuilder = propertiesBuilder;
     }
 
     public RdtProperties getProperties() {
@@ -41,6 +45,10 @@ public class RdtSupport {
 
     public void setRdtResolver(RdtResolver rdtResolver) {
         this.rdtResolver = rdtResolver;
+    }
+
+    public void builderClass(Class currentClass) {
+        propertiesBuilder.builderClass(currentClass);
     }
 
     /**
@@ -99,6 +107,12 @@ public class RdtSupport {
         return describe;
     }
 
+    /**
+     * 获取更新时关于changed property的modifyRelyDescribe数据
+     * @param describe
+     * @param changedPropertys
+     * @return
+     */
     public ModifyRelyDescribe getModifyRelyDescribe(ModifyRelyDescribe describe, List<String> changedPropertys) {
         ModifyRelyDescribe temp = null;
         List<ModifyColumn> columnList = new ArrayList<ModifyColumn>();
@@ -110,7 +124,7 @@ public class RdtSupport {
 
         if (!columnList.isEmpty()) {
             temp = new ModifyRelyDescribe();
-
+            temp.setRelyColumn(describe.getRelyColumn());
             temp.setIndex(describe.getIndex());
             temp.setConditionList(describe.getConditionList());
             temp.setValType(describe.getValType());
