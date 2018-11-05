@@ -37,6 +37,11 @@ public class RdtPropertiesBuilder {
     public void builderClass(Class currentClass) {
         ClassModel classModel = getClassModel(currentClass);
 
+        if (classModel.getBuilderMark() != 0) {
+            return;
+        }
+        classModel.setBuilderMark(1);
+
         Boolean isBaseClass = classModel.getBaseClass();
 
         List<Field> fieldList = classModel.getFieldList();
@@ -147,6 +152,7 @@ public class RdtPropertiesBuilder {
                 }
             }
         }
+        classModel.setBuilderMark(2);
     }
 
     /**
@@ -549,6 +555,7 @@ public class RdtPropertiesBuilder {
             classModel.setSimpleName(currentClass.getSimpleName());
             classModel.setCurrentClass(currentClass);
             classModel.setBaseClass(rdtResolver.isBaseClass(currentClass));
+            classModel.setBuilderMark(0);
             if (classModel.getBaseClass()) {
                 //必须有空的构造方法
                 try {

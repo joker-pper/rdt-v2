@@ -1,9 +1,10 @@
 logging:
   level:
     root: INFO
-    org.springframework.data: debug
-    com.devloper.joker.redundant: debug
+    #org.springframework.data: debug
+    #com.devloper.joker.redundant: debug
     com.devloper.joker.rdt_sbm.rdt: debug
+    #com.devloper.joker: debug
 
 
 rdt:

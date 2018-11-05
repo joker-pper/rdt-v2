@@ -15,6 +15,11 @@ public class ClassModel {
     private Boolean baseClass;  //是否为基本类(类有注解@RdtBaseEntity或通过实现方法进行判断)
     private String primaryId;  //当前类的id字段(基本类时必须存在)
 
+    /**
+     * 标志 0: 初始化 1: 进行中 2: 已完成
+     */
+    private Integer builderMark;
+
     private List<Field> fieldList = new ArrayList<Field>(16);
     private Map<String, Field> propertyFieldMap = new HashMap<String, Field>(16);
     private Map<String, String> aliasPropertyMap = new LinkedHashMap<String, String>(16);  //该类属性别名对应的该类属性名称
@@ -98,6 +103,14 @@ public class ClassModel {
 
     public void setPrimaryId(String primaryId) {
         this.primaryId = primaryId;
+    }
+
+    public Integer getBuilderMark() {
+        return builderMark;
+    }
+
+    public void setBuilderMark(Integer builderMark) {
+        this.builderMark = builderMark;
     }
 
     public List<Field> getFieldList() {

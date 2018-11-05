@@ -252,19 +252,20 @@ public abstract class RdtResolver {
     public Class getRelationModelCurrentClassType(ClassModel classModel, Column column, boolean one) {
         Class type = column.getPropertyClass();
         Field field = classModel.getPropertyFieldMap().get(column.getProperty());
+        String hint = classModel.getClassName() + " property " + column.getProperty() + " to get relation type with " + (one ? "@RdtOne" : "@RdtMany") + " has error, cause by : ";
         if (!one) {
             if (type.isArray()) {
                 type = type.getComponentType();
             } else if (ClassUtils.familyClass(type, Collection.class)) {
-                if (ClassUtils.familyClass(type, Map.class)) throw new IllegalArgumentException("the relation many type not support map");
+                if (ClassUtils.familyClass(type, Map.class)) throw new IllegalArgumentException(hint + "the relation many type not support map");
                 if (ClassUtils.getActualTypeArgumentsLength(field.getGenericType()) == 0) {
-                    throw new IllegalArgumentException("the relation many type not has actual class type");
+                    throw new IllegalArgumentException(hint + "the relation many type not has actual class type");
                 }
                 type = ClassUtils.getActualTypeArgumentClass(field, 0);
             }
         }
-        if (type.isArray()) throw new IllegalArgumentException("the relation one/many actual class type must be not array");
-        else if (ClassUtils.familyClass(type, Collection.class)) throw new IllegalArgumentException("the relation one/many actual class type must be not collection");
+        if (type.isArray()) throw new IllegalArgumentException(hint + "the relation " + (one ? "one" : "many") +" actual class type must be not array");
+        else if (ClassUtils.familyClass(type, Collection.class)) throw new IllegalArgumentException(hint + "the relation " + (one ? "one" : "many") +" actual class type must be not collection");
         return type;
     }
 

@@ -14,8 +14,11 @@ public class DataSupport {
     }
     /**
      * 通过对象的属性表达式及回调函数进行执行结果(仅支持一维数组)
-     * @param data
-     * @param property arr.*.key <==> arr.key
+     * @param data simple object/array/list
+     * @param property
+     *                 * 时回调函数property为null
+     *                 simple property  simple object的property
+     *                 arr.*.key <==> arr.key
      *                 arr.[index].key
      *                 arr.* 会依次通过回调函数执行对应的结果值
      * @param callback 回调函数 property(为null时表示为当前对象) 属性 data 值
@@ -116,6 +119,42 @@ public class DataSupport {
                 dispose(result, nextProperty, prefix,  callback);
             }
         }
+    }
+
+
+    public static void main(String[] args) {
+        Map<String, List<Long>> resultMap = new HashMap<String, List<Long>>();
+
+        resultMap.put("value1", Arrays.asList(10L, 20L));
+        resultMap.put("value2", Arrays.asList(10L));
+
+        DataSupport.dispose(resultMap, "value1", new DataSupport.Callback() {
+            @Override
+            public void execute(String property, Object data) {
+                System.out.println(property + ": " + data);
+            }
+        });
+
+        DataSupport.dispose(resultMap, "value1.[0]", new DataSupport.Callback() {
+            @Override
+            public void execute(String property, Object data) {
+                System.out.println(property + ": " + data);
+            }
+        });
+
+        DataSupport.dispose(resultMap, "value1.*", new DataSupport.Callback() {
+            @Override
+            public void execute(String property, Object data) {
+                System.out.println(property + ": " + data);
+            }
+        });
+
+        DataSupport.dispose(resultMap, "value2.[0]", new DataSupport.Callback() {
+            @Override
+            public void execute(String property, Object data) {
+                System.out.println(property + ": " + data);
+            }
+        });
     }
 
 }

@@ -85,6 +85,20 @@ public class DataTests extends ApplicationTests {
             userRepository.save(current);
             //将会更新被使用的冗余字段
             rdtOperation.updateMulti(current);
+
+           /* for (int i = 0; i < 100; i++) {
+                new Thread(() -> {
+                    try {
+                        rdtOperation.updateMulti(current);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }).start();
+            }*/
+
+
+            Thread.sleep(20000);
+
         }
 
     }
@@ -167,6 +181,13 @@ public class DataTests extends ApplicationTests {
         log.info("results: {}", JSON.toJSONString(results));
 
         results = rdtOperation.findByIdIn(User.class, Arrays.asList(userIds));
+        log.info("results: {}", JSON.toJSONString(results));
+    }
+
+    @Test
+    public void fill() throws Exception {
+        Collection<Article> results = articleRepository.findAll();
+        rdtOperation.fill(results);
         log.info("results: {}", JSON.toJSONString(results));
     }
 
