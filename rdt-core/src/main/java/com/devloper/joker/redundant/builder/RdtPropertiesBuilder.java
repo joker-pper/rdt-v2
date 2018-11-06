@@ -375,10 +375,20 @@ public class RdtPropertiesBuilder {
             builderPropertyRelyGroupTypeData(classModel, column, conditionRely, targetClass, alias, classTargetColumnMap, hintPrefix, null);
             index ++;
         }
+
+        Class nullType = rdtRelyModel.getNullType();
+        if (nullType != null && StringUtils.isEmpty(nullTypeProperty) && usePropertyList.size() == 1) {
+            nullTypeProperty = usePropertyList.get(0);
+        }
+        Class unknowType = rdtRelyModel.getUnknowType();
+        if (unknowType != null && StringUtils.isEmpty(unknowTypeProperty) && usePropertyList.size() == 1) {
+            unknowTypeProperty = usePropertyList.get(0);
+        }
+
         //处理nullType
-        builderPropertyRelyGroupTypeData(classModel, column, conditionRely, rdtRelyModel.getNullType(), nullTypeProperty, classTargetColumnMap, hintPrefix, " null type");
+        builderPropertyRelyGroupTypeData(classModel, column, conditionRely, nullType, nullTypeProperty, classTargetColumnMap, hintPrefix, " null type appointed");
         //处理unknowType
-        builderPropertyRelyGroupTypeData(classModel, column, conditionRely, rdtRelyModel.getUnknowType(), unknowTypeProperty, classTargetColumnMap, hintPrefix, " unknow type");
+        builderPropertyRelyGroupTypeData(classModel, column, conditionRely, rdtRelyModel.getUnknowType(), unknowTypeProperty, classTargetColumnMap, hintPrefix, " unknow type appointed");
     }
 
     private void builderPropertyRelyGroupTypeData(ClassModel classModel, Column column, boolean conditionRely, Class type, String typePropertyAlias, Map<Class, Column> classTargetColumnMap, String hintPrefix, String describe) {
@@ -390,7 +400,7 @@ public class RdtPropertiesBuilder {
         } else {
             Column currentColumn = classTargetColumnMap.get(type);
             if (currentColumn == null && typePropertyAlias == null) {
-                throw new IllegalArgumentException(hintPrefix + " property must not be empty");
+                throw new IllegalArgumentException(hintPrefix + type.getName() + " property not found, please to appoint.");
             } else {
                 if (currentColumn == null) {
                     ClassModel typeClassModel = getClassModel(type);
@@ -763,6 +773,7 @@ public class RdtPropertiesBuilder {
             modifyDescribe = new ModifyRelyDescribe();
             modifyDescribe.setRelyColumn(relyColumn);
             modifyDescribe.setIndex(index);
+            modifyDescribe.setGroup(group);
             findModifyDescribeRelyValue(classModel, targetClassModel, relyColumn, group, modifyDescribe);
             modifyDescribeList.add(position, modifyDescribe);
         }
@@ -780,7 +791,7 @@ public class RdtPropertiesBuilder {
         Class targetClass = targetClassModel.getCurrentClass();
         modifyDescribe.setValType(rdtRelyModel.getValType());
         modifyDescribe.setValList(targetClassValueMap.get(targetClass));
-
+        modifyDescribe.setRdtRelyModel(rdtRelyModel);
         if (targetClass.equals(rdtRelyModel.getUnknowType())) {
             modifyDescribe.setUnknowNotExistValList(rdtRelyModel.getUnknowNotExistValues());
         }

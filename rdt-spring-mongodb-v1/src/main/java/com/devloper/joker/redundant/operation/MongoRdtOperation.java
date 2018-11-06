@@ -1,5 +1,6 @@
 package com.devloper.joker.redundant.operation;
 
+import com.devloper.joker.redundant.fill.FillKeyModel;
 import com.devloper.joker.redundant.model.*;
 import com.devloper.joker.redundant.support.DataSupport;
 import com.devloper.joker.redundant.support.Prototype;
@@ -41,6 +42,14 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
     @Override
     public <T> T findById(Class<T> entityClass, Object id) {
         return mongoTemplate.findById(id, entityClass);
+    }
+
+
+    @Override
+    protected <T> List<T> findByFillKeyModelExecute(FillKeyModel fillKeyVO) {
+        Class<T> entityClass = fillKeyVO.getEntityClass();
+        Query query = new Query(criteriaIn(Criteria.where(fillKeyVO.getKey()), fillKeyVO.getKeyValues()));
+        return mongoTemplate.find(query, entityClass);
     }
 
     /**

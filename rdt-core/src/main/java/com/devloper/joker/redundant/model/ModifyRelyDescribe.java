@@ -1,5 +1,7 @@
 package com.devloper.joker.redundant.model;
 
+import com.devloper.joker.redundant.model.commons.RdtRelyModel;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +12,10 @@ import java.util.List;
 public class ModifyRelyDescribe implements Serializable {
 
     private int index;
+    private int group;
     private Column relyColumn;
+
+    private RdtRelyModel rdtRelyModel;
 
     private Class valType;//值所对应的class,比如依赖字段为枚举类时,该值可能为int.class/String.class
     private List<Object> valList = new ArrayList<Object>();//target class所要依赖的值
@@ -28,12 +33,28 @@ public class ModifyRelyDescribe implements Serializable {
         this.index = index;
     }
 
+    public int getGroup() {
+        return group;
+    }
+
+    public void setGroup(int group) {
+        this.group = group;
+    }
+
     public Column getRelyColumn() {
         return relyColumn;
     }
 
     public void setRelyColumn(Column relyColumn) {
         this.relyColumn = relyColumn;
+    }
+
+    public RdtRelyModel getRdtRelyModel() {
+        return rdtRelyModel;
+    }
+
+    public void setRdtRelyModel(RdtRelyModel rdtRelyModel) {
+        this.rdtRelyModel = rdtRelyModel;
     }
 
     public Class getValType() {

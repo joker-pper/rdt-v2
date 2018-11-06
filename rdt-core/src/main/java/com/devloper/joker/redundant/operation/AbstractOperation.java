@@ -1,5 +1,8 @@
 package com.devloper.joker.redundant.operation;
 
+import com.devloper.joker.redundant.fill.FillKeyModel;
+import com.devloper.joker.redundant.fill.FillRSModel;
+import com.devloper.joker.redundant.fill.RdtFillBuilder;
 import com.devloper.joker.redundant.model.*;
 import com.devloper.joker.redundant.resolver.RdtResolver;
 import org.slf4j.Logger;
@@ -22,6 +25,9 @@ public abstract class AbstractOperation {
 
     protected Boolean logDetail = true;
 
+    protected RdtFillBuilder fillBuilder;
+
+
     /**
      * 保存操作出错时是否抛出异常
      */
@@ -32,6 +38,7 @@ public abstract class AbstractOperation {
         this.rdtResolver = rdtSupport.getRdtResolver();
         this.properties = rdtSupport.getProperties();
         this.throwException = this.properties.getThrowException();
+        this.fillBuilder = RdtFillBuilder.of(rdtSupport);
     }
 
     public RdtResolver getRdtResolver() {
@@ -94,22 +101,16 @@ public abstract class AbstractOperation {
 
 
     public ClassModel getClassModel(Class entityClass) {
-        return properties.getClassModel(entityClass);
+        return rdtSupport.getClassModel(entityClass);
     }
 
     public String getPrimaryId(Class entityClass) {
-        ClassModel classModel = getClassModel(entityClass);
-        if (classModel == null) throw new IllegalArgumentException("not found classModel with type " + entityClass);
-        if (!classModel.getBaseClass()) throw new IllegalArgumentException("type " + entityClass + " has no primary id");
-        return classModel.getPrimaryId();
+        return rdtSupport.getPrimaryId(entityClass);
     }
 
     public Map<Object, Object> getBeforeData(Object entity) {
         return getBeforeData(entity, true);
     }
-
-
-
 
 
     /**
@@ -553,6 +554,105 @@ public abstract class AbstractOperation {
      * @return
      */
     protected abstract void updateModifyRelyDescribeSimpleImpl(final ClassModel classModel, final ClassModel modifyClassModel, final ChangedVo vo, final Map<String, Object> conditionValMap, final Map<String, Object> updateValMap, final Column relyColumn, final int group, final ModifyRelyDescribe describe, RdtLog rdtLog);
+
+
+
+    protected <T> List<T> findByFillKeyModel(FillKeyModel fillKeyModel) {
+        List<T> result = null;
+        /*if (fillKeyModel.getIsPrimaryKey()) {
+            //均为id key时
+            result = findByIdIn(fillKeyModel.getEntityClass(), fillKeyModel.getKey(), fillKeyModel.getKeyValues());
+        }*/
+        result = findByFillKeyModelExecute(fillKeyModel);
+        if (result == null) {
+            result = Collections.emptyList();
+        }
+        return result;
+    }
+
+
+    protected abstract <T> List<T> findByFillKeyModelExecute(FillKeyModel fillKeyModel);
+
+
+    public void fill(Collection<?> collection) {
+        fill(collection, false, false, true);
+    }
+
+    /**
+     * 根据关系填充对应字段列
+     *
+     * @param collection
+     * @param withNullKeyValue
+     * @param checkValue       为true时对应条件值的个数必须等于所匹配的结果个数,反之抛出异常
+     * @param clear            为true时会清除未匹配到数据的字段值
+     */
+    public void fill(Collection<?> collection, boolean withNullKeyValue, boolean checkValue, boolean clear) {
+        FillRSModel fillRSModel = new FillRSModel();
+        //处理数据关系
+        fillRelationshipHandle(fillRSModel, collection, withNullKeyValue, checkValue, clear);
+
+        Map<Class, List<FillKeyModel>> fillKeyModelListMap = fillRSModel.getFillKeyModelListMap();
+
+        if (!fillKeyModelListMap.isEmpty()) {
+            for (Class entityClass : fillKeyModelListMap.keySet()) {
+                List<FillKeyModel> fillKeyModelList = fillKeyModelListMap.get(entityClass);
+                for (FillKeyModel fillKeyModel : fillKeyModelList) {
+                    int keyValuesSize = fillKeyModel.getKeyValues().size();
+                    if (keyValuesSize == 0) {
+                        continue;
+                    }
+                    List<Object> entityList = findByFillKeyModel(fillKeyModel);
+
+                    if (checkValue) {
+                        //TODO
+                        //抛出异常类 其中包含当前class类型及其他数据
+                    }
+
+                    if (!entityList.isEmpty()) {
+                        //分别获取以key值为key的map数据, 并根据修改列信息赋值
+                        String key = fillKeyModel.getKey();
+                        Map<Object, Object> entityDataMap = getKeyMap(entityList, key);
+                        for (ModifyDescribe modifyDescribe : fillKeyModel.getDescribeKeyDataMap().keySet()) {
+                            Map<Object, Set<Object>> keyValueData = fillKeyModel.getDescribeKeyData(modifyDescribe);
+                            for (Object keyValue : keyValueData.keySet()) {
+                                Set<Object> modifyDataSet = keyValueData.get(keyValue);
+                                if (!modifyDataSet.isEmpty()) {
+                                    //获取当前值对应的数据
+                                    fillBuilder.setFillKeyData(entityDataMap, entityClass, key, keyValue, modifyDataSet, modifyDescribe);
+                                }
+                            }
+                        }
+
+                        for (ModifyRelyDescribe modifyDescribe : fillKeyModel.getRelyDescribeKeyDataMap().keySet()) {
+                            Map<Object, Set<Object>> keyValueData = fillKeyModel.getDescribeKeyData(modifyDescribe);
+                            for (Object keyValue : keyValueData.keySet()) {
+                                Set<Object> modifyDataSet = keyValueData.get(keyValue);
+                                if (!modifyDataSet.isEmpty()) {
+                                    //获取当前值对应的数据
+                                    fillBuilder.setFillKeyData(entityDataMap, entityClass, key, keyValue, modifyDataSet, modifyDescribe);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 处理关系
+     * @param fillRSModel
+     * @param collection
+     * @param withNullKeyValue
+     * @param checkValue
+     * @param clear
+     */
+    protected void fillRelationshipHandle(FillRSModel fillRSModel, Collection<?> collection, final boolean withNullKeyValue, final boolean checkValue, final boolean clear) {
+        fillBuilder.fillRelationshipHandle(fillRSModel, collection, withNullKeyValue, checkValue, clear);
+    }
+
+
+
 
 
     public static class RdtLog {

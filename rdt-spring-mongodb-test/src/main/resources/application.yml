@@ -3,8 +3,8 @@ logging:
     root: INFO
     #org.springframework.data: debug
     #com.devloper.joker.redundant: debug
-    com.devloper.joker.rdt_sbm.rdt: debug
-    #com.devloper.joker: debug
+    com.devloper.joker.rdt_sbm.rdt: trace
+    com.devloper.joker: debug
 
 
 rdt:

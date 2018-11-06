@@ -51,6 +51,17 @@ public class RdtSupport {
         propertiesBuilder.builderClass(currentClass);
     }
 
+
+    public ClassModel getClassModel(Class entityClass) {
+        return properties.getClassModel(entityClass);
+    }
+
+    public String getPrimaryId(Class entityClass) {
+        ClassModel classModel = getClassModel(entityClass);
+        if (classModel == null) throw new IllegalArgumentException("not found classModel with type " + entityClass);
+        return classModel.getPrimaryId();
+    }
+
     /**
      * 获取classModel中关于entityClass的修改信息
      * @param classModel

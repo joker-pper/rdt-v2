@@ -83,19 +83,19 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
     @Override
     protected void updateModifyRelyDescribeSimpleImpl(ClassModel classModel, ClassModel modifyClassModel, ChangedVo vo, Map<String, Object> conditionValMap, Map<String, Object> updateValMap, Column relyColumn, int group, ModifyRelyDescribe describe, RdtLog rdtLog) {
         Class entityClass = modifyClassModel.getCurrentClass();
-        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-        CriteriaUpdate criteriaUpdate = criteriaBuilder.createCriteriaUpdate(entityClass);
+        CriteriaPredicateBuilder builder = CriteriaPredicateBuilder.of(entityManager);
+        CriteriaUpdate criteriaUpdate = builder.createCriteriaUpdate(entityClass);
         Root root = criteriaUpdate.from(entityClass);
         for (String property: updateValMap.keySet()) {
             criteriaUpdate.set(property, updateValMap.get(property));
         }
         List<Predicate> predicateList = new ArrayList<Predicate>();
         for (String property: conditionValMap.keySet()) {
-            predicateList.add(criteriaBuilder.equal(root.get(property), conditionValMap.get(property)));
+            predicateList.add(builder.eq(root.get(property), conditionValMap.get(property)));
         }
 
         String relyProperty = relyColumn.getProperty();
-        Predicate processingPredicate = modelTypeCriteriaProcessing(describe, relyProperty, criteriaBuilder, root, rdtLog);
+        Predicate processingPredicate = modelTypeCriteriaProcessing(describe, relyProperty, builder, root, rdtLog);
         if (processingPredicate != null) {
             predicateList.add(processingPredicate);
         }
@@ -106,23 +106,9 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
         entityManager.createQuery(criteriaUpdate).executeUpdate();
     }
 
-    protected Predicate criteriaIn(CriteriaBuilder criteriaBuilder, Path path, Collection<?> vals) {
-        if (vals != null && vals.size() == 1) {
-            return criteriaBuilder.equal(path, vals.iterator().next());
-        }
-        return path.in(vals);
-    }
 
 
-    protected Predicate criteriaNotIn(CriteriaBuilder criteriaBuilder, Path path, Collection<?> vals) {
-        if (vals != null && vals.size() == 1) {
-            return criteriaBuilder.notEqual(path, vals.iterator().next());
-        }
-        return criteriaBuilder.not(path.in(vals));
-    }
-
-
-    protected Predicate modelTypeCriteriaProcessing(ModifyRelyDescribe describe, String relyProperty, CriteriaBuilder criteriaBuilder, Root root, RdtLog rdtLog) {
+    protected Predicate modelTypeCriteriaProcessing(ModifyRelyDescribe describe, String relyProperty, CriteriaPredicateBuilder builder, Root root, RdtLog rdtLog) {
         List<Object> unknowNotExistValList = describe.getUnknowNotExistValList();
         List<Object> valList = describe.getValList();
         Path relyPropertyPath = root.get(relyProperty);
@@ -130,11 +116,11 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
         Map allMap = new HashMap();
         if (!valList.isEmpty()) {
             if (unknowNotExistValList.isEmpty()) {
-                predicate = criteriaIn(criteriaBuilder, relyPropertyPath, valList);
+                predicate = builder.criteriaIn(relyPropertyPath, valList);
                 allMap.put(relyProperty, valList);
             } else {
                 //满足在valList 或 非unknowNotExistValList时
-                predicate = criteriaBuilder.or(criteriaIn(criteriaBuilder, relyPropertyPath, valList), criteriaNotIn(criteriaBuilder, relyPropertyPath, unknowNotExistValList));
+                predicate = builder.or(builder.criteriaIn(relyPropertyPath, valList), builder.criteriaNotIn(relyPropertyPath, unknowNotExistValList));
 
                 Map notValMap = new HashMap();
                 notValMap.put(relyProperty, unknowNotExistValList);
@@ -150,7 +136,7 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
             }
         } else {
             if (!unknowNotExistValList.isEmpty()) {
-                predicate = criteriaNotIn(criteriaBuilder, relyPropertyPath, unknowNotExistValList);
+                predicate = builder.criteriaNotIn(relyPropertyPath, unknowNotExistValList);
                 Map notMap = new HashMap();
                 notMap.put(relyProperty, unknowNotExistValList);
                 allMap.put("not", notMap);

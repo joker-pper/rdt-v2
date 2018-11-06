@@ -1,9 +1,6 @@
 package com.devloper.joker.redundant.model.commons;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @RdtRely所解析的模型
@@ -15,6 +12,11 @@ public class RdtRelyModel {
     private Class nullType;//存在时最后添加到targetClassValueMap中
     private Class unknowType;//不为null时不处于unknowNotExistValues中所对应的target class
     private List<Object> unknowNotExistValues = new ArrayList<Object>();//记录的为非unknowType类型时已存在的值
+
+    /**
+     * 当前字段所拥有的指定值列表
+     */
+    private List<Object> explicitValueList;
 
     public List<Class> getKeyTargetClassList() {
         return keyTargetClassList;
@@ -62,5 +64,28 @@ public class RdtRelyModel {
 
     public void setUnknowNotExistValues(List<Object> unknowNotExistValues) {
         this.unknowNotExistValues = unknowNotExistValues;
+    }
+
+    //获取当前类型所拥有的明确值列表
+    public List<Object> getExplicitValueList() {
+        if (explicitValueList == null) {
+            Set<Object> values = new HashSet<Object>(16);
+            for (List<Object> list : targetClassValueMap.values()) {
+                values.addAll(list);
+            }
+            if (nullType != null) {
+                values.add(null);
+            }
+            explicitValueList = new ArrayList<Object>(values);
+        }
+        return explicitValueList;
+    }
+
+
+    public boolean isValueAllowed(Object value) {
+        if (unknowType != null) {
+            return true;
+        }
+        return getExplicitValueList().contains(value);
     }
 }
