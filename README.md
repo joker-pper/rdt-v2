@@ -2,13 +2,23 @@
 
 基于class中的注解构建完成后的关系更新/填充实体字段的框架
 
+
 注:
-    配置的关于字段的实体,仅支持在field上读取
+    
+	配置的关于字段的实体,仅支持在field上读取
     基于条件注解和依赖字段注解,标识对应类中唯一数据
 
 使用配置:
-    //属性配置类
-    public RdtProperties rdtProperties() {
+    
+    
+    
+    
+    
+	
+	
+	
+	//属性配置类
+	public RdtProperties rdtProperties() {
         RdtProperties properties = new RdtProperties();
         //读取class所在的包; 支持,分割
         properties.setBasePackage(basePackage);
@@ -16,9 +26,8 @@
         properties.setComplexBySaveAll(false);
         return properties;
     }
-    
-    //框架依赖于该对象的功能解析,可覆盖相应实现方法
-    public RdtResolver rdtResolver() {
+	//框架依赖于该对象的功能解析,可覆盖相应实现方法
+	public RdtResolver rdtResolver() {
         return new RdtResolver() {
             
             //base class注解类,用于解析为存在的持久化实体类,默认包含提供的@RdtBaseEntity
@@ -82,17 +91,20 @@
         return operation;
     }
 operation 方法:
+
     update* 根据当前持久化数据中改变的字段值去更新存在于其他持久化类中的冗余字段值
-    fill    根据当前集合数据根据关系填充所引用target持久化类的字段值,支持属性字段中为对象/List/数组(仅支持一维),
-            已完成持久化类所对应单字段列条件的数据填充
+	
+    fill    根据当前集合数据根据关系填充所引用target持久化类的字段值,支持属性字段中为对象/List/数组(仅支持一维),已完成持久化类所对应单字段列条件的数据填充
     
     
 注解:
-    @RdtBaseEntity ---- 标识为持久化类
+   
     
     @RdtId ---- 标识为id字段
     
-    @RdtBaseField
+	@RdtBaseEntity ---- 标识为持久化类
+    
+	@RdtBaseField
     属性:
         property(string) 属性字段别名
         columnName(string) 列名
@@ -144,5 +156,7 @@ operation 方法:
     @RdtOne   --- 关系注解(填充/文档型子数据更新时) 
 
 示例项目:
+
  rdt-spring-mongodb-test 
+ 
  rdt-jpa-test
