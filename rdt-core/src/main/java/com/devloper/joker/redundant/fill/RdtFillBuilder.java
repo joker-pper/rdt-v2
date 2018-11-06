@@ -132,6 +132,7 @@ public class RdtFillBuilder {
 
         if (fillManyKeyModel == null) {
             fillManyKeyModel = new FillManyKeyModel();
+            fillManyKeyModel.setEntityClass(entityClass);
             fillManyKeyModelMap.put(entityClass, fillManyKeyModel);
         }
 
@@ -256,7 +257,7 @@ public class RdtFillBuilder {
                             //基于entity data 修改 data model的数据
                             support.doModifyDescribeHandle(entityClassModel, dataClassModel, new RdtSupport.ModifyDescribeCallBack() {
                                 @Override
-                                public void execute(ClassModel classModel, ClassModel modifyClassModel, ModifyDescribe describe) throws Exception {
+                                public void execute(ClassModel classModel, ClassModel modifyClassModel, ModifyDescribe describe) {
                                     List<ModifyCondition> conditionList = describe.getConditionList();
                                     List<ModifyColumn> columnList = describe.getColumnList();
 
@@ -293,7 +294,7 @@ public class RdtFillBuilder {
                         try {
                             support.doModifyRelyDescribeHandle(entityClassModel, dataClassModel, new RdtSupport.ModifyRelyDescribeCallBack() {
                                 @Override
-                                public void execute(ClassModel classModel, ClassModel modifyClassModel, Column relyColumn, int group, ModifyRelyDescribe describe) throws Exception {
+                                public void execute(ClassModel classModel, ClassModel modifyClassModel, Column relyColumn, int group, ModifyRelyDescribe describe) {
                                     List<ModifyCondition> conditionList = describe.getConditionList();
                                     List<ModifyColumn> columnList = describe.getColumnList();
 

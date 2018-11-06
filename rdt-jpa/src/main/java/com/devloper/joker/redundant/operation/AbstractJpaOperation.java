@@ -1,5 +1,6 @@
 package com.devloper.joker.redundant.operation;
 
+import com.devloper.joker.redundant.fill.FillKeyModel;
 import com.devloper.joker.redundant.model.*;
 import org.springframework.data.repository.CrudRepository;
 
@@ -40,7 +41,7 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
     }
 
     @Override
-    protected void updateModifyDescribeSimpleImpl(ClassModel classModel, ClassModel modifyClassModel, ModifyDescribe describe, ChangedVo vo, Map<String, Object> conditionValMap, Map<String, Object> updateValMap) throws Exception {
+    protected void updateModifyDescribeSimpleImpl(ClassModel classModel, ClassModel modifyClassModel, ModifyDescribe describe, ChangedVo vo, Map<String, Object> conditionValMap, Map<String, Object> updateValMap) {
 
         StringBuilder sb = new StringBuilder();
         sb.append("UPDATE " + modifyClassModel.getClassName() + " SET ");
@@ -144,5 +145,57 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
         }
         rdtLog.putConditionTop(allMap);
         return predicate;
+    }
+
+    @Override
+    protected <T> List<T> findByFillKeyModelExecute(FillKeyModel fillKeyModel) {
+        Class<T> entityClass = fillKeyModel.getEntityClass();
+        CriteriaPredicateBuilder criteriaBuilder = CriteriaPredicateBuilder.of(entityManager);
+        try {
+            CriteriaQuery criteriaQuery = criteriaBuilder.createQuery(entityClass);
+            Root root = criteriaQuery.from(entityClass);
+
+            Set<Column> columnSet = fillKeyModel.getColumnValues();
+
+            List<Selection<?>> selectionList = new ArrayList<Selection<?>>(16);
+            selectionList.add(root.get(fillKeyModel.getKey()));
+
+            for (Column column : columnSet) {
+                selectionList.add(root.get(column.getProperty()));
+            }
+
+            criteriaQuery.select(criteriaBuilder.getCriteriaBuilder().construct(Object[].class, selectionList.toArray(new Selection[selectionList.size()])));
+
+            List<Predicate> predicateList = new ArrayList<Predicate>();
+            predicateList.add(criteriaBuilder.criteriaIn(root.get(fillKeyModel.getKey()), fillKeyModel.getKeyValues()));
+
+            criteriaQuery.where(predicateList.toArray(new Predicate[predicateList.size()]));
+            List<Object[]> list = entityManager.createQuery(criteriaQuery).getResultList();
+            List<T> results = new ArrayList<T>(16);
+            for (Object[] objects : list) {
+                T data = entityClass.newInstance();
+                int i = 0;
+                rdtResolver.setPropertyValue(data, fillKeyModel.getKey(), objects[i]);
+                for (Column column : columnSet) {
+                    i++;
+                    String property = column.getProperty();
+                    rdtResolver.setPropertyValue(data, property, objects[i]);
+                }
+
+                results.add(data);
+            }
+            return results;
+        } catch (Exception e) {
+            logger.warn("rdt fill get " + entityClass.getName() + " data list by used property has error, will use all property, \n cause by exception :", e);
+        }
+
+        CriteriaQuery criteriaQuery = criteriaBuilder.createQuery(entityClass);
+        Root root = criteriaQuery.from(entityClass);
+
+        List<Predicate> predicateList = new ArrayList<Predicate>(16);
+        predicateList.add(criteriaBuilder.criteriaIn(root.get(fillKeyModel.getKey()), fillKeyModel.getKeyValues()));
+
+        criteriaQuery.where(predicateList.toArray(new Predicate[predicateList.size()]));
+        return entityManager.createQuery(criteriaQuery).getResultList();
     }
 }

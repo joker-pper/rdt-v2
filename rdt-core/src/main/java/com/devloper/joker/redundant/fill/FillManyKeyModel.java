@@ -67,6 +67,10 @@ public class FillManyKeyModel {
         System.out.println(valueMap.get(vos1));
         System.out.println(valueMap.get(vos2));
 
+
+        System.out.println((new IllegalArgumentException() instanceof RuntimeException));
+
+
     }
 
 

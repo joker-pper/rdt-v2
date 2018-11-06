@@ -11,7 +11,7 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
     }
 
     @Override
-    protected void updateMultiCore(ClassModel classModel, ChangedVo changedVo) throws Exception {
+    protected void updateMultiCore(ClassModel classModel, ChangedVo changedVo) {
         super.updateMultiCore(classModel, changedVo);
         updateModifyComplex(classModel, changedVo);
     }
@@ -23,7 +23,7 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
      * @param classModel
      * @param vo
      */
-    protected void updateModifyComplex(final ClassModel classModel, final ChangedVo vo) throws Exception {
+    protected void updateModifyComplex(final ClassModel classModel, final ChangedVo vo) {
         //获取classModel相关的非base关系类
         Set<Class> complexClassSet = classModel.getChangedComplexClassSet();
         if (!complexClassSet.isEmpty()) {
@@ -37,7 +37,7 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
 
                         rdtSupport.doModifyDescribeHandle(classModel, complexClassModel, new RdtSupport.ModifyDescribeCallBack() {
                             @Override
-                            public void execute(ClassModel classModel, ClassModel currentClassModel, ModifyDescribe describe) throws Exception {
+                            public void execute(ClassModel classModel, ClassModel currentClassModel, ModifyDescribe describe) {
                                 ModifyDescribe currentDescribe = rdtSupport.getModifyDescribe(describe, changedPropertys); //获取当前的修改条件
                                 if (currentDescribe != null) {
                                     updateModifyDescribeMany(classModel, currentClassModel, complexAnalysis, currentDescribe, vo);
@@ -47,7 +47,7 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
 
                         rdtSupport.doModifyRelyDescribeHandle(classModel, complexClassModel, new RdtSupport.ModifyRelyDescribeCallBack() {
                             @Override
-                            public void execute(ClassModel classModel, ClassModel currentClassModel, Column relyColumn, int group, ModifyRelyDescribe describe) throws Exception {
+                            public void execute(ClassModel classModel, ClassModel currentClassModel, Column relyColumn, int group, ModifyRelyDescribe describe) {
                                 ModifyRelyDescribe currentDescribe = rdtSupport.getModifyRelyDescribe(describe, changedPropertys);
                                 if (currentDescribe != null) {
                                     updateModifyRelyDescribeMany(classModel, currentClassModel, complexAnalysis, currentDescribe, vo, relyColumn, group);
@@ -59,7 +59,7 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
 
                         rdtSupport.doModifyDescribeHandle(classModel, complexClassModel, new RdtSupport.ModifyDescribeCallBack() {
                             @Override
-                            public void execute(ClassModel classModel, ClassModel currentClassModel, ModifyDescribe describe) throws Exception {
+                            public void execute(ClassModel classModel, ClassModel currentClassModel, ModifyDescribe describe) {
                                 ModifyDescribe currentDescribe = rdtSupport.getModifyDescribe(describe, changedPropertys); //获取当前的修改条件
                                 if (currentDescribe != null) {
                                     updateModifyDescribeOne(classModel, currentClassModel, complexAnalysis, currentDescribe, vo);
@@ -68,7 +68,7 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
                         });
                         rdtSupport.doModifyRelyDescribeHandle(classModel, complexClassModel, new RdtSupport.ModifyRelyDescribeCallBack() {
                             @Override
-                            public void execute(ClassModel classModel, ClassModel currentClassModel, Column relyColumn, int group, ModifyRelyDescribe describe) throws Exception {
+                            public void execute(ClassModel classModel, ClassModel currentClassModel, Column relyColumn, int group, ModifyRelyDescribe describe) {
                                 ModifyRelyDescribe currentDescribe = rdtSupport.getModifyRelyDescribe(describe, changedPropertys);
                                 if (currentDescribe != null) {
                                     updateModifyRelyDescribeOne(classModel, currentClassModel, complexAnalysis, currentDescribe, vo, relyColumn, group);
@@ -92,7 +92,7 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
      * @param describe          对应的修改信息
      * @param vo
      */
-    protected void updateModifyDescribeOne(final ClassModel classModel, final ClassModel complexClassModel, final ComplexAnalysis complexAnalysis, final ModifyDescribe describe, final ChangedVo vo) throws Exception {
+    protected void updateModifyDescribeOne(final ClassModel classModel, final ClassModel complexClassModel, final ComplexAnalysis complexAnalysis, final ModifyDescribe describe, final ChangedVo vo) {
 
         ClassModel modifyClassModel = getModifyDescribeOneModifyClassModel(complexClassModel, complexAnalysis); //获取当前要修改的base model
 
@@ -132,7 +132,7 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
         try {
             updateModifyDescribeOneImpl(classModel, complexClassModel, complexAnalysis, modifyClassModel, describe, vo, conditionDataMap, updateDataMap);
 
-            logger.trace("{} modify about {}【{}={}】data with complex【{}】, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
+            logger.debug("{} modify about {}【{}={}】data with complex【{}】, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
                     complexAnalysis.getPrefix(), describe.getIndex(), rdtResolver.toJson(conditionLogMap), rdtResolver.toJson(updateLogMap));
         } catch (Exception e) {
             logger.warn("{} modify about {}【{}={}】data with complex【{}】 has error, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
@@ -150,7 +150,7 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
 
     protected abstract void updateModifyDescribeOneImpl(final ClassModel classModel, final ClassModel complexClassModel, final ComplexAnalysis complexAnalysis, final ClassModel modifyClassModel, final ModifyDescribe describe, final ChangedVo vo, final Map<String, Object> conditionValMap, final Map<String, Object> updateValMap);
 
-    protected void updateModifyRelyDescribeOne(final ClassModel classModel, final ClassModel complexClassModel, final ComplexAnalysis complexAnalysis, final ModifyRelyDescribe describe, final ChangedVo vo, final Column relyColumn, final int group) throws Exception {
+    protected void updateModifyRelyDescribeOne(final ClassModel classModel, final ClassModel complexClassModel, final ComplexAnalysis complexAnalysis, final ModifyRelyDescribe describe, final ChangedVo vo, final Column relyColumn, final int group) {
         ClassModel modifyClassModel = getModifyRelyDescribeOneModifyClassModel(complexClassModel, complexAnalysis);
 
         final Map<String, Object> conditionLogMap = new LinkedHashMap<String, Object>(16);
@@ -192,7 +192,7 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
         try {
             updateModifyRelyDescribeOneImpl(classModel, complexClassModel, complexAnalysis, modifyClassModel, describe, vo, conditionDataMap, updateDataMap, relyColumn, group, rdtLog);
 
-            logger.trace("{} modify about {}【{}={}】data with complex【{}】and rely column - 【name: {}, group: {} 】 , index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
+            logger.debug("{} modify about {}【{}={}】data with complex【{}】and rely column - 【name: {}, group: {} 】 , index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
                     complexAnalysis.getPrefix(), relyColumn.getProperty(), group, describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
 
         } catch (Exception e) {
@@ -214,7 +214,7 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
 
     protected abstract void updateModifyRelyDescribeOneImpl(final ClassModel classModel, final ClassModel complexClassModel, final ComplexAnalysis complexAnalysis, final ClassModel modifyClassModel, final ModifyRelyDescribe describe, final ChangedVo vo, final Map<String, Object> conditionValMap, final Map<String, Object> updateValMap, final Column relyColumn, final int group, RdtLog rdtLog);
 
-    protected void updateModifyDescribeMany(final ClassModel classModel, final ClassModel complexClassModel, final ComplexAnalysis complexAnalysis, final ModifyDescribe describe, final ChangedVo vo) throws Exception {
+    protected void updateModifyDescribeMany(final ClassModel classModel, final ClassModel complexClassModel, final ComplexAnalysis complexAnalysis, final ModifyDescribe describe, final ChangedVo vo) {
         ClassModel modifyClassModel = getModifyDescribeManyModifyClassModel(complexClassModel, complexAnalysis);
 
         Map<String, Object> conditionLogMap = new LinkedHashMap<String, Object>(16);
@@ -225,7 +225,7 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
         try {
             updateModifyDescribeManyImpl(classModel, complexClassModel, complexAnalysis, modifyClassModel, describe, vo, rdtLog);
 
-            logger.trace("{} modify about {}【{}={}】data with complex【{}】, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
+            logger.debug("{} modify about {}【{}={}】data with complex【{}】, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
                     complexAnalysis.getPrefix(), describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
         } catch (Exception e) {
             logger.warn("{} modify about {}【{}={}】data with complex【{}】has error, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
@@ -241,7 +241,7 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
     protected abstract void updateModifyDescribeManyImpl(final ClassModel classModel, final ClassModel complexClassModel, final ComplexAnalysis complexAnalysis, final ClassModel modifyClassModel, final ModifyDescribe describe, final ChangedVo vo, RdtLog rdtLog);
 
 
-    protected void updateModifyRelyDescribeMany(final ClassModel classModel, final ClassModel complexClassModel, final ComplexAnalysis complexAnalysis, final ModifyRelyDescribe describe, final ChangedVo vo, final Column relyColumn, final int group) throws Exception {
+    protected void updateModifyRelyDescribeMany(final ClassModel classModel, final ClassModel complexClassModel, final ComplexAnalysis complexAnalysis, final ModifyRelyDescribe describe, final ChangedVo vo, final Column relyColumn, final int group) {
         ClassModel modifyClassModel = getModifyRelyDescribeManyModifyClassModel(complexClassModel, complexAnalysis);
 
         Map<String, Object> conditionLogMap = new LinkedHashMap<String, Object>(16);
@@ -252,7 +252,7 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
         try {
             updateModifyRelyDescribeManyImpl(classModel, complexClassModel, complexAnalysis, modifyClassModel, describe, vo, relyColumn, group, rdtLog);
 
-            logger.trace("{} modify about {}【{}={}】data with complex【{}】and rely column - 【name: {}, group: {} 】 , index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
+            logger.debug("{} modify about {}【{}={}】data with complex【{}】and rely column - 【name: {}, group: {} 】 , index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
                     complexAnalysis.getPrefix(), relyColumn.getProperty(), group, describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
 
         } catch (Exception e) {

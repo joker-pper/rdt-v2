@@ -1,6 +1,5 @@
 package com.devloper.joker.redundant.builder;
 
-import com.devloper.joker.redundant.annotation.RdtComplex;
 import com.devloper.joker.redundant.annotation.RdtMany;
 import com.devloper.joker.redundant.annotation.RdtOne;
 import com.devloper.joker.redundant.annotation.field.RdtField;
@@ -51,7 +50,7 @@ public class RdtPropertiesBuilder {
                 RdtFieldCondition.class, RdtField.class,
                 RdtRelys.class, RdtRely.class,
                 RdtFieldConditionRely.class, RdtFieldRely.class,
-                RdtOne.class, RdtMany.class, RdtComplex.class);
+                RdtOne.class, RdtMany.class);
 
         Map<Class, Map<Field, Annotation>> sortAnnotationClassMap = new LinkedHashMap<Class, Map<Field, Annotation>>(16);
 

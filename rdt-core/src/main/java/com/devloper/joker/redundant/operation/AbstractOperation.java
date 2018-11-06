@@ -28,16 +28,10 @@ public abstract class AbstractOperation {
     protected RdtFillBuilder fillBuilder;
 
 
-    /**
-     * 保存操作出错时是否抛出异常
-     */
-    protected Boolean throwException;
-
     public AbstractOperation(RdtSupport rdtSupport) {
         this.rdtSupport = rdtSupport;
         this.rdtResolver = rdtSupport.getRdtResolver();
         this.properties = rdtSupport.getProperties();
-        this.throwException = this.properties.getThrowException();
         this.fillBuilder = RdtFillBuilder.of(rdtSupport);
     }
 
@@ -240,7 +234,7 @@ public abstract class AbstractOperation {
      * @param entity
      * @param beforeKeyDataMap
      */
-    public void updateRelevant(Object entity, Map<Object, Object> beforeKeyDataMap) throws Exception {
+    public void updateRelevant(Object entity, Map<Object, Object> beforeKeyDataMap) {
         Collection<Object> dataList = parseEntityData(entity);
         String idKey = null;
 
@@ -267,7 +261,7 @@ public abstract class AbstractOperation {
      * 更新当前对象的所有相关冗余字段数据
      * @param current
      */
-    public void updateMulti(Object current) throws Exception {
+    public void updateMulti(Object current) {
         Object before = null;
         try {
             if (current != null) before = current.getClass().newInstance();
@@ -283,11 +277,11 @@ public abstract class AbstractOperation {
      * @param current
      * @param before
      */
-    public void updateMulti(Object current, Object before) throws Exception {
+    public void updateMulti(Object current, Object before) {
         updateMulti(current, before, false);
     }
 
-    private void updateMulti(Object current, Object before, boolean allUsedPropertysChange) throws Exception {
+    private void updateMulti(Object current, Object before, boolean allUsedPropertysChange) {
         if (current == null) return;
         //获取当前entity的class
         Class entityClass = current.getClass();
@@ -364,25 +358,29 @@ public abstract class AbstractOperation {
 
     }
 
-    protected void updateMultiCore(ClassModel classModel, ChangedVo changedVo) throws Exception {
+    protected void updateMultiCore(ClassModel classModel, ChangedVo changedVo) {
         updateModifyDescribeSimple(classModel, changedVo);
         updateModifyRelyDescribeSimple(classModel, changedVo);
     }
 
-    protected void handlerThrowException(Exception e) throws Exception {
-        if (throwException) {
-            throw e;
+    protected void handlerThrowException(Exception e) {
+        if (Boolean.TRUE.equals(properties.getThrowException())) {
+            if (e instanceof RuntimeException) {
+                throw (RuntimeException) e;
+            } else {
+                throw new IllegalStateException(e);
+            }
         }
     }
 
-    protected void updateModifyDescribeSimple(final ClassModel classModel, final ChangedVo vo) throws Exception {
+    protected void updateModifyDescribeSimple(final ClassModel classModel, final ChangedVo vo) {
         Set<Class> changedRelaxedClassSet = classModel.getChangedRelaxedClassSet();
         final List<String> changedPropertys = vo.getChangedPropertys();
         for (Class relaxedClass : changedRelaxedClassSet) {
             ClassModel currentClassModel = properties.getClassModel(relaxedClass); //要修改的classModel
             rdtSupport.doModifyDescribeHandle(classModel, currentClassModel, new RdtSupport.ModifyDescribeCallBack() {
                 @Override
-                public void execute(ClassModel classModel, ClassModel currentClassModel, ModifyDescribe describe) throws Exception {
+                public void execute(ClassModel classModel, ClassModel currentClassModel, ModifyDescribe describe) {
                     ModifyDescribe currentDescribe = rdtSupport.getModifyDescribe(describe, changedPropertys); //获取当前的修改条件
                     if (currentDescribe != null) {
                         updateModifyDescribeSimple(classModel, currentClassModel, currentDescribe, vo);
@@ -401,7 +399,7 @@ public abstract class AbstractOperation {
      * @param describe         对应的修改信息
      * @param vo
      */
-    protected void updateModifyDescribeSimple(final ClassModel classModel, final ClassModel modifyClassModel, final ModifyDescribe describe, final ChangedVo vo) throws Exception {
+    protected void updateModifyDescribeSimple(final ClassModel classModel, final ClassModel modifyClassModel, final ModifyDescribe describe, final ChangedVo vo) {
         final Map<String, Object> conditionMap = new LinkedHashMap<String, Object>(16);
         final Map<String, Object> updateLogMap = new LinkedHashMap<String, Object>(16);
 
@@ -438,7 +436,7 @@ public abstract class AbstractOperation {
 
         try {
             updateModifyDescribeSimpleImpl(classModel, modifyClassModel, describe, vo, conditionDataMap, updateDataMap);
-            logger.trace("{} modify about {}【{}={}】data, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
+            logger.debug("{} modify about {}【{}={}】data, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
                     describe.getIndex(), rdtResolver.toJson(conditionMap), rdtResolver.toJson(updateLogMap));
         } catch (Exception e) {
             logger.warn("{} modify about {}【{}={}】data error, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
@@ -457,10 +455,10 @@ public abstract class AbstractOperation {
      * @param conditionValMap 条件约束数据
      * @param updateValMap    更新字段数据
      */
-    protected abstract void updateModifyDescribeSimpleImpl(final ClassModel classModel, final ClassModel modifyClassModel, final ModifyDescribe describe, final ChangedVo vo, final Map<String, Object> conditionValMap, final Map<String, Object> updateValMap) throws Exception;
+    protected abstract void updateModifyDescribeSimpleImpl(final ClassModel classModel, final ClassModel modifyClassModel, final ModifyDescribe describe, final ChangedVo vo, final Map<String, Object> conditionValMap, final Map<String, Object> updateValMap);
 
 
-    protected void updateModifyRelyDescribeSimple(final ClassModel classModel, final ChangedVo vo) throws Exception {
+    protected void updateModifyRelyDescribeSimple(final ClassModel classModel, final ChangedVo vo) {
         Set<Class> changedRelaxedClassSet = classModel.getChangedRelaxedClassSet();
 
         final List<String> changedPropertys = vo.getChangedPropertys();
@@ -469,7 +467,7 @@ public abstract class AbstractOperation {
 
             rdtSupport.doModifyRelyDescribeHandle(classModel, modifyClassModel, new RdtSupport.ModifyRelyDescribeCallBack() {
                 @Override
-                public void execute(ClassModel classModel, ClassModel currentClassModel, Column relyColumn, int group, ModifyRelyDescribe describe) throws Exception {
+                public void execute(ClassModel classModel, ClassModel currentClassModel, Column relyColumn, int group, ModifyRelyDescribe describe) {
                     ModifyRelyDescribe currentDescribe = rdtSupport.getModifyRelyDescribe(describe, changedPropertys);
                     if (currentDescribe != null) {
                         updateModifyRelyDescribeSimple(classModel, currentClassModel, vo, relyColumn, group, currentDescribe);
@@ -489,7 +487,7 @@ public abstract class AbstractOperation {
      * @param group            所处group
      * @param describe
      */
-    protected void updateModifyRelyDescribeSimple(final ClassModel classModel, final ClassModel modifyClassModel, final ChangedVo vo, final Column relyColumn, final int group, final ModifyRelyDescribe describe) throws Exception {
+    protected void updateModifyRelyDescribeSimple(final ClassModel classModel, final ClassModel modifyClassModel, final ChangedVo vo, final Column relyColumn, final int group, final ModifyRelyDescribe describe) {
 
         final Map<String, Object> conditionLogMap = new LinkedHashMap<String, Object>(16);
         final Map<String, Object> updateLogMap = new LinkedHashMap<String, Object>(16);
@@ -527,7 +525,7 @@ public abstract class AbstractOperation {
         try {
             updateModifyRelyDescribeSimpleImpl(classModel, modifyClassModel, vo, conditionDataMap, updateDataMap, relyColumn, group, describe, rdtLog);
 
-            logger.trace("{} modify about {}【{}={}】data with rely column - 【name: {}, group: {} 】 , index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
+            logger.debug("{} modify about {}【{}={}】data with rely column - 【name: {}, group: {} 】 , index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
                     relyColumn.getProperty(), group, describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
 
         } catch (Exception e) {
@@ -570,7 +568,12 @@ public abstract class AbstractOperation {
         return result;
     }
 
-
+    /**
+     * 提供基于fillKeyModel查询相关数据的方法
+     * @param fillKeyModel
+     * @param <T>
+     * @return
+     */
     protected abstract <T> List<T> findByFillKeyModelExecute(FillKeyModel fillKeyModel);
 
 
