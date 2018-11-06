@@ -25,10 +25,18 @@ public class RepositoryUtils implements CommandLineRunner {
         for (String beanName : repositoryMap.keySet()) {
             CrudRepository bean = repositoryMap.get(beanName);
             Object actualRepository = AopDataUtils.getTargetInstance(bean);
-            EntityInformation entityInformation = (EntityInformation) AopDataUtils.getFieldValue(actualRepository, "entityInformation");
-            Class javaType = entityInformation.getJavaType();
-            domainRepositoryMap.put(javaType, bean);
-            domainActualRepositoryMap.put(javaType, (CrudRepository) actualRepository);
+            EntityInformation entityInformation = null;
+            try {
+                entityInformation = (EntityInformation) AopDataUtils.getFieldValue(actualRepository, "entityInformation");
+            } catch (Exception e) {
+                //e.printStackTrace();
+            }
+
+            if (entityInformation != null) {
+                Class javaType = entityInformation.getJavaType();
+                domainRepositoryMap.put(javaType, bean);
+                domainActualRepositoryMap.put(javaType, (CrudRepository) actualRepository);
+            }
         }
 
     }

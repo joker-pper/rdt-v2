@@ -1,8 +1,10 @@
 package com.devloper.joker.rdt_jpa_test.rdt;
 
 import com.devloper.joker.rdt_jpa_test.core.RepositoryUtils;
+import com.devloper.joker.rdt_jpa_test.domain.User;
+import com.devloper.joker.redundant.fill.FillKeyModel;
 import com.devloper.joker.redundant.model.*;
-import com.devloper.joker.redundant.operation.AbstractRdtJpaResolver;
+import com.devloper.joker.redundant.operation.AbstractJpaOperation;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 
@@ -11,9 +13,9 @@ import javax.persistence.EntityManager;
 import java.util.*;
 
 @Component
-public class RdtJpaCoreResolver extends AbstractRdtJpaResolver {
+public class JpaOperation extends AbstractJpaOperation {
 
-    public RdtJpaCoreResolver(RdtSupport rdtSupport) {
+    public JpaOperation(RdtSupport rdtSupport) {
         super(rdtSupport);
     }
 
@@ -43,12 +45,8 @@ public class RdtJpaCoreResolver extends AbstractRdtJpaResolver {
     }
 
     @Override
-    public Object save(Object o) {
-        return null;
+    public <T> T save(T entity) {
+        return super.save(entity);
     }
 
-    @Override
-    public Object saveAll(Collection<Object> o) {
-        return null;
-    }
 }

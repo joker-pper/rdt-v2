@@ -18,12 +18,12 @@ spring:
 
 rdt:
   domain:
-    basePackage: com.devloper.joker.*.domain
+    basePackage: com.devloper.joker.*.domain,com.devloper.joker.*.vo
 
 logging:
   level:
     root: INFO
-    org.springframework.data: debug
+    #org.springframework: debug
     com.devloper.joker: debug
 
 server:

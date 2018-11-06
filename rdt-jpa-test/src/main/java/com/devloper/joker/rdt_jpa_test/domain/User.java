@@ -24,6 +24,15 @@ public class User {
     public final static int TYPE_USER = 1;
     public final static int TYPE_ROLE = 2;
 
+    /**
+     * 用户类型
+     */
+    public enum AccountType {
+        USER,
+        ROLE;
+    }
+
+
     @Id
     //@GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -54,5 +63,15 @@ public class User {
 
     @RdtFieldRely(property = "type", targetPropertys = {"username", "name"})
     private String createByName;
+
+    @RdtRely(value = {@KeyTarget(target = User.class, value = "0"), @KeyTarget(target = Role.class, value = "ROLE")}, nullType = User.class)
+    @Enumerated(EnumType.STRING)
+    private AccountType accountType;
+
+    @RdtFieldConditionRely(property = "accountType", targetPropertys = "id")
+    private Long createById2;
+
+    @RdtFieldRely(property = "accountType", targetPropertys = {"username", "name"})
+    private String createByName2;
 
 }

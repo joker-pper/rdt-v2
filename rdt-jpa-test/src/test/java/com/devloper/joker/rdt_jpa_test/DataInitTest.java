@@ -47,10 +47,28 @@ public class DataInitTest extends ApplicationTests {
                 createById = new Random().nextInt(i) + 1;
                 createByName = userList.get((int) createById - 1).getUsername();
             }
+            User.AccountType accountType = null;
+            Long createById2 = null;
+            String createByName2 = null;
+            if (i > 0) {
+
+                if (new Random().nextInt(15) > 3) {
+                    accountType = User.AccountType.USER;
+
+                    createById2 = (long)new Random().nextInt(i) + 1;
+                    createByName2 = userList.get(Integer.parseInt(createById2.toString()) -1).getUsername();
+                } else {
+                    accountType = User.AccountType.ROLE;
+
+                    createById2 = (long) new Random().nextInt(2) + 1;
+                    createByName2 = getRole(Integer.parseInt(createById2.toString()) - 1).getName();
+
+                }
+            }
 
             userList.add(new User((long) i + 1, "用户" + (i + 1),
                     role.getId(), role.getName(), role.getCreateTime(),
-                    new Date(), userType, createById, createByName));
+                    new Date(), userType, createById, createByName, accountType, createById2, createByName2));
         }
 
 

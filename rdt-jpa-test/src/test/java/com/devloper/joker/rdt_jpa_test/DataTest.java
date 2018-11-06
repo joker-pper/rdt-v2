@@ -8,9 +8,10 @@ import org.junit.Test;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
+import java.util.*;
 
 public class DataTest extends ApplicationTests {
+
 
     @Test
     public void findByIdIn() {
@@ -45,8 +46,34 @@ public class DataTest extends ApplicationTests {
     @Test
     public void userModify() throws Exception {
         User user = userRepository.findById(1L).get();
-        user.setUsername("joker");
+        user.setUsername("jokers");
         userRepository.save(user);
         coreResolver.updateMulti(user);
     }
+
+
+    @Test
+    public void userModifyWithService() throws Exception {
+        User user = userService.getOne(1L);
+        user.setUsername("jokerw");
+        userService.save(user);
+        //coreResolver.updateMulti(user);
+       //throw new NullPointerException("xxxxx");
+    }
+
+    @Test
+    public void updateUser() throws Exception {
+        userService.updateUser(1L, "O(∩_∩)O哈哈~");
+    }
+
+
+    @Test
+    public void userFindAll() throws Exception {
+        List<User> users = userService.findAll();
+        userService.saveAll(users);
+        logger.info("results: {}", JsonUtils.toJson(users));
+    }
+
+
+
 }

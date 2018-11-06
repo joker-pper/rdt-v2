@@ -1,8 +1,9 @@
 package com.devloper.joker.rdt_jpa_test;
 
-import com.devloper.joker.rdt_jpa_test.rdt.RdtJpaCoreResolver;
+import com.devloper.joker.rdt_jpa_test.rdt.JpaOperation;
 import com.devloper.joker.rdt_jpa_test.repository.RoleRepository;
 import com.devloper.joker.rdt_jpa_test.repository.UserRepository;
+import com.devloper.joker.rdt_jpa_test.service.IUserService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -26,7 +27,10 @@ public class ApplicationTests {
 	protected RoleRepository roleRepository;
 
 	@Resource
-	protected RdtJpaCoreResolver coreResolver;
+	protected JpaOperation coreResolver;
+
+	@Resource
+	protected IUserService userService;
 
 	@Test
 	public void contextLoads() {

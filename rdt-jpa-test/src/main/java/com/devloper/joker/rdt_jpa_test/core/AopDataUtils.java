@@ -34,7 +34,7 @@ public class AopDataUtils {
 
     public static Object getFieldValue(Object target, String fieldName) {
         Field field = ReflectionUtils.findField(target.getClass(), fieldName);
-        field.setAccessible(true);
+        ReflectionUtils.makeAccessible(field);
         return ReflectionUtils.getField(field, target);
     }
 
