@@ -41,35 +41,70 @@ public class RdtFillBuilder {
             //存在数据或clear时进行处理
 
             for (ModifyDescribe modifyDescribe : fillOneKeyModel.getDescribeKeyDataMap().keySet()) {
-                Map<Object, Set<Object>> keyValueData = fillOneKeyModel.getDescribeKeyData(modifyDescribe);
+                Map<Object, List<Object>> keyValueData = fillOneKeyModel.getDescribeKeyData(modifyDescribe);
                 for (Object keyValue : keyValueData.keySet()) {
                     //获取当前key要修改的数据列表
-                    Set<Object> modifyDataSet = keyValueData.get(keyValue);
-                    if (!modifyDataSet.isEmpty()) {
+                    List<Object> modifyData = keyValueData.get(keyValue);
+                    if (!modifyData.isEmpty()) {
                         //获取当前值所对应的数据
                         Object entityData = entityDataMap.get(keyValue);
-                        setFillKeyData(entityData, entityClass, key, keyValue, modifyDataSet, modifyDescribe, clear);
+                        setFillKeyData(entityData, entityClass, getConditionMark(key, keyValue), modifyData, modifyDescribe, clear);
                     }
                 }
             }
 
             for (ModifyRelyDescribe modifyDescribe : fillOneKeyModel.getRelyDescribeKeyDataMap().keySet()) {
-                Map<Object, Set<Object>> keyValueData = fillOneKeyModel.getDescribeKeyData(modifyDescribe);
+                Map<Object, List<Object>> keyValueData = fillOneKeyModel.getDescribeKeyData(modifyDescribe);
                 for (Object keyValue : keyValueData.keySet()) {
-                    Set<Object> modifyDataSet = keyValueData.get(keyValue);
-                    if (!modifyDataSet.isEmpty()) {
+                    List<Object> modifyData = keyValueData.get(keyValue);
+                    if (!modifyData.isEmpty()) {
                         Object entityData = entityDataMap.get(keyValue);
-                        setFillKeyData(entityData, entityClass, key, keyValue, modifyDataSet, modifyDescribe, clear);                    }
+                        setFillKeyData(entityData, entityClass, getConditionMark(key, keyValue), modifyData, modifyDescribe, clear);                    }
                 }
             }
-
-
         }
-
 
     }
 
-    private void setFillKeyData(Object entityData, Class entityClass, String key, Object keyValue, Set<Object> waitFillSet, ModifyDescribe describe, boolean clear) {
+    /**
+     * 获取条件标识
+     * @param key
+     * @param value
+     * @return
+     */
+    public String getConditionMark(String key, Object value) {
+        return "[" + key + "=" + value + "]";
+    }
+
+
+    /**
+     * 获取条件标识
+     * @param conditionColumns
+     * @param values
+     * @return
+     */
+    public String getConditionMark(Collection<Column> conditionColumns, List<Object> values) {
+        StringBuilder sb = new StringBuilder("[");
+
+        if (!conditionColumns.isEmpty()) {
+            int index = 0;
+            for (Column column : conditionColumns) {
+                sb.append(column.getProperty() + "=" + values.get(index ++) + "&");
+            }
+            int length = sb.length();
+            sb.delete(length - 1, length);
+        }
+
+        sb.append("]");
+        return sb.toString();
+    }
+
+    public void setFillManyKeyData(Object entityData, Class entityClass, Collection<Object> waitFillData, ModifyDescribe describe, boolean clear, String conditionMark) {
+        setFillKeyData(entityData, entityClass, conditionMark, waitFillData, describe, clear);
+    }
+
+
+    private void setFillKeyData(Object entityData, Class entityClass, String conditionMark, Collection<Object> waitFillDatas, ModifyDescribe describe, boolean clear) {
         if (entityData != null || clear) {
             //当持久化数据存在或者clear时
             List<ModifyColumn> columnList = describe.getColumnList();
@@ -80,9 +115,8 @@ public class RdtFillBuilder {
                 relyColumn = modifyRelyDescribe.getRelyColumn();
             }
 
-
             //依据列信息进行赋值
-            for (Object waitFillData : waitFillSet) {
+            for (Object waitFillData : waitFillDatas) {
                 ClassModel waitClassModel = null;
                 String text = null;
 
@@ -116,9 +150,9 @@ public class RdtFillBuilder {
 
                         if (relyColumn != null) {
                             String relyProperty = relyColumn.getProperty();
-                            logger.info("rdt fill clear condition with rely property {}({}-[{}]) about {}{} set [{}({})={}] from [{}[{}={}]", relyProperty, relyColumn.getPropertyClass().getName(), rdtResolver.getPropertyValue(waitFillData, relyProperty), waitClassModel.getClassName(), text, property, propertyClass.getName(), value, entityClass.getName(), key, keyValue);
+                            logger.info("rdt fill clear condition with rely property {}({}-[{}]) about {}{} set [{}({})={}] from [{}{}]", relyProperty, relyColumn.getPropertyClass().getName(), rdtResolver.getPropertyValue(waitFillData, relyProperty), waitClassModel.getClassName(), text, property, propertyClass.getName(), value, entityClass.getName(), conditionMark);
                         } else {
-                            logger.info("rdt fill clear condition about {}{} set [{}({})={}] from [{}[{}={}]", waitClassModel.getClassName(), text, property, propertyClass.getName(), value, entityClass.getName(), key, keyValue);
+                            logger.info("rdt fill clear condition about {}{} set [{}({})={}] from [{}{}]", waitClassModel.getClassName(), text, property, propertyClass.getName(), value, entityClass.getName(), conditionMark);
                         }
                     }
                 }
@@ -153,41 +187,33 @@ public class RdtFillBuilder {
                     if (relyColumn != null) {
                         String relyProperty = relyColumn.getProperty();
                         if (clearMark) {
-                            logger.info("rdt fill clear column with rely property {}({}-[{}]) about {}{} set [{}({})->{}({})={}] from [{}[{}={}]", relyProperty, relyColumn.getPropertyClass().getName(), rdtResolver.getPropertyValue(waitFillData, relyProperty), waitClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), key, keyValue);
+                            logger.info("rdt fill clear column with rely property {}({}-[{}]) about {}{} set [{}({})->{}({})={}] from [{}{}]", relyProperty, relyColumn.getPropertyClass().getName(), rdtResolver.getPropertyValue(waitFillData, relyProperty), waitClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), conditionMark);
                         } else {
-                            logger.debug("rdt fill column with rely property {}({}-[{}]) about {}{} set [{}({})->{}({})={}] from [{}[{}={}]", relyProperty, relyColumn.getPropertyClass().getName(), rdtResolver.getPropertyValue(waitFillData, relyProperty), waitClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), key, keyValue);
+                            logger.debug("rdt fill column with rely property {}({}-[{}]) about {}{} set [{}({})->{}({})={}] from [{}{}]", relyProperty, relyColumn.getPropertyClass().getName(), rdtResolver.getPropertyValue(waitFillData, relyProperty), waitClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), conditionMark);
                         }
                     } else {
                         if (clearMark) {
-                            logger.info("rdt fill clear column about {}{} set [{}({})->{}({})={}] from [{}[{}={}]", waitClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), key, keyValue);
+                            logger.info("rdt fill clear column about {}{} set [{}({})->{}({})={}] from [{}{}]", waitClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), conditionMark);
                         } else {
-                            logger.debug("rdt fill column about {}{} set [{}({})->{}({})={}] from [{}[{}={}]", waitClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), key, keyValue);
+                            logger.debug("rdt fill column about {}{} set [{}({})->{}({})={}] from [{}{}]", waitClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), conditionMark);
                         }
                     }
-
-
 
                 }
             }
         }
     }
 
+
+
     public static boolean equalsElement(Collection collection1, Collection collection2) {
         boolean result = false;
         if (collection1 != null && collection2 != null) {
-            if (collection1 == collection2) {
+            if (collection1.equals(collection2)) {
                 result = true;
             } else {
                 if (collection1.size() == collection2.size()) {
-                    //数量一致时
-                    boolean equals = true;
-                    for (Object data : collection1) {
-                        if (!collection2.contains(data)) {
-                            equals = false;
-                            break;
-                        }
-                    }
-                    result = equals;
+                    result = collection1.containsAll(collection2);
                 }
             }
         } else {
@@ -216,14 +242,14 @@ public class RdtFillBuilder {
         }
 
         //处理当前entity class的条件列
-        Map<Column, ModifyCondition> columnModifyConditionMap = new LinkedHashMap<Column, ModifyCondition>(16);
+        Map<Column, Column> targetColumnKeyMap = new HashMap<Column, Column>(16);
 
         List<Column> currentConditionColumnValues = new ArrayList<Column>(16);
 
         for (ModifyCondition modifyCondition : modifyConditionList) {
             Column targetColumn = modifyCondition.getTargetColumn();
             currentConditionColumnValues.add(targetColumn);
-            columnModifyConditionMap.put(targetColumn, modifyCondition);
+            targetColumnKeyMap.put(targetColumn, modifyCondition.getColumn());
         }
 
         //获取当前detail
@@ -252,23 +278,32 @@ public class RdtFillBuilder {
         }
         Class dataClass = dataClassModel.getCurrentClass();
 
-        //获取当前对应的条件列值
-        List<Object> currentConditionGroupValue = new ArrayList<Object>(16);
+
+        boolean isGroupValueNull = true;
+
+
         List<List<Object>> conditionGroupValues = currentKeyDetail.getConditionGroupValues();
-        for (ModifyCondition modifyCondition : columnModifyConditionMap.values()) {
-            Column column = modifyCondition.getColumn();
+
+        //根据当前条件列生成对应的值
+        List<Object> currentConditionGroupValue = new ArrayList<Object>(16);
+        for (Column targetColumn : currentConditionColumnValues) {
+            //获取当前data对应的列
+            Column column = targetColumnKeyMap.get(targetColumn);
             String property = column.getProperty();
             Object value = rdtResolver.getPropertyValue(data, property);
-
             if (!allowedNullValue && value == null) {
                 throw new FillNotAllowedValueException(fillManyKeyModel, dataClass, data, describe, property, dataClassModel.getClassName() + " property " + property + " value not allowed null.");
             }
-
+            if (value != null) {
+                isGroupValueNull = false;
+            }
             currentConditionGroupValue.add(value);
         }
+
+
         boolean hasContainsConditionGroupValue = false;
         for (List<Object> values : conditionGroupValues) {
-            if (equalsElement(currentConditionGroupValue, values)) {
+            if (values.equals(currentConditionGroupValue)) {
                 hasContainsConditionGroupValue = true;
                 currentConditionGroupValue = values;
                 break;
@@ -277,41 +312,33 @@ public class RdtFillBuilder {
 
         //不存在时加入条件值组中
         if (!hasContainsConditionGroupValue) {
+            if (isGroupValueNull) {
+                currentKeyDetail.setGroupValueNullIndex(conditionGroupValues.size());
+            }
             conditionGroupValues.add(currentConditionGroupValue);
         }
 
-        Set<Object> dataSet;
+        List<Object> dataList;
 
         if (describe instanceof ModifyRelyDescribe) {
             ModifyRelyDescribe modifyRelyDescribe = (ModifyRelyDescribe) describe;
-            Map<List<Object>, Map<ModifyRelyDescribe, Set<Object>>> conditionGroupValueRelyDescribeDataMap = currentKeyDetail.getConditionGroupValueRelyDescribeDataMap();
-            //获取当前条件值下的relyDescribeSetMap
-            Map<ModifyRelyDescribe, Set<Object>> relyDescribeSetMap = conditionGroupValueRelyDescribeDataMap.get(currentConditionGroupValue);
-            if (relyDescribeSetMap == null) {
-                relyDescribeSetMap = new HashMap<ModifyRelyDescribe, Set<Object>>(16);
-                conditionGroupValueRelyDescribeDataMap.put(currentConditionGroupValue, relyDescribeSetMap);
-            }
-
-            dataSet = relyDescribeSetMap.get(modifyRelyDescribe);
-            if (dataSet == null) {
-                dataSet = new HashSet<Object>(16);
-                relyDescribeSetMap.put(modifyRelyDescribe, dataSet);
+            //获取当前条件值下的relyDescribeMap
+            Map<ModifyRelyDescribe, List<Object>> relyDescribeMap = currentKeyDetail.getRelyDescribeMap(currentConditionGroupValue);
+            dataList = relyDescribeMap.get(modifyRelyDescribe);
+            if (dataList == null) {
+                dataList = new ArrayList<Object>(16);
+                relyDescribeMap.put(modifyRelyDescribe, dataList);
             }
         } else {
-            Map<List<Object>, Map<ModifyDescribe, Set<Object>>> describeDataMap = currentKeyDetail.getConditionGroupValueDescribeDataMap();
-            Map<ModifyDescribe, Set<Object>> describeSetMap = describeDataMap.get(currentConditionGroupValue);
-            if (describeSetMap == null) {
-                describeSetMap = new HashMap<ModifyDescribe, Set<Object>>(16);
-                describeDataMap.put(currentConditionGroupValue, describeSetMap);
-            }
+            Map<ModifyDescribe, List<Object>> describeMap = currentKeyDetail.getDescribeMap(currentConditionGroupValue);
 
-            dataSet = describeSetMap.get(describe);
-            if (dataSet == null) {
-                dataSet = new HashSet<Object>(16);
-                describeSetMap.put(describe, dataSet);
+            dataList = describeMap.get(describe);
+            if (dataList == null) {
+                dataList = new ArrayList<Object>(16);
+                describeMap.put(describe, dataList);
             }
         }
-        dataSet.add(data);
+        dataList.add(data);
 
     }
 

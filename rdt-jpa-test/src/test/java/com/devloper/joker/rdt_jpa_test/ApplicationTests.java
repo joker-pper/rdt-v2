@@ -12,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
+import java.util.Random;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -36,4 +37,20 @@ public class ApplicationTests {
 	public void contextLoads() {
 	}
 
+	public Long getRoleRandomId() {
+		return (long) new Random().nextInt(2) + 1;
+	}
+
+	public Long getUserRandomId() {
+		return (long) new Random().nextInt(5) + 1;
+	}
+
+	public String getUserRandomName() {
+		long id = (long) new Random().nextInt(5) + 1;
+		if (id == 1) {
+			id = 2;
+		}
+		return "用户" + id;
+
+	}
 }

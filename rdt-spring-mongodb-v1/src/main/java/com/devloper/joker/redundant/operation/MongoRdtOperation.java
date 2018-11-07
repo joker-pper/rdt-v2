@@ -52,6 +52,18 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
         return mongoTemplate.find(query, entityClass);
     }
 
+    @Override
+    protected <T> List<T> findByFillManyKeyExecute(Class<T> entityClass, List<Column> conditionColumnValues, Set<Column> columnValues, List<Object> conditionGroupValue) {
+        Criteria criteria = new Criteria();
+        Query query = new Query();
+        int index = 0;
+        for (Column column : conditionColumnValues) {
+            Object value = conditionGroupValue.get(index ++);
+            criteria.and(column.getProperty()).is(value);
+        }
+        return mongoTemplate.find(query, entityClass);
+    }
+
     /**
      * 用于批量保存子文档数据
      * @param data

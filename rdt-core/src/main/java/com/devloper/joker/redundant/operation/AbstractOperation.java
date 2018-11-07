@@ -1,8 +1,6 @@
 package com.devloper.joker.redundant.operation;
 
-import com.devloper.joker.redundant.fill.FillOneKeyModel;
-import com.devloper.joker.redundant.fill.FillRSModel;
-import com.devloper.joker.redundant.fill.RdtFillBuilder;
+import com.devloper.joker.redundant.fill.*;
 import com.devloper.joker.redundant.model.*;
 import com.devloper.joker.redundant.resolver.RdtResolver;
 import org.slf4j.Logger;
@@ -576,6 +574,27 @@ public abstract class AbstractOperation {
     protected abstract <T> List<T> findByFillKeyModelExecute(FillOneKeyModel fillOneKeyModel);
 
 
+    protected <T> List<T> findByFillManyKey(Class<T> entityClass, List<Column> conditionColumnValues, Set<Column> columnValues, List<Object> conditionGroupValue) {
+        List<T> result = findByFillManyKeyExecute(entityClass, conditionColumnValues, columnValues, conditionGroupValue);
+        if (result == null) {
+            result = Collections.emptyList();
+        }
+        return result;
+    }
+
+    /**
+     * 获取entity class当前条件组的数据
+     * @param entityClass
+     * @param conditionColumnValues 条件列
+     * @param columnValues 需要加载的列字段
+     * @param conditionGroupValue 条件列对应的值
+     * @param <T>
+     * @return
+     */
+    protected abstract <T> List<T> findByFillManyKeyExecute(Class<T> entityClass, List<Column> conditionColumnValues, Set<Column> columnValues, List<Object> conditionGroupValue);
+
+
+
     public void fill(Collection<?> collection) {
         fill(collection, true, false, false);
     }
@@ -592,6 +611,65 @@ public abstract class AbstractOperation {
         FillRSModel fillRSModel = new FillRSModel();
         //处理数据关系
         fillRelationshipHandle(fillRSModel, collection, allowedNullValue, checkValue, clear);
+
+        //多条件时每组条件值都要进行查询,优先处理
+        Map<Class, FillManyKeyModel> fillManyKeyModelMap = fillRSModel.getFillManyKeyModelMap();
+        if (!fillManyKeyModelMap.isEmpty()) {
+            for (Class entityClass : fillManyKeyModelMap.keySet()) {
+                FillManyKeyModel fillManyKeyModel = fillManyKeyModelMap.get(entityClass);
+                for (FillManyKeyDetail detail : fillManyKeyModel.getManyKeyDetails()) {
+                    int index = 0;
+                    int groupValueNullIndex = detail.getGroupValueNullIndex();
+                    for (List<Object> groupValue : detail.getConditionGroupValues()) {
+                        boolean isGroupValueNull = groupValueNullIndex == index ++;
+                        List<Column> conditionColumnValues = detail.getConditionColumnValues();
+                        Object entityData = null;
+                        if (!isGroupValueNull) {
+                            //获取当前条件组的数据
+                            List<Object> dataList = findByFillManyKey(entityClass, conditionColumnValues, detail.getColumnValues(), groupValue);
+
+                            boolean isAllowed = false;
+                            if (dataList.size() == 1) {
+                                Object data = dataList.get(0);
+                                if (data != null) {
+                                    List<Object> currentValues = new ArrayList<Object>();
+                                    for (Column column : conditionColumnValues) {
+                                        currentValues.add(rdtResolver.getPropertyValue(data, column.getProperty()));
+                                    }
+                                    isAllowed = fillBuilder.equalsElement(groupValue, currentValues);
+                                    if (isAllowed) {
+                                        entityData = data;
+                                    }
+                                }
+                            }
+
+                            if (checkValue && !isAllowed) {
+                                throw new IllegalArgumentException(entityClass.getName() + " can't find one data with " + fillBuilder.getConditionMark(conditionColumnValues, groupValue));
+                            }
+
+                        }
+
+                        if (clear || entityData != null) {
+                            String conditionMark = fillBuilder.getConditionMark(conditionColumnValues, groupValue);
+                            Map<ModifyDescribe, List<Object>> describeMap = detail.getDescribeMap(groupValue);
+                            for (ModifyDescribe describe : describeMap.keySet()) {
+                                List<Object> waitFillData = describeMap.get(describe);
+                                fillBuilder.setFillManyKeyData(entityData, entityClass, waitFillData, describe, clear, conditionMark);
+                            }
+
+                            Map<ModifyRelyDescribe, List<Object>> relyDescribeMap = detail.getRelyDescribeMap(groupValue);
+                            for (ModifyRelyDescribe describe : relyDescribeMap.keySet()) {
+                                List<Object> waitFillData = relyDescribeMap.get(describe);
+                                fillBuilder.setFillManyKeyData(entityData, entityClass, waitFillData, describe, clear, conditionMark);
+                            }
+                        }
+                    }
+                }
+
+
+            }
+        }
+
         Map<Class, List<FillOneKeyModel>> fillKeyModelListMap = fillRSModel.getFillKeyModelListMap();
         if (!fillKeyModelListMap.isEmpty()) {
             for (Class entityClass : fillKeyModelListMap.keySet()) {

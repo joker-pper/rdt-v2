@@ -61,7 +61,7 @@ public class FillRSModel {
             fillOneKeyModel = new FillOneKeyModel();
             fillOneKeyModel.setKey(targetProperty);
             fillOneKeyModel.setEntityClass(entityClass);
-            fillOneKeyModel.setIsPrimaryKey(targetColumn.getIsPrimaryId());
+            fillOneKeyModel.setKeyColumn(targetColumn);
             fillOneKeyModelList.add(fillOneKeyModel);
         }
         return fillOneKeyModel;

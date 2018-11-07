@@ -23,14 +23,20 @@ public class FillManyKeyDetail {
     private List<List<Object>> conditionGroupValues = new ArrayList<List<Object>>(16);
 
     /**
+     * 条件组值全为null的索引值
+     */
+    private int groupValueNullIndex = -1;
+
+
+    /**
      * 基于一组条件列顺序值所对应describe的要修改的数据列表
      */
-    private Map<List<Object>, Map<ModifyDescribe, Set<Object>>> conditionGroupValueDescribeDataMap = new HashMap<List<Object>, Map<ModifyDescribe, Set<Object>>>(16);
+    private Map<List<Object>, Map<ModifyDescribe, List<Object>>> conditionGroupValueDescribeDataMap = new HashMap<List<Object>, Map<ModifyDescribe, List<Object>>>(16);
 
     /**
      * 基于一组条件列顺序值所对应rely describe的要修改的数据列表
      */
-    private Map<List<Object>, Map<ModifyRelyDescribe, Set<Object>>> conditionGroupValueRelyDescribeDataMap = new HashMap<List<Object>, Map<ModifyRelyDescribe, Set<Object>>>(16);
+    private Map<List<Object>, Map<ModifyRelyDescribe, List<Object>>> conditionGroupValueRelyDescribeDataMap = new HashMap<List<Object>, Map<ModifyRelyDescribe, List<Object>>>(16);
 
     public List<Column> getConditionColumnValues() {
         return conditionColumnValues;
@@ -56,19 +62,46 @@ public class FillManyKeyDetail {
         this.conditionGroupValues = conditionGroupValues;
     }
 
-    public Map<List<Object>, Map<ModifyDescribe, Set<Object>>> getConditionGroupValueDescribeDataMap() {
+    public int getGroupValueNullIndex() {
+        return groupValueNullIndex;
+    }
+
+    public void setGroupValueNullIndex(int groupValueNullIndex) {
+        this.groupValueNullIndex = groupValueNullIndex;
+    }
+
+    public Map<List<Object>, Map<ModifyDescribe, List<Object>>> getConditionGroupValueDescribeDataMap() {
         return conditionGroupValueDescribeDataMap;
     }
 
-    public void setConditionGroupValueDescribeDataMap(Map<List<Object>, Map<ModifyDescribe, Set<Object>>> conditionGroupValueDescribeDataMap) {
+    public void setConditionGroupValueDescribeDataMap(Map<List<Object>, Map<ModifyDescribe, List<Object>>> conditionGroupValueDescribeDataMap) {
         this.conditionGroupValueDescribeDataMap = conditionGroupValueDescribeDataMap;
     }
 
-    public Map<List<Object>, Map<ModifyRelyDescribe, Set<Object>>> getConditionGroupValueRelyDescribeDataMap() {
+    public Map<List<Object>, Map<ModifyRelyDescribe, List<Object>>> getConditionGroupValueRelyDescribeDataMap() {
         return conditionGroupValueRelyDescribeDataMap;
     }
 
-    public void setConditionGroupValueRelyDescribeDataMap(Map<List<Object>, Map<ModifyRelyDescribe, Set<Object>>> conditionGroupValueRelyDescribeDataMap) {
+    public void setConditionGroupValueRelyDescribeDataMap(Map<List<Object>, Map<ModifyRelyDescribe, List<Object>>> conditionGroupValueRelyDescribeDataMap) {
         this.conditionGroupValueRelyDescribeDataMap = conditionGroupValueRelyDescribeDataMap;
+    }
+
+
+    public Map<ModifyDescribe, List<Object>> getDescribeMap(List<Object> groupValue) {
+        Map<ModifyDescribe, List<Object>> describeListMap = conditionGroupValueDescribeDataMap.get(groupValue);
+        if (describeListMap == null) {
+            describeListMap = new HashMap<ModifyDescribe, List<Object>>(16);
+            conditionGroupValueDescribeDataMap.put(groupValue, describeListMap);
+        }
+        return describeListMap;
+    }
+
+    public Map<ModifyRelyDescribe, List<Object>> getRelyDescribeMap(List<Object> groupValue) {
+        Map<ModifyRelyDescribe, List<Object>> relyDescribeListMap = conditionGroupValueRelyDescribeDataMap.get(groupValue);
+        if (relyDescribeListMap == null) {
+            relyDescribeListMap = new HashMap<ModifyRelyDescribe, List<Object>>(16);
+            conditionGroupValueRelyDescribeDataMap.put(groupValue, relyDescribeListMap);
+        }
+        return relyDescribeListMap;
     }
 }

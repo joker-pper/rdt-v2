@@ -17,7 +17,9 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserRoleVO {
-
+    /**
+     * 基于 user id的字段列
+     */
     @RdtFieldCondition(property = "id", target = User.class)
     private Long id;
 
@@ -30,6 +32,9 @@ public class UserRoleVO {
     @RdtField(property = "roleName", target = User.class)
     private String userRoleName;
 
+    /**
+     * 两组基于roleId的字段列
+     */
 
     @RdtFieldCondition(property = "id", target = Role.class)
     private Long roleId;
@@ -45,7 +50,7 @@ public class UserRoleVO {
 
 
     /**
-     * 基于username获取role name
+     * 基于username填充对应的role name及 user id
      */
 
     @RdtFieldCondition(property = "username", target = User.class, index = 1)

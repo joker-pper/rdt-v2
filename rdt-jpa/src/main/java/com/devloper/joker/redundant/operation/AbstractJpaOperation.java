@@ -171,20 +171,7 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
 
             criteriaQuery.where(predicateList.toArray(new Predicate[predicateList.size()]));
             List<Object[]> list = entityManager.createQuery(criteriaQuery).getResultList();
-            List<T> results = new ArrayList<T>(16);
-            for (Object[] objects : list) {
-                T data = entityClass.newInstance();
-                int i = 0;
-                rdtResolver.setPropertyValue(data, fillOneKeyModel.getKey(), objects[i]);
-                for (Column column : columnSet) {
-                    i++;
-                    String property = column.getProperty();
-                    rdtResolver.setPropertyValue(data, property, objects[i]);
-                }
-
-                results.add(data);
-            }
-            return results;
+            return parseResults(entityClass, list, Arrays.asList(fillOneKeyModel.getKeyColumn()), columnSet);
         } catch (Exception e) {
             logger.warn("rdt fill get " + entityClass.getName() + " data list by used property has error, will use all property, \n cause by exception :", e);
         }
@@ -195,6 +182,70 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
         List<Predicate> predicateList = new ArrayList<Predicate>(16);
         predicateList.add(criteriaBuilder.criteriaIn(root.get(fillOneKeyModel.getKey()), fillOneKeyModel.getKeyValues()));
 
+        criteriaQuery.where(predicateList.toArray(new Predicate[predicateList.size()]));
+        return entityManager.createQuery(criteriaQuery).getResultList();
+    }
+
+    protected <T> List<T> parseResults(Class<T> entityClass, List<Object[]> list, Collection<Column> conditions, Collection<Column> columns) throws Exception {
+        List<T> results = new ArrayList<T>(16);
+        for (Object[] objects : list) {
+            T data = entityClass.newInstance();
+            int i = 0;
+
+            for (Column column : conditions) {
+                String property = column.getProperty();
+                rdtResolver.setPropertyValue(data, property, objects[i ++]);
+            }
+
+            for (Column column : columns) {
+                String property = column.getProperty();
+                rdtResolver.setPropertyValue(data, property, objects[i ++]);
+            }
+
+            results.add(data);
+        }
+        return results;
+    }
+
+
+    @Override
+    protected <T> List<T> findByFillManyKeyExecute(Class<T> entityClass, List<Column> conditionColumnValues, Set<Column> columnValues, List<Object> conditionGroupValue) {
+        CriteriaPredicateBuilder criteriaBuilder = CriteriaPredicateBuilder.of(entityManager);
+        try {
+            CriteriaQuery criteriaQuery = criteriaBuilder.createQuery(entityClass);
+            Root root = criteriaQuery.from(entityClass);
+            List<Selection<?>> selectionList = new ArrayList<Selection<?>>(16);
+            List<Predicate> predicateList = new ArrayList<Predicate>();
+
+            int index = 0;
+            for (Column column : conditionColumnValues) {
+                Path path = root.get(column.getProperty());
+                selectionList.add(path);
+                predicateList.add(criteriaBuilder.eq(path, conditionGroupValue.get(index ++)));
+            }
+
+            for (Column column : columnValues) {
+                selectionList.add(root.get(column.getProperty()));
+            }
+
+            criteriaQuery.select(criteriaBuilder.getCriteriaBuilder().construct(Object[].class, selectionList.toArray(new Selection[selectionList.size()])));
+
+            criteriaQuery.where(predicateList.toArray(new Predicate[predicateList.size()]));
+            List<Object[]> list = entityManager.createQuery(criteriaQuery).getResultList();
+            return parseResults(entityClass, list, conditionColumnValues, columnValues);
+        } catch (Exception e) {
+            logger.warn("rdt fill get " + entityClass.getName() + " data list by used property has error, will use all property, \n cause by exception :", e);
+        }
+
+        CriteriaQuery criteriaQuery = criteriaBuilder.createQuery(entityClass);
+        Root root = criteriaQuery.from(entityClass);
+
+        List<Predicate> predicateList = new ArrayList<Predicate>(16);
+        int index = 0;
+        for (Column column : conditionColumnValues) {
+            Path path = root.get(column.getProperty());
+            predicateList.add(criteriaBuilder.eq(path, conditionGroupValue.get(index ++)));
+        }
         criteriaQuery.where(predicateList.toArray(new Predicate[predicateList.size()]));
         return entityManager.createQuery(criteriaQuery).getResultList();
     }

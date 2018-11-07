@@ -16,11 +16,8 @@ public class FillOneKeyModel extends FillKeyModel {
      */
     private String key;
 
-    /**
-     * 是否为id key
-     */
-    private boolean isPrimaryKey;
 
+    private Column keyColumn;
 
     /**
      * key所对应的值
@@ -33,12 +30,12 @@ public class FillOneKeyModel extends FillKeyModel {
     /**
      * modifyDesc情况下对应key值所对应要修改的数据列表
      */
-    private Map<ModifyDescribe, Map<Object, Set<Object>>> describeKeyDataMap = new HashMap<ModifyDescribe, Map<Object, Set<Object>>>(16);
+    private Map<ModifyDescribe, Map<Object, List<Object>>> describeKeyDataMap = new HashMap<ModifyDescribe, Map<Object, List<Object>>>(16);
 
     /**
      * relyDescribe情况下对应key值所对应要修改的数据列表
      */
-    private Map<ModifyRelyDescribe, Map<Object, Set<Object>>> relyDescribeKeyDataMap = new HashMap<ModifyRelyDescribe, Map<Object, Set<Object>>>(16);
+    private Map<ModifyRelyDescribe, Map<Object, List<Object>>> relyDescribeKeyDataMap = new HashMap<ModifyRelyDescribe, Map<Object, List<Object>>>(16);
 
     public String getKey() {
         return key;
@@ -48,14 +45,13 @@ public class FillOneKeyModel extends FillKeyModel {
         this.key = key;
     }
 
-    public boolean getIsPrimaryKey() {
-        return isPrimaryKey;
+    public Column getKeyColumn() {
+        return keyColumn;
     }
 
-    public void setIsPrimaryKey(boolean isPrimaryKey) {
-        this.isPrimaryKey = isPrimaryKey;
+    public void setKeyColumn(Column keyColumn) {
+        this.keyColumn = keyColumn;
     }
-
 
     public Set<Object> getKeyValues() {
         return keyValues;
@@ -81,18 +77,18 @@ public class FillOneKeyModel extends FillKeyModel {
         columnValues.add(value);
     }
 
-    public Map<ModifyDescribe, Map<Object, Set<Object>>> getDescribeKeyDataMap() {
+    public Map<ModifyDescribe, Map<Object, List<Object>>> getDescribeKeyDataMap() {
         return describeKeyDataMap;
     }
 
-    public void setDescribeKeyDataMap(Map<ModifyDescribe, Map<Object, Set<Object>>> describeKeyDataMap) {
+    public void setDescribeKeyDataMap(Map<ModifyDescribe, Map<Object, List<Object>>> describeKeyDataMap) {
         this.describeKeyDataMap = describeKeyDataMap;
     }
 
-    public Map<Object, Set<Object>> getDescribeKeyData(ModifyDescribe describe) {
-        Map<Object, Set<Object>> result = describeKeyDataMap.get(describe);
+    public Map<Object, List<Object>> getDescribeKeyData(ModifyDescribe describe) {
+        Map<Object, List<Object>> result = describeKeyDataMap.get(describe);
         if (result == null) {
-            result = new HashMap<Object, Set<Object>>(16);
+            result = new HashMap<Object, List<Object>>(16);
             describeKeyDataMap.put(describe, result);
         }
         return result;
@@ -102,27 +98,27 @@ public class FillOneKeyModel extends FillKeyModel {
         if (keyValue != null) {
             addKeyValue(keyValue);
         }
-        Map<Object, Set<Object>> result = getDescribeKeyData(describe);
-        Set<Object> datas = result.get(keyValue);
+        Map<Object, List<Object>> result = getDescribeKeyData(describe);
+        List<Object> datas = result.get(keyValue);
         if (datas == null) {
-            datas = new HashSet<Object>(16);
+            datas = new ArrayList<Object>(16);
             result.put(keyValue, datas);
         }
         datas.add(data);
     }
 
-    public Map<ModifyRelyDescribe, Map<Object, Set<Object>>> getRelyDescribeKeyDataMap() {
+    public Map<ModifyRelyDescribe, Map<Object, List<Object>>> getRelyDescribeKeyDataMap() {
         return relyDescribeKeyDataMap;
     }
 
-    public void setRelyDescribeKeyDataMap(Map<ModifyRelyDescribe, Map<Object, Set<Object>>> relyDescribeKeyDataMap) {
+    public void setRelyDescribeKeyDataMap(Map<ModifyRelyDescribe, Map<Object, List<Object>>> relyDescribeKeyDataMap) {
         this.relyDescribeKeyDataMap = relyDescribeKeyDataMap;
     }
 
-    public Map<Object, Set<Object>> getDescribeKeyData(ModifyRelyDescribe describe) {
-        Map<Object, Set<Object>> result = relyDescribeKeyDataMap.get(describe);
+    public Map<Object, List<Object>> getDescribeKeyData(ModifyRelyDescribe describe) {
+        Map<Object, List<Object>> result = relyDescribeKeyDataMap.get(describe);
         if (result == null) {
-            result = new HashMap<Object, Set<Object>>(16);
+            result = new HashMap<Object, List<Object>>(16);
             relyDescribeKeyDataMap.put(describe, result);
         }
         return result;
@@ -132,10 +128,10 @@ public class FillOneKeyModel extends FillKeyModel {
         if (keyValue != null) {
             addKeyValue(keyValue);
         }
-        Map<Object, Set<Object>> result = getDescribeKeyData(describe);
-        Set<Object> datas = result.get(keyValue);
+        Map<Object, List<Object>> result = getDescribeKeyData(describe);
+        List<Object> datas = result.get(keyValue);
         if (datas == null) {
-            datas = new HashSet<Object>(16);
+            datas = new ArrayList<Object>(16);
             result.put(keyValue, datas);
         }
         datas.add(data);
