@@ -11,7 +11,6 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
-
 import java.util.*;
 
 public abstract class MongoRdtOperation extends AbstractMongoOperation {
@@ -84,7 +83,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
     }
 
     protected Pageable getPageable(long page, long size) {
-        return  new PageRequest((int) page, (int)size);
+        return new PageRequest((int) page, (int)size);
     }
 
     protected void updateMulti(Criteria criteria, Update update, Class entityClass) {
@@ -332,7 +331,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
      * @param conditionLogMap 条件log对象
      * @param relyColumn
      */
-    protected void updateManyDataConditionHandle(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ClassModel modifyClassModel, Object describe, final ChangedVo vo, Criteria criteria,  final Map<String, Object> conditionValMap, final Map<String, Object> conditionLogMap, final Column relyColumn) {
+    protected void updateManyDataConditionHandle(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ClassModel modifyClassModel, ModifyDescribe describe, final ChangedVo vo, Criteria criteria,  final Map<String, Object> conditionValMap, final Map<String, Object> conditionLogMap, final Column relyColumn) {
         if (criteria == null) throw new IllegalArgumentException("criteria must not null");
         if (describe == null) throw new IllegalArgumentException("describe must not null");
         List<Boolean> oneList = complexAnalysis.getOneList();

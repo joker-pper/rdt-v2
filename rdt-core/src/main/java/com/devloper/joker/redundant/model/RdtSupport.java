@@ -357,11 +357,8 @@ public class RdtSupport {
      * @param describe
      * @param callBack
      */
-    public void doModifyColumnHandle(ChangedVo vo, Object describe, ModifyColumnCallBack callBack) {
-        List<ModifyColumn> modifyColumnList;
-        if (describe instanceof ModifyDescribe) modifyColumnList = ((ModifyDescribe) describe).getColumnList();
-        else if (describe instanceof ModifyRelyDescribe) modifyColumnList = ((ModifyRelyDescribe) describe).getColumnList();
-        else throw new IllegalArgumentException("not allowed describe instance");
+    public void doModifyColumnHandle(ChangedVo vo, ModifyDescribe describe, ModifyColumnCallBack callBack) {
+        List<ModifyColumn> modifyColumnList = describe.getColumnList();
         for (ModifyColumn modifyColumn : modifyColumnList) {
             String targetProperty = modifyColumn.getTargetColumn().getProperty();
             Object val = vo.getCurrentVal(targetProperty);
@@ -386,12 +383,8 @@ public class RdtSupport {
      * @param describe
      * @param callBack
      */
-    public void doModifyConditionHandle(ChangedVo vo, Object describe, ModifyConditionCallBack callBack) {
-        List<ModifyCondition> conditionList;
-        if (describe instanceof ModifyDescribe) conditionList = ((ModifyDescribe) describe).getConditionList();
-        else if (describe instanceof ModifyRelyDescribe) conditionList = ((ModifyRelyDescribe) describe).getConditionList();
-        else throw new IllegalArgumentException("not allowed describe instance");
-
+    public void doModifyConditionHandle(ChangedVo vo, ModifyDescribe describe, ModifyConditionCallBack callBack) {
+        List<ModifyCondition> conditionList = describe.getConditionList();
         for (ModifyCondition modifyCondition : conditionList) {
             String targetProperty = modifyCondition.getTargetColumn().getProperty();
             Object val = vo.getCurrentVal(targetProperty);

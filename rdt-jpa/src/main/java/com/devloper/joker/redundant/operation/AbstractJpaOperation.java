@@ -46,7 +46,7 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
         StringBuilder sb = new StringBuilder();
         sb.append("UPDATE " + modifyClassModel.getClassName() + " SET ");
 
-        for (String property: updateValMap.keySet()) {
+        for (String property : updateValMap.keySet()) {
             sb.append(property + "=:" + property + ", ");
         }
         int index = sb.lastIndexOf(", ");
@@ -71,11 +71,11 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
             }
         }
         Query query = entityManager.createQuery(sb.toString());
-        for (String property: updateValMap.keySet()) {
+        for (String property : updateValMap.keySet()) {
             query.setParameter(property, updateValMap.get(property));
         }
 
-        for (String property: conditionValMap.keySet()) {
+        for (String property : conditionValMap.keySet()) {
             query.setParameter(property, conditionValMap.get(property));
         }
         query.executeUpdate();
@@ -87,11 +87,11 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
         CriteriaPredicateBuilder builder = CriteriaPredicateBuilder.of(entityManager);
         CriteriaUpdate criteriaUpdate = builder.createCriteriaUpdate(entityClass);
         Root root = criteriaUpdate.from(entityClass);
-        for (String property: updateValMap.keySet()) {
+        for (String property : updateValMap.keySet()) {
             criteriaUpdate.set(property, updateValMap.get(property));
         }
         List<Predicate> predicateList = new ArrayList<Predicate>();
-        for (String property: conditionValMap.keySet()) {
+        for (String property : conditionValMap.keySet()) {
             predicateList.add(builder.eq(root.get(property), conditionValMap.get(property)));
         }
 
