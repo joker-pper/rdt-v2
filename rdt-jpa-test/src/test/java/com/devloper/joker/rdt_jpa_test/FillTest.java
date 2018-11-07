@@ -5,6 +5,8 @@ import com.devloper.joker.rdt_jpa_test.domain.User;
 import com.devloper.joker.rdt_jpa_test.support.JsonUtils;
 import com.devloper.joker.rdt_jpa_test.vo.UserRoleComplexVO;
 import com.devloper.joker.rdt_jpa_test.vo.UserRoleVO;
+import com.devloper.joker.redundant.fill.FillNotAllowedValueException;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -46,6 +48,82 @@ public class FillTest extends ApplicationTests  {
     }
 
 
+    /**
+     * allowedNullValue为false时,作为条件列的值必须存在
+     * @throws Exception
+     */
+    @Test
+    public void fillUserRoleVOWithNotAllowedNullValue() throws Exception {
+        UserRoleVO vo = new UserRoleVO();
+        vo.setId(getUserRandomId());
+        //vo.setRoleId(getRoleRandomId());
+        vo.setRoleId2(getRoleRandomId());
+        vo.setUsername2(getUserRandomName());
+
+        List<UserRoleVO> results = Arrays.asList(vo);
+        try {
+            coreResolver.fill(results, false, true, true);
+            logger.info("results: {}", JsonUtils.toJson(results));
+        } catch (Exception e) {
+            if (e instanceof FillNotAllowedValueException) {
+                FillNotAllowedValueException valueException = (FillNotAllowedValueException) e;
+                if (valueException.getDataType() == UserRoleVO.class) {
+                    switch (valueException.getProperty()) {
+                        case "username2":
+                            logger.error("用户名不能为空");
+                            break;
+                        case "roleId":
+                        case "roleId2":
+                            logger.error("角色不能为空");
+                            break;
+
+                    }
+
+                }
+            }
+            e.printStackTrace();
+        }
+    }
+
+
+    /**
+     * checkValue为true时,条件值必须匹配到对应的结果
+     * @throws Exception
+     */
+    @Test
+    public void fillUserRoleVOWithCheckValue() throws Exception {
+        UserRoleVO vo = new UserRoleVO();
+        vo.setId(getUserRandomId());
+        //vo.setRoleId(getRoleRandomId());
+        vo.setRoleId2(3L);
+        vo.setUsername2(getUserRandomName());
+
+        List<UserRoleVO> results = Arrays.asList(vo);
+        coreResolver.fill(results, true, true, true);
+        logger.info("results: {}", JsonUtils.toJson(results));
+    }
+
+
+    /**
+     *
+     * @throws Exception
+     */
+    @Test
+    public void fillUserRoleVOWithClear() throws Exception {
+        UserRoleVO vo = new UserRoleVO();
+        vo.setId(getUserRandomId());
+        //vo.setRoleId(getRoleRandomId());
+        vo.setRoleId2(3L); //不存在的id值
+        vo.setRoleName2("测试不存在的角色2");
+        vo.setUsername2(getUserRandomName());
+
+        List<UserRoleVO> results = Arrays.asList(vo);
+        coreResolver.fill(results, true, false, true);
+
+        Assert.assertNull("roleId2应该为null", vo.getRoleId2());
+        Assert.assertNull("roleName2应该为null", vo.getRoleName2());
+        logger.info("results: {}", JsonUtils.toJson(results));
+    }
 
 
     @Test

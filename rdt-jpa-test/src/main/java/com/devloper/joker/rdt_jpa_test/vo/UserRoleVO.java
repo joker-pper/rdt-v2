@@ -53,4 +53,8 @@ public class UserRoleVO {
 
     @RdtField(property = "roleName", target = User.class, index = 1)
     private String userRoleName2;
+
+
+    @RdtField(property = "id", target = User.class, index = 1)
+    private String userId2;
 }

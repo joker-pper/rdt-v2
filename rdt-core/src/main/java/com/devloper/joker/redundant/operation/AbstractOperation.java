@@ -1,6 +1,6 @@
 package com.devloper.joker.redundant.operation;
 
-import com.devloper.joker.redundant.fill.FillKeyModel;
+import com.devloper.joker.redundant.fill.FillOneKeyModel;
 import com.devloper.joker.redundant.fill.FillRSModel;
 import com.devloper.joker.redundant.fill.RdtFillBuilder;
 import com.devloper.joker.redundant.model.*;
@@ -84,13 +84,7 @@ public abstract class AbstractOperation {
      * @return
      */
     protected <T> Map<Object, T> getKeyMap(Collection<T> data, String key) {
-        Map<Object, T> result = new LinkedHashMap<Object, T>(16);
-        if (data != null && !data.isEmpty()) {
-            for (T t : data) {
-                result.put(rdtResolver.getPropertyValue(t, key), t);
-            }
-        }
-        return result;
+        return rdtSupport.getKeyMap(data, key);
     }
 
 
@@ -555,13 +549,18 @@ public abstract class AbstractOperation {
 
 
 
-    protected <T> List<T> findByFillKeyModel(FillKeyModel fillKeyModel) {
+    protected <T> List<T> findByFillKeyModel(FillOneKeyModel fillOneKeyModel) {
         List<T> result = null;
-        /*if (fillKeyModel.getIsPrimaryKey()) {
+        /*if (fillOneKeyModel.getIsPrimaryKey()) {
             //均为id key时
-            result = findByIdIn(fillKeyModel.getEntityClass(), fillKeyModel.getKey(), fillKeyModel.getKeyValues());
+            result = findByIdIn(fillOneKeyModel.getEntityClass(), fillOneKeyModel.getKey(), fillOneKeyModel.getKeyValues());
         }*/
-        result = findByFillKeyModelExecute(fillKeyModel);
+
+        int keyValuesSize = fillOneKeyModel.getKeyValues().size();
+        if (keyValuesSize > 0) {
+            result = findByFillKeyModelExecute(fillOneKeyModel);
+        }
+
         if (result == null) {
             result = Collections.emptyList();
         }
@@ -570,73 +569,36 @@ public abstract class AbstractOperation {
 
     /**
      * 提供基于fillKeyModel查询相关数据的方法
-     * @param fillKeyModel
+     * @param fillOneKeyModel
      * @param <T>
      * @return
      */
-    protected abstract <T> List<T> findByFillKeyModelExecute(FillKeyModel fillKeyModel);
+    protected abstract <T> List<T> findByFillKeyModelExecute(FillOneKeyModel fillOneKeyModel);
 
 
     public void fill(Collection<?> collection) {
-        fill(collection, false, false, true);
+        fill(collection, true, false, false);
     }
 
     /**
      * 根据关系填充对应字段列
      *
      * @param collection
-     * @param withNullKeyValue
+     * @param allowedNullValue 是否允许条件列的值为空
      * @param checkValue       为true时对应条件值的个数必须等于所匹配的结果个数,反之抛出异常
      * @param clear            为true时会清除未匹配到数据的字段值
      */
-    public void fill(Collection<?> collection, boolean withNullKeyValue, boolean checkValue, boolean clear) {
+    public void fill(Collection<?> collection, boolean allowedNullValue, boolean checkValue, boolean clear) {
         FillRSModel fillRSModel = new FillRSModel();
         //处理数据关系
-        fillRelationshipHandle(fillRSModel, collection, withNullKeyValue, checkValue, clear);
-
-        Map<Class, List<FillKeyModel>> fillKeyModelListMap = fillRSModel.getFillKeyModelListMap();
-
+        fillRelationshipHandle(fillRSModel, collection, allowedNullValue, checkValue, clear);
+        Map<Class, List<FillOneKeyModel>> fillKeyModelListMap = fillRSModel.getFillKeyModelListMap();
         if (!fillKeyModelListMap.isEmpty()) {
             for (Class entityClass : fillKeyModelListMap.keySet()) {
-                List<FillKeyModel> fillKeyModelList = fillKeyModelListMap.get(entityClass);
-                for (FillKeyModel fillKeyModel : fillKeyModelList) {
-                    int keyValuesSize = fillKeyModel.getKeyValues().size();
-                    if (keyValuesSize == 0) {
-                        continue;
-                    }
-                    List<Object> entityList = findByFillKeyModel(fillKeyModel);
-
-                    if (checkValue) {
-                        //TODO
-                        //抛出异常类 其中包含当前class类型及其他数据
-                    }
-
-                    if (!entityList.isEmpty()) {
-                        //分别获取以key值为key的map数据, 并根据修改列信息赋值
-                        String key = fillKeyModel.getKey();
-                        Map<Object, Object> entityDataMap = getKeyMap(entityList, key);
-                        for (ModifyDescribe modifyDescribe : fillKeyModel.getDescribeKeyDataMap().keySet()) {
-                            Map<Object, Set<Object>> keyValueData = fillKeyModel.getDescribeKeyData(modifyDescribe);
-                            for (Object keyValue : keyValueData.keySet()) {
-                                Set<Object> modifyDataSet = keyValueData.get(keyValue);
-                                if (!modifyDataSet.isEmpty()) {
-                                    //获取当前值对应的数据
-                                    fillBuilder.setFillKeyData(entityDataMap, entityClass, key, keyValue, modifyDataSet, modifyDescribe);
-                                }
-                            }
-                        }
-
-                        for (ModifyRelyDescribe modifyDescribe : fillKeyModel.getRelyDescribeKeyDataMap().keySet()) {
-                            Map<Object, Set<Object>> keyValueData = fillKeyModel.getDescribeKeyData(modifyDescribe);
-                            for (Object keyValue : keyValueData.keySet()) {
-                                Set<Object> modifyDataSet = keyValueData.get(keyValue);
-                                if (!modifyDataSet.isEmpty()) {
-                                    //获取当前值对应的数据
-                                    fillBuilder.setFillKeyData(entityDataMap, entityClass, key, keyValue, modifyDataSet, modifyDescribe);
-                                }
-                            }
-                        }
-                    }
+                List<FillOneKeyModel> fillOneKeyModelList = fillKeyModelListMap.get(entityClass);
+                for (FillOneKeyModel fillOneKeyModel : fillOneKeyModelList) {
+                    List<Object> entityList = findByFillKeyModel(fillOneKeyModel);
+                    fillBuilder.setFillKeyData(fillOneKeyModel, entityClass, entityList, checkValue, clear);
                 }
             }
         }
@@ -653,8 +615,6 @@ public abstract class AbstractOperation {
     protected void fillRelationshipHandle(FillRSModel fillRSModel, Collection<?> collection, final boolean withNullKeyValue, final boolean checkValue, final boolean clear) {
         fillBuilder.fillRelationshipHandle(fillRSModel, collection, withNullKeyValue, checkValue, clear);
     }
-
-
 
 
 

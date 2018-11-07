@@ -8,17 +8,12 @@ import java.util.*;
  * 作为base class(即被引用的字段所处的实体类)多项key列的实体
  */
 
-public class FillManyKeyModel {
+public class FillManyKeyModel extends FillKeyModel {
 
     /**
      * 关于当前base class多组条件列的数据
      */
     private List<FillManyKeyDetail> manyKeyDetails = new ArrayList<FillManyKeyDetail>(16);
-
-    /**
-     * 当前base class
-     */
-    private Class entityClass;
 
 
     public List<FillManyKeyDetail> getManyKeyDetails() {
@@ -29,14 +24,6 @@ public class FillManyKeyModel {
         this.manyKeyDetails = manyKeyDetails;
     }
 
-    public Class getEntityClass() {
-        return entityClass;
-    }
-
-    public void setEntityClass(Class entityClass) {
-        this.entityClass = entityClass;
-    }
-
     public static void main(String[] args) {
 
         List<String> arrays = new ArrayList<String>();
@@ -44,7 +31,7 @@ public class FillManyKeyModel {
         arrays.add("2");
         List<String> arrays2 = Arrays.asList("1", "2");
 
-        Map<List, String> valueMap = new HashMap<List, String>(16);
+        Map<Object, String> valueMap = new HashMap<Object, String>(16);
         valueMap.put(arrays2, "2");
         List<String> arrays3 = Arrays.asList("1", "2", "3");
 
@@ -67,9 +54,12 @@ public class FillManyKeyModel {
         System.out.println(valueMap.get(vos1));
         System.out.println(valueMap.get(vos2));
 
+        Date date = new Date();
+        Date date1 = new Date(date.getTime());
 
-        System.out.println((new IllegalArgumentException() instanceof RuntimeException));
-
+        valueMap.put(date, "23331111");
+        System.out.println(valueMap.get(date1));
+        System.out.println(valueMap.get(date));
 
     }
 

@@ -6,10 +6,8 @@ import com.devloper.joker.redundant.resolver.RdtResolver;
 import com.devloper.joker.redundant.support.Prototype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
 
 public class RdtSupport {
 
@@ -60,6 +58,24 @@ public class RdtSupport {
         ClassModel classModel = getClassModel(entityClass);
         if (classModel == null) throw new IllegalArgumentException("not found classModel with type " + entityClass);
         return classModel.getPrimaryId();
+    }
+
+
+    /**
+     * 获取以key值为key的map数据
+     * @param data
+     * @param key
+     * @param <T>
+     * @return
+     */
+    public <T> Map<Object, T> getKeyMap(Collection<T> data, String key) {
+        Map<Object, T> result = new LinkedHashMap<Object, T>(16);
+        if (data != null && !data.isEmpty()) {
+            for (T t : data) {
+                result.put(rdtResolver.getPropertyValue(t, key), t);
+            }
+        }
+        return result;
     }
 
     /**

@@ -1,8 +1,6 @@
 package com.devloper.joker.rdt_jpa_test.rdt;
 
 import com.devloper.joker.rdt_jpa_test.core.RepositoryUtils;
-import com.devloper.joker.rdt_jpa_test.domain.User;
-import com.devloper.joker.redundant.fill.FillKeyModel;
 import com.devloper.joker.redundant.model.*;
 import com.devloper.joker.redundant.operation.AbstractJpaOperation;
 import org.springframework.data.repository.CrudRepository;

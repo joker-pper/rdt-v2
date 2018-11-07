@@ -10,14 +10,14 @@ import java.util.Map;
 
 public class FillRSModel {
 
-    private Map<Class, List<FillKeyModel>> fillKeyModelListMap = new HashMap<Class, List<FillKeyModel>>(16);
+    private Map<Class, List<FillOneKeyModel>> fillKeyModelListMap = new HashMap<Class, List<FillOneKeyModel>>(16);
     private Map<Class, FillManyKeyModel> fillManyKeyModelMap = new HashMap<Class, FillManyKeyModel>(16);
 
-    public Map<Class, List<FillKeyModel>> getFillKeyModelListMap() {
+    public Map<Class, List<FillOneKeyModel>> getFillKeyModelListMap() {
         return fillKeyModelListMap;
     }
 
-    public void setFillKeyModelListMap(Map<Class, List<FillKeyModel>> fillKeyModelListMap) {
+    public void setFillKeyModelListMap(Map<Class, List<FillOneKeyModel>> fillKeyModelListMap) {
         this.fillKeyModelListMap = fillKeyModelListMap;
     }
 
@@ -38,32 +38,32 @@ public class FillRSModel {
      * @param entityFillKeyVoListMap
      * @return
      */
-    public FillKeyModel getFillKeyModel(Class entityClass, ModifyCondition modifyCondition, Map<Class, List<FillKeyModel>> entityFillKeyVoListMap) {
+    public FillOneKeyModel getFillKeyModel(Class entityClass, ModifyCondition modifyCondition, Map<Class, List<FillOneKeyModel>> entityFillKeyVoListMap) {
         Column targetColumn = modifyCondition.getTargetColumn();
-        List<FillKeyModel> fillKeyModelList = entityFillKeyVoListMap.get(entityClass);
+        List<FillOneKeyModel> fillOneKeyModelList = entityFillKeyVoListMap.get(entityClass);
 
-        if (fillKeyModelList == null) {
-            fillKeyModelList = new ArrayList<FillKeyModel>(16);
-            entityFillKeyVoListMap.put(entityClass, fillKeyModelList);
+        if (fillOneKeyModelList == null) {
+            fillOneKeyModelList = new ArrayList<FillOneKeyModel>(16);
+            entityFillKeyVoListMap.put(entityClass, fillOneKeyModelList);
         }
 
-        FillKeyModel fillKeyModel = null;
+        FillOneKeyModel fillOneKeyModel = null;
 
         String targetProperty = targetColumn.getProperty();
-        for (FillKeyModel vo : fillKeyModelList) {
+        for (FillOneKeyModel vo : fillOneKeyModelList) {
             if (vo.getKey().equals(targetProperty)) {
-                fillKeyModel = vo;
+                fillOneKeyModel = vo;
                 break;
             }
         }
 
-        if (fillKeyModel == null) {
-            fillKeyModel = new FillKeyModel();
-            fillKeyModel.setKey(targetProperty);
-            fillKeyModel.setEntityClass(entityClass);
-            fillKeyModel.setIsPrimaryKey(targetColumn.getIsPrimaryId());
-            fillKeyModelList.add(fillKeyModel);
+        if (fillOneKeyModel == null) {
+            fillOneKeyModel = new FillOneKeyModel();
+            fillOneKeyModel.setKey(targetProperty);
+            fillOneKeyModel.setEntityClass(entityClass);
+            fillOneKeyModel.setIsPrimaryKey(targetColumn.getIsPrimaryId());
+            fillOneKeyModelList.add(fillOneKeyModel);
         }
-        return fillKeyModel;
+        return fillOneKeyModel;
     }
 }

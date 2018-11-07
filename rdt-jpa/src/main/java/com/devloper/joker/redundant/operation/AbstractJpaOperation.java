@@ -1,6 +1,6 @@
 package com.devloper.joker.redundant.operation;
 
-import com.devloper.joker.redundant.fill.FillKeyModel;
+import com.devloper.joker.redundant.fill.FillOneKeyModel;
 import com.devloper.joker.redundant.model.*;
 import org.springframework.data.repository.CrudRepository;
 
@@ -148,17 +148,17 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
     }
 
     @Override
-    protected <T> List<T> findByFillKeyModelExecute(FillKeyModel fillKeyModel) {
-        Class<T> entityClass = fillKeyModel.getEntityClass();
+    protected <T> List<T> findByFillKeyModelExecute(FillOneKeyModel fillOneKeyModel) {
+        Class<T> entityClass = fillOneKeyModel.getEntityClass();
         CriteriaPredicateBuilder criteriaBuilder = CriteriaPredicateBuilder.of(entityManager);
         try {
             CriteriaQuery criteriaQuery = criteriaBuilder.createQuery(entityClass);
             Root root = criteriaQuery.from(entityClass);
 
-            Set<Column> columnSet = fillKeyModel.getColumnValues();
+            Set<Column> columnSet = fillOneKeyModel.getColumnValues();
 
             List<Selection<?>> selectionList = new ArrayList<Selection<?>>(16);
-            selectionList.add(root.get(fillKeyModel.getKey()));
+            selectionList.add(root.get(fillOneKeyModel.getKey()));
 
             for (Column column : columnSet) {
                 selectionList.add(root.get(column.getProperty()));
@@ -167,7 +167,7 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
             criteriaQuery.select(criteriaBuilder.getCriteriaBuilder().construct(Object[].class, selectionList.toArray(new Selection[selectionList.size()])));
 
             List<Predicate> predicateList = new ArrayList<Predicate>();
-            predicateList.add(criteriaBuilder.criteriaIn(root.get(fillKeyModel.getKey()), fillKeyModel.getKeyValues()));
+            predicateList.add(criteriaBuilder.criteriaIn(root.get(fillOneKeyModel.getKey()), fillOneKeyModel.getKeyValues()));
 
             criteriaQuery.where(predicateList.toArray(new Predicate[predicateList.size()]));
             List<Object[]> list = entityManager.createQuery(criteriaQuery).getResultList();
@@ -175,7 +175,7 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
             for (Object[] objects : list) {
                 T data = entityClass.newInstance();
                 int i = 0;
-                rdtResolver.setPropertyValue(data, fillKeyModel.getKey(), objects[i]);
+                rdtResolver.setPropertyValue(data, fillOneKeyModel.getKey(), objects[i]);
                 for (Column column : columnSet) {
                     i++;
                     String property = column.getProperty();
@@ -193,7 +193,7 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
         Root root = criteriaQuery.from(entityClass);
 
         List<Predicate> predicateList = new ArrayList<Predicate>(16);
-        predicateList.add(criteriaBuilder.criteriaIn(root.get(fillKeyModel.getKey()), fillKeyModel.getKeyValues()));
+        predicateList.add(criteriaBuilder.criteriaIn(root.get(fillOneKeyModel.getKey()), fillOneKeyModel.getKeyValues()));
 
         criteriaQuery.where(predicateList.toArray(new Predicate[predicateList.size()]));
         return entityManager.createQuery(criteriaQuery).getResultList();
