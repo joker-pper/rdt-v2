@@ -101,6 +101,7 @@ public class RdtSupport {
         ModifyDescribe temp = null;
         List<ModifyColumn> columnList = new ArrayList<ModifyColumn>();  //当前值发生变化所要修改的列
         for (ModifyColumn modifyColumn : modifyDescribe.getColumnList()) {
+            //如果包含列时加入
             if (changedPropertys.contains(modifyColumn.getTargetColumn().getProperty())) {
                 columnList.add(modifyColumn);
             }

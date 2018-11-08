@@ -804,8 +804,11 @@ public class RdtPropertiesBuilder {
         modifyColumn.setColumn(column);
         modifyColumn.setTargetColumn(targetColumn);
 
-        //设置target class被使用的字段
-        getClassModel(PojoUtils.getFieldLocalityClass(modifyColumn.getTargetColumn().getField())).getUsedPropertySet().add(modifyColumn.getTargetColumn().getProperty());
+        if (!column.getIsTransient()) {
+            //设置target class被使用的字段
+            ClassModel targetModel = getClassModel(PojoUtils.getFieldLocalityClass(targetColumn.getField()));
+            targetModel.addUsedProperty(targetColumn.getProperty());
+        }
         return modifyColumn;
     }
 

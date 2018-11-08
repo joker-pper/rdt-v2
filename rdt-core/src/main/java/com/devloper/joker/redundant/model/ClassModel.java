@@ -31,7 +31,7 @@ public class ClassModel {
     private Map<String, Map<Column, Map<Integer, RdtRelyTargetColumnModel>>> propertyTargetRelyMap = new LinkedHashMap<String, Map<Column, Map<Integer, RdtRelyTargetColumnModel>>>(16);
     private Map<String, Map<Column, Map<Integer, RdtRelyTargetColumnModel>>> propertyTargetConditionRelyMap = new LinkedHashMap<String, Map<Column, Map<Integer, RdtRelyTargetColumnModel>>>(16);
 
-    private Set<String> usedPropertySet = new HashSet<String>(16);  //被使用的冗余字段
+    private Set<String> usedPropertySet = new HashSet<String>(16);  //被其他持久化使用(所保存)的冗余字段
 
     //当前类数据修改后所要修改的基本类列表(该类属性做为直接冗余字段的相关基本类,即target class为当前类的类列表)
     private Set<Class> changedRelaxedClassSet = new LinkedHashSet<Class>(16);
@@ -48,12 +48,12 @@ public class ClassModel {
     private Set<Class> targetRelyModifyClassSet = new LinkedHashSet<Class>(16);
 
     /**
-     * 当前类拥有的关联对象列表,依赖于注解@RdtOne,@RdtMany用于文档型
+     * 当前类拥有的关联对象列表,依赖于注解@RdtOne,@RdtMany(用于文档型更新/子对象填充)
      */
     private List<ComplexModel> complexModelList = new ArrayList<ComplexModel>(16);
 
     /**
-     * target class为当前类的class非base类集合
+     * 其他非持久化类中字段target class为当前类的class集合
      */
     private Set<Class> changedComplexClassSet = new LinkedHashSet<Class>(16);
 
@@ -229,6 +229,13 @@ public class ClassModel {
         return targetClassModifyDescribeMap.get(targetClass);
     }
 
+    /**
+     * 添加被引用的字段(非)
+     * @param property
+     */
+    public void addUsedProperty(String property) {
+        usedPropertySet.add(property);
+    }
 
 
 }
