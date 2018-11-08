@@ -151,14 +151,18 @@ public class RdtSupport {
         }
 
         if (!columnList.isEmpty()) {
+
             temp = new ModifyRelyDescribe();
-            temp.setRelyColumn(describe.getRelyColumn());
             temp.setIndex(describe.getIndex());
             temp.setConditionList(describe.getConditionList());
+            temp.setColumnList(columnList);
+
+            temp.setGroup(describe.getGroup());
             temp.setValType(describe.getValType());
+            temp.setRdtRelyModel(describe.getRdtRelyModel());
+            temp.setRelyColumn(describe.getRelyColumn());
             temp.setValList(describe.getValList());
             temp.setUnknowNotExistValList(describe.getUnknowNotExistValList());
-            temp.setColumnList(columnList);
         }
         return getDeepCloneModifyRelyDescribe(temp);
     }

@@ -230,7 +230,7 @@ public class ClassModel {
     }
 
     /**
-     * 添加被引用的字段(非)
+     * 添加被引用的字段
      * @param property
      */
     public void addUsedProperty(String property) {
