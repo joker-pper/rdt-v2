@@ -33,7 +33,7 @@ public class RdtFillBuilder {
         if (checkValue) {
             //查找的结果值必须与key value的个数相同
             if (keyValuesSize != entityDataMap.size()) {
-                throw new IllegalArgumentException(fillOneKeyModel.getEntityClass().getName() + " can't find all data with property " + fillOneKeyModel.getKey() + " value in " + rdtResolver.toJson(fillOneKeyModel.getKeyValues()));
+                throw new FillNotAllowedDataException(fillOneKeyModel, entityClass, fillOneKeyModel.getEntityClass().getName() + " can't find all data with property " + fillOneKeyModel.getKey() + " value in " + rdtResolver.toJson(fillOneKeyModel.getKeyValues()));
             }
         }
 
@@ -123,11 +123,7 @@ public class RdtFillBuilder {
                 if (logger.isDebugEnabled()) {
                     waitClassModel = support.getClassModel(waitFillData.getClass());
                     String primaryId = waitClassModel.getPrimaryId();
-                    if (StringUtils.isNotEmpty(primaryId)) {
-                        text = "[" + primaryId + "=" + rdtResolver.getPropertyValue(waitFillData, primaryId) + "]";
-                    } else {
-                        text = "";
-                    }
+                    text = StringUtils.isNotEmpty(primaryId) ? getConditionMark(primaryId, rdtResolver.getPropertyValue(waitFillData, primaryId)) : "";
                 }
                 boolean clearMark = entityData == null;
                 if (clearMark) {
@@ -137,22 +133,25 @@ public class RdtFillBuilder {
                         String property = column.getProperty();
                         Class propertyClass = column.getPropertyClass();
 
-                        Object value = null;
-                        try {
-                            //转换值
-                            value = rdtResolver.cast(null, propertyClass);
-                        } catch (Exception e) {
-                            logger.warn("rdt cast val error", e);
-                        }
+                        Object value = rdtResolver.getPropertyValue(waitFillData, property);
 
-                        //设置当前填充列字段的值
-                        rdtResolver.setPropertyValue(waitFillData, property, value);
+                        if (value != null) {
+                            try {
+                                //转换值
+                                value = rdtResolver.cast(null, propertyClass);
+                            } catch (Exception e) {
+                                logger.warn("rdt cast val error", e);
+                            }
 
-                        if (relyColumn != null) {
-                            String relyProperty = relyColumn.getProperty();
-                            logger.info("rdt fill clear condition with rely property {}({}-[{}]) about {}{} set [{}({})={}] from [{}{}]", relyProperty, relyColumn.getPropertyClass().getName(), rdtResolver.getPropertyValue(waitFillData, relyProperty), waitClassModel.getClassName(), text, property, propertyClass.getName(), value, entityClass.getName(), conditionMark);
-                        } else {
-                            logger.info("rdt fill clear condition about {}{} set [{}({})={}] from [{}{}]", waitClassModel.getClassName(), text, property, propertyClass.getName(), value, entityClass.getName(), conditionMark);
+                            //设置当前填充列字段的值
+                            rdtResolver.setPropertyValue(waitFillData, property, value);
+
+                            if (relyColumn != null) {
+                                String relyProperty = relyColumn.getProperty();
+                                logger.info("rdt fill clear condition with rely property {}({}-[{}]) about {}{} set [{}({})={}] from [{}{}]", relyProperty, relyColumn.getPropertyClass().getName(), rdtResolver.getPropertyValue(waitFillData, relyProperty), waitClassModel.getClassName(), text, property, propertyClass.getName(), value, entityClass.getName(), conditionMark);
+                            } else {
+                                logger.info("rdt fill clear condition about {}{} set [{}({})={}] from [{}{}]", waitClassModel.getClassName(), text, property, propertyClass.getName(), value, entityClass.getName(), conditionMark);
+                            }
                         }
                     }
                 }
@@ -182,7 +181,6 @@ public class RdtFillBuilder {
 
                     //设置当前填充列字段的值
                     rdtResolver.setPropertyValue(waitFillData, property, value);
-
 
                     if (relyColumn != null) {
                         String relyProperty = relyColumn.getProperty();
@@ -380,8 +378,6 @@ public class RdtFillBuilder {
      */
     public void fillRelationshipHandle(final FillRSModel fillRSModel, Collection<?> collection, final boolean allowedNullValue, final boolean checkValue, final boolean clear) {
         if (collection != null && !collection.isEmpty()) {
-            final Map<Class, List<FillOneKeyModel>> fillKeyModelListMap = fillRSModel.getFillKeyModelListMap();
-
             for (final Object data : collection) {
                 if (data != null) {
                     //获取当前数据的类型
@@ -421,46 +417,40 @@ public class RdtFillBuilder {
 
                     for (final Class entityClass : dataClassModel.getTargetRelyModifyClassSet()) {
                         ClassModel entityClassModel = support.getClassModel(entityClass);
-
-                        try {
-                            support.doModifyRelyDescribeHandle(entityClassModel, dataClassModel, new RdtSupport.ModifyRelyDescribeCallBack() {
-                                @Override
-                                public void execute(ClassModel entityClassModel, ClassModel dataClassModel, Column relyColumn, int group, ModifyRelyDescribe describe) {
-                                    List<ModifyCondition> conditionList = describe.getConditionList();
-                                    List<ModifyColumn> columnList = describe.getColumnList();
-
-                                    if (!columnList.isEmpty()) {
-                                        int conditionSize = conditionList.size();
-                                        if (conditionSize == 0) {
-                                            logger.warn("rdt fill relationship handle continued : {} with rely property {} target about [{}(group={}&index={})] has no condition.", dataClassModel.getClassName(), relyColumn.getProperty(), entityClassModel.getClassName(), describe.getGroup(), describe.getIndex());
-                                        } else {
-                                            //获取当前依赖字段的值
-                                            Object relyColumnValue = rdtResolver.getPropertyValue(data, relyColumn.getProperty());
-                                            if (isMatchedType(describe, relyColumnValue)) {
-                                                if (conditionSize == 1) {
-                                                    initOneKeyModelData(fillRSModel, entityClassModel, dataClassModel, describe, data, allowedNullValue);
-                                                } else {
-                                                    initManyKeyModelData(fillRSModel, entityClassModel, dataClassModel, describe, data, allowedNullValue);
-                                                }
+                        support.doModifyRelyDescribeHandle(entityClassModel, dataClassModel, new RdtSupport.ModifyRelyDescribeCallBack() {
+                            @Override
+                            public void execute(ClassModel entityClassModel, ClassModel dataClassModel, Column relyColumn, int group, ModifyRelyDescribe describe) {
+                                List<ModifyCondition> conditionList = describe.getConditionList();
+                                List<ModifyColumn> columnList = describe.getColumnList();
+                                if (!columnList.isEmpty()) {
+                                    int conditionSize = conditionList.size();
+                                    if (conditionSize == 0) {
+                                        logger.warn("rdt fill relationship handle continued : {} with rely property {} target about [{}(group={}&index={})] has no condition.", dataClassModel.getClassName(), relyColumn.getProperty(), entityClassModel.getClassName(), describe.getGroup(), describe.getIndex());
+                                    } else {
+                                        //获取当前依赖字段的值
+                                        Object relyColumnValue = rdtResolver.getPropertyValue(data, relyColumn.getProperty());
+                                        if (isMatchedType(describe, relyColumnValue)) {
+                                            if (conditionSize == 1) {
+                                                initOneKeyModelData(fillRSModel, entityClassModel, dataClassModel, describe, data, allowedNullValue);
                                             } else {
-                                                RdtRelyModel relyModel = describe.getRdtRelyModel();
-                                                boolean isAllowed = relyModel.isValueAllowed(relyColumnValue);
-                                                if (!isAllowed) {
-                                                    logger.warn("rdt fill relationship handle check macth type error : " + dataClassModel.getClassName() + " has no rely property " + relyColumn.getProperty() + " value " + relyColumnValue + " to appoint type : [{}(group={}&index={})], and current type values is {}", entityClassModel.getClassName(), describe.getGroup(), describe.getIndex(), relyModel.getExplicitValueList());
-                                                    if (checkValue) {
-                                                        //验证数据合法性
-                                                        throw new IllegalArgumentException(dataClassModel.getClassName() + " has no rely property " + relyColumn.getProperty() + " value " + relyColumnValue + " to appoint type : " + entityClassModel.getClassName());
-                                                    }
+                                                initManyKeyModelData(fillRSModel, entityClassModel, dataClassModel, describe, data, allowedNullValue);
+                                            }
+                                        } else {
+                                            RdtRelyModel relyModel = describe.getRdtRelyModel();
+                                            boolean isAllowed = relyModel.isValueAllowed(relyColumnValue);
+                                            if (!isAllowed) {
+                                                logger.warn("rdt fill relationship handle check macth type error : " + dataClassModel.getClassName() + " has no rely property " + relyColumn.getProperty() + " value " + relyColumnValue + " to appoint type : [{}(group={}&index={})], and current type values is {}", entityClassModel.getClassName(), describe.getGroup(), describe.getIndex(), relyModel.getExplicitValueList());
+                                                if (checkValue) {
+                                                    //验证数据合法性
+                                                    throw new FillNotAllowedValueException(null, dataClass, data, describe, relyColumn.getProperty(), dataClassModel.getClassName() + " has no rely property " + relyColumn.getProperty() + " value " + relyColumnValue + " to appoint type : " + entityClassModel.getClassName());
                                                 }
                                             }
                                         }
                                     }
-
                                 }
-                            });
-                        } catch (Exception e) {
-                            throw new IllegalStateException(e);
-                        }
+
+                            }
+                        });
                     }
 
                     //处理当前数据中的存在的关联字段的数据

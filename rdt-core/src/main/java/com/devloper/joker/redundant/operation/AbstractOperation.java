@@ -644,7 +644,7 @@ public abstract class AbstractOperation {
                             }
 
                             if (checkValue && !isAllowed) {
-                                throw new IllegalArgumentException(entityClass.getName() + " can't find one data with " + fillBuilder.getConditionMark(conditionColumnValues, groupValue));
+                                throw new FillNotAllowedDataException(fillManyKeyModel, entityClass, entityClass.getName() + " can't find one data with " + fillBuilder.getConditionMark(conditionColumnValues, groupValue));
                             }
 
                         }

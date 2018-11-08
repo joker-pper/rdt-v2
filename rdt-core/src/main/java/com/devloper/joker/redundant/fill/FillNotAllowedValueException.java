@@ -2,6 +2,9 @@ package com.devloper.joker.redundant.fill;
 
 import com.devloper.joker.redundant.model.ModifyDescribe;
 
+/**
+ * 不允许参数值时的异常
+ */
 public class FillNotAllowedValueException extends IllegalArgumentException {
 
     private FillKeyModel fillKeyModel;
@@ -17,7 +20,6 @@ public class FillNotAllowedValueException extends IllegalArgumentException {
     public FillNotAllowedValueException() {
         super();
     }
-
 
     public FillNotAllowedValueException(String s) {
         super(s);
