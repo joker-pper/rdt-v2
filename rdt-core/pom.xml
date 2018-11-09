@@ -11,16 +11,11 @@
 
     <artifactId>rdt-core</artifactId>
 
-    <properties>
-        <slf4j.version>1.7.25</slf4j.version>
-        <rdt.core.version>1.0</rdt.core.version>
-    </properties>
-
     <dependencies>
         <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-            <scope>compile</scope>
+            <groupId>com.github.joker-pper</groupId>
+            <artifactId>rdt-annotation</artifactId>
+            <version>${rdt.annotation.version}</version>
         </dependency>
 
         <dependency>
