@@ -78,6 +78,36 @@ public class RdtSupport {
         return result;
     }
 
+
+
+    /**
+     * 依赖值是否满足匹配条件
+     *
+     * @param describe
+     * @param relyColumnValue
+     * @return
+     */
+    public boolean isMatchedType(ModifyRelyDescribe describe, Object relyColumnValue) {
+        boolean result = false;
+        List<Object> unknowNotExistValList = describe.getUnknowNotExistValList();
+        List<Object> valList = describe.getValList();
+        if (!valList.isEmpty()) {
+            result = valList.contains(relyColumnValue);
+            if (!result && !unknowNotExistValList.isEmpty()) {
+                //未包含valList判断是否在非unknowNotExistValList中
+                result = !unknowNotExistValList.contains(relyColumnValue);
+            }
+
+        } else {
+            if (!unknowNotExistValList.isEmpty()) {
+                //满足非unknowNotExistValList时
+                result = !unknowNotExistValList.contains(relyColumnValue);
+            }
+        }
+        return result;
+    }
+
+
     /**
      * 获取classModel中关于entityClass的修改信息
      * @param classModel

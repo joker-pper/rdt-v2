@@ -429,7 +429,7 @@ public class RdtFillBuilder {
                                     } else {
                                         //获取当前依赖字段的值
                                         Object relyColumnValue = rdtResolver.getPropertyValue(data, relyColumn.getProperty());
-                                        if (isMatchedType(describe, relyColumnValue)) {
+                                        if (support.isMatchedType(describe, relyColumnValue)) {
                                             if (conditionSize == 1) {
                                                 initOneKeyModelData(fillRSModel, entityClassModel, dataClassModel, describe, data, allowedNullValue);
                                             } else {
@@ -478,35 +478,5 @@ public class RdtFillBuilder {
         }
     }
 
-
-    /**
-     * 依赖值是否满足匹配条件
-     *
-     * @param describe
-     * @param relyColumnValue
-     * @return
-     */
-    public boolean isMatchedType(ModifyRelyDescribe describe, Object relyColumnValue) {
-        boolean result = false;
-        List<Object> unknowNotExistValList = describe.getUnknowNotExistValList();
-        List<Object> valList = describe.getValList();
-        if (!valList.isEmpty()) {
-            result = valList.contains(relyColumnValue);
-            if (unknowNotExistValList.isEmpty()) {
-                //valList 包含当前data的依赖字段值
-            } else {
-                //满足在valList 或 非unknowNotExistValList时
-                if (!result) {
-                    result = !unknowNotExistValList.contains(relyColumnValue);
-                }
-            }
-        } else {
-            if (!unknowNotExistValList.isEmpty()) {
-                //满足非unknowNotExistValList时
-                result = !unknowNotExistValList.contains(relyColumnValue);
-            }
-        }
-        return result;
-    }
 
 }

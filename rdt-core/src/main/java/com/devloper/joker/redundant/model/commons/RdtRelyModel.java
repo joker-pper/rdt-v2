@@ -11,8 +11,12 @@ public class RdtRelyModel implements Serializable {
     private Map<Class, List<Object>> targetClassValueMap = new LinkedHashMap<Class, List<Object>>();//target class所需要对应的值
     private Class valType;
     private Class nullType;//存在时最后添加到targetClassValueMap中
-    private Class unknowType;//不为null时不处于unknowNotExistValues中所对应的target class
-    private List<Object> unknowNotExistValues = new ArrayList<Object>();//记录的为非unknowType类型时已存在的值
+    private Class unknowType;
+
+    /**
+     * 除unknowType外所存在的类型值
+     */
+    private List<Object> unknowNotExistValues = new ArrayList<Object>();
 
     /**
      * 当前字段所拥有的指定值列表

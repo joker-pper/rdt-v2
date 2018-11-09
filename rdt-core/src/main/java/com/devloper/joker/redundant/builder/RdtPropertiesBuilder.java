@@ -540,10 +540,16 @@ public class RdtPropertiesBuilder {
         if (unknowType != null) {
             loadExtraClass(unknowType);
             List<Object> unknowNotExistValues = rdtRelyModel.getUnknowNotExistValues();
+            //先存放已存在的全部类型值
             for (List<Object> values : targetClassValueMap.values()) {
                 unknowNotExistValues.addAll(values);
             }
-            unknowNotExistValues.removeAll(rdtRelyModel.getTargetClassValueMap().get(unknowType));
+            //获取unknowType所对应的全部值
+            List<Object> unknowTypeValList = rdtRelyModel.getTargetClassValueMap().get(unknowType);
+            if (unknowTypeValList != null && !unknowTypeValList.isEmpty()) {
+                //只保留除unknowType外所存在的类型值
+                unknowNotExistValues.removeAll(unknowTypeValList);
+            }
         }
 
         rdtRelyModel.setValType(valType);

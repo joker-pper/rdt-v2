@@ -488,21 +488,10 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
                             boolean flag = true;  //当前数据是否满足要求
 
                             if (describe != null) {  //存在依赖时
-                                List<Object> unknowNotExistValList = describe.getUnknowNotExistValList();
-                                List<Object> valList = describe.getValList();
-
                                 String relyProperty = relyColumn.getProperty();
                                 Object relyPropertyVal = rdtResolver.getPropertyValue(result, relyProperty);
 
-                                if (!valList.isEmpty()) {
-                                    if (unknowNotExistValList.isEmpty()) {
-                                        flag = valList.contains(relyPropertyVal);
-                                    } else { //满足在valList 或 非unknowNotExistValList时
-                                        flag = valList.contains(relyPropertyVal) || !unknowNotExistValList.contains(relyProperty);
-                                    }
-                                } else {
-                                    if (!unknowNotExistValList.isEmpty()) flag = !unknowNotExistValList.contains(relyProperty);
-                                }
+                                flag = rdtSupport.isMatchedType(describe, relyPropertyVal);
                             }
 
                             if (flag) {

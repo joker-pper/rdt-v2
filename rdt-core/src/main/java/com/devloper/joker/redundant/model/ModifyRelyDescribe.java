@@ -16,9 +16,18 @@ public class ModifyRelyDescribe extends ModifyDescribe {
     private RdtRelyModel rdtRelyModel;
 
     private Class valType;//值所对应的class,比如依赖字段为枚举类时,该值可能为int.class/String.class
-    private List<Object> valList = new ArrayList<Object>();//target class所要依赖的值
 
-    private List<Object> unknowNotExistValList = new ArrayList<Object>();//非这些值时为target class
+    /**
+     *
+     * 为target class时依赖字段所处已存在的值
+     *
+     */
+    private List<Object> valList = new ArrayList<Object>();
+
+    /**
+     * 依赖字段未处于这些值时为target class(size > 1)
+     */
+    private List<Object> unknowNotExistValList = new ArrayList<Object>();
 
     public int getGroup() {
         return group;

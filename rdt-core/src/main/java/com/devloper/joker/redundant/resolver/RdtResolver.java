@@ -17,7 +17,7 @@ import java.util.*;
 
 public abstract class RdtResolver {
 
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
+    protected final Logger logger = LoggerFactory.getLogger(RdtResolver.class);
 
     private List<Class> baseEntityAnnotationClassList = null;
     private List<Class> primaryIdAnnotationClassList = null;

@@ -24,7 +24,7 @@ logging:
   level:
     root: INFO
     #org.springframework: debug
-    com.devloper.joker: debug
+    com.devloper.joker.redundant: debug
 
 server:
   tomcat.uri-encoding: UTF-8
