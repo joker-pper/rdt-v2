@@ -11,7 +11,7 @@ import java.util.*;
 
 public abstract class AbstractOperation {
 
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
+    protected final Logger logger = LoggerFactory.getLogger(AbstractOperation.class);
 
     protected RdtProperties properties;
 

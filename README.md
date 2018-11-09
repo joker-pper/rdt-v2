@@ -4,13 +4,14 @@
 
 
 注:
-    
+
 	配置的关于字段的实体,仅支持在field上读取
-    基于条件注解和依赖字段注解,标识对应类中唯一数据
+	rdt-core只是对数据关系进行了维护,数据层操作需要根据具体情况实现,可参考默认提供的实现类
+	基于方法可覆盖的理念,大多数方法均可被覆盖重写,以便提供更高性能的支持
+    基于条件注解和依赖字段注解,通过条件标识对应持久化类中唯一数据
+    若当前持久化类中引用的其他持久类的字段(冗余)无需持久化,需要指定为transient(不用更新),在RdtResolver中设置对应的注解即可
 
 使用配置:
-    
-	
 	
 	
 	//属性配置类
@@ -122,7 +123,9 @@ operation 方法:
     @RdtRely ---- 用于根据字段类型值指定所对应的持久化类
     属性:
        
-       value(KeyTarget[]);  必须指定,其他注解依赖于class顺序作为相对应持久化类的字段值 e.g {@KeyTarget(value = {"用户"}, target = User.class), @KeyTarget(value = "文章", target = Article.class)}
+       value(KeyTarget[]);  必须指定,其他注解依赖于class顺序作为相对应持久化类的字段值 
+                            e.g {@KeyTarget(value = {"用户"}, target = User.class), 
+                                @KeyTarget(value = "文章", target = Article.class)}
        nullType(class) 为空值时所对应的class
        unknowType(class) 未找到对应值时使用的class
        group(int) 默认值为0,该属性的第几组依赖配置描述,该属性可能被不同的字段所依赖,其值可能代表不同的含义,即可能存在多组

@@ -3,12 +3,13 @@ package com.devloper.joker.redundant.fill;
 import com.devloper.joker.redundant.model.Column;
 import com.devloper.joker.redundant.model.ModifyCondition;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class FillRSModel {
+public class FillRSModel implements Serializable {
 
     private Map<Class, List<FillOneKeyModel>> fillKeyModelListMap = new HashMap<Class, List<FillOneKeyModel>>(16);
     private Map<Class, FillManyKeyModel> fillManyKeyModelMap = new HashMap<Class, FillManyKeyModel>(16);

@@ -1,11 +1,12 @@
 package com.devloper.joker.redundant.model.commons;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
  * @RdtRely所解析的模型
  */
-public class RdtRelyModel {
+public class RdtRelyModel implements Serializable {
     private List<Class> keyTargetClassList = new ArrayList<Class>();//多个KeyTarget注解顺序的target class
     private Map<Class, List<Object>> targetClassValueMap = new LinkedHashMap<Class, List<Object>>();//target class所需要对应的值
     private Class valType;

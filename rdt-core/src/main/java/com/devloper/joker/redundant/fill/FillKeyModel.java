@@ -1,6 +1,8 @@
 package com.devloper.joker.redundant.fill;
 
-public class FillKeyModel {
+import java.io.Serializable;
+
+public class FillKeyModel implements Serializable {
 
     private Class entityClass;
 

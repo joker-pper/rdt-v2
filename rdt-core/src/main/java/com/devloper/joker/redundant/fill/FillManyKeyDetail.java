@@ -4,9 +4,10 @@ import com.devloper.joker.redundant.model.Column;
 import com.devloper.joker.redundant.model.ModifyDescribe;
 import com.devloper.joker.redundant.model.ModifyRelyDescribe;
 
+import java.io.Serializable;
 import java.util.*;
 
-public class FillManyKeyDetail {
+public class FillManyKeyDetail implements Serializable {
     /**
      * 条件列
      */
