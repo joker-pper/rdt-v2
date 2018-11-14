@@ -33,7 +33,7 @@ rdt-jpa及rdt-spring-mongodb为已提供的数据层操作实现,可作为具体
 
 > 注解介绍: [详情](https://github.com/joker-pper/rdt-v2/wiki/Rdt%E6%B3%A8%E8%A7%A3%E4%BB%8B%E7%BB%8D)
 
-> api介绍 [详情](https://github.com/joker-pper/rdt-v2/blob/master/rdt-core/src/main/java/com/devloper/joker/redundant/operation/RdtOperation.java)
+> api介绍: [详情](https://github.com/joker-pper/rdt-v2/blob/master/rdt-core/src/main/java/com/devloper/joker/redundant/operation/RdtOperation.java)
 
 
 >使用配置:
