@@ -43,7 +43,7 @@ public interface RdtOperation {
 
 
     /**
-     * 获取当前entity class的 id
+     * 获取当前entity class的 id字段名称
      * @param entityClass
      * @return
      */
