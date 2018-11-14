@@ -131,31 +131,31 @@ public class DataTests extends ApplicationTests {
         if (userOptional.isPresent()) {
             User user = userOptional.get();
             user.setUserName("joker" + "_" + "yyc(power by " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + ")");
-            Map<Object, Object> beforeMap = rdtOperation.getBeforeData(user);
+            Map<Object, Object> beforeMap = rdtOperation.getCurrentMapData(user);
             userRepository.save(user);
             rdtOperation.updateRelevant(user, beforeMap);
         }
     }
 
     /**
-     * 通过getBeforeData获取之前的数据,用于更新实体(当前实体未存在被使用的冗余字段,将会减少查询操作)
+     * 通过getCurrentMapData获取之前的数据,用于更新实体(当前实体未存在被使用的冗余字段,将会减少查询操作)
      */
     @Test
     public void updateByBeforeDataAndNotUsedProperty() throws Exception {
         ArticleProgress articleProgress = articleProgressRepository.findTopBy();
         if (articleProgress != null) {
-            Map<Object, Object> beforeMap = rdtOperation.getBeforeData(articleProgress);
+            Map<Object, Object> beforeMap = rdtOperation.getCurrentMapData(articleProgress);
             articleProgressRepository.save(articleProgress);
             rdtOperation.updateRelevant(articleProgress, beforeMap);
         }
     }
 
     @Test
-    public void getBeforeDataTest() throws Exception {
-        rdtOperation.getBeforeData(new User("1"));
-        rdtOperation.getBeforeData(new User("12333"));
-        rdtOperation.getBeforeData(new Article("123123"));
-        rdtOperation.getBeforeData(new ArticleProgress("123123123"));
+    public void getCurrentMapDataTest() throws Exception {
+        rdtOperation.getCurrentMapData(new User("1"));
+        rdtOperation.getCurrentMapData(new User("12333"));
+        rdtOperation.getCurrentMapData(new Article("123123"));
+        rdtOperation.getCurrentMapData(new ArticleProgress("123123123"));
 
     }
 
@@ -187,7 +187,7 @@ public class DataTests extends ApplicationTests {
     @Test
     public void fill() throws Exception {
         Collection<Article> results = articleRepository.findAll();
-        rdtOperation.fill(results);
+        rdtOperation.fillForShow(results);
         log.info("results: {}", JSON.toJSONString(results));
     }
 

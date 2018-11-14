@@ -15,10 +15,10 @@ public class DataTest extends ApplicationTests {
 
     @Test
     public void findByIdIn() {
-        Object results = coreResolver.findByIdIn(User.class, Arrays.asList(new Long[]{1L}));
+        Object results = rdtOperation.findByIdIn(User.class, Arrays.asList(new Long[]{1L}));
         logger.info("results: {}", JsonUtils.toJson(results));
 
-        results = coreResolver.findByIdIn(User.class, Arrays.asList(new Long[]{1L, 2L}));
+        results = rdtOperation.findByIdIn(User.class, Arrays.asList(new Long[]{1L, 2L}));
         logger.info("results: {}", JsonUtils.toJson(results));
     }
 
@@ -36,7 +36,7 @@ public class DataTest extends ApplicationTests {
         role.setName(name);
         role.setCreateTime(new Date());
         roleRepository.save(role);
-        coreResolver.updateMulti(role);
+        rdtOperation.updateMulti(role);
 
     }
 
@@ -48,7 +48,7 @@ public class DataTest extends ApplicationTests {
         User user = userRepository.findById(1L).get();
         user.setUsername("jokers");
         userRepository.save(user);
-        coreResolver.updateMulti(user);
+        rdtOperation.updateMulti(user);
     }
 
 
@@ -57,7 +57,7 @@ public class DataTest extends ApplicationTests {
         User user = userService.getOne(1L);
         user.setUsername("jokerw");
         userService.save(user);
-        //coreResolver.updateMulti(user);
+        //rdtOperation.updateMulti(user);
        //throw new NullPointerException("xxxxx");
     }
 

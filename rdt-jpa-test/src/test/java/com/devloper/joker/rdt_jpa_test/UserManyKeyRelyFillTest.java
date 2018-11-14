@@ -2,13 +2,10 @@ package com.devloper.joker.rdt_jpa_test;
 
 import com.devloper.joker.rdt_jpa_test.support.JsonUtils;
 import com.devloper.joker.rdt_jpa_test.vo.UserManyKeyRelyVo;
-import com.devloper.joker.rdt_jpa_test.vo.UserManyKeyVo;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class UserManyKeyRelyFillTest extends ApplicationTests  {
 
@@ -20,7 +17,7 @@ public class UserManyKeyRelyFillTest extends ApplicationTests  {
         vo.setCurrentId(2L);
         vo.setCurrentName("用户2");
         results.add(vo);
-        coreResolver.fill(results);
+        rdtOperation.fillForShow(results);
         logger.info("results: {}", JsonUtils.toJson(results));
     }
 
@@ -33,7 +30,7 @@ public class UserManyKeyRelyFillTest extends ApplicationTests  {
         vo.setCurrentId(1L);
         vo.setCurrentName("SA");
         results.add(vo);
-        coreResolver.fill(results);
+        rdtOperation.fillForShow(results);
         logger.info("results: {}", JsonUtils.toJson(results));
     }
 
@@ -91,7 +88,7 @@ public class UserManyKeyRelyFillTest extends ApplicationTests  {
         vo7.setCurrentValue("adadaad");
         results.add(vo7);
 
-        coreResolver.fill(results, true, false, true);
+        rdtOperation.fill(results, true, false, true);
         logger.info("results: {}", JsonUtils.toJson(results));
     }
 

@@ -18,7 +18,7 @@ public class UserManyKeyFillTest extends ApplicationTests  {
         vo.setUserId(2L);
         vo.setUsername("用户2");
         results.add(vo);
-        coreResolver.fill(results);
+        rdtOperation.fillForShow(results);
         logger.info("results: {}", JsonUtils.toJson(results));
     }
 
@@ -39,7 +39,7 @@ public class UserManyKeyFillTest extends ApplicationTests  {
             vo.setUsername("用户" + val);
             results.add(vo);
         }
-        coreResolver.fill(results);
+        rdtOperation.fillForShow(results);
         logger.info("results: {}", JsonUtils.toJson(results));
     }
 
@@ -55,7 +55,7 @@ public class UserManyKeyFillTest extends ApplicationTests  {
             results.add(vo);
             set.add(vo);
         }
-        coreResolver.fill(results);
+        rdtOperation.fillForShow(results);
         logger.info("results: {}", JsonUtils.toJson(results));
     }
 

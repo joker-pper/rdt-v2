@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Array;
 import java.util.*;
 
-public abstract class AbstractOperation {
+public abstract class AbstractOperation implements RdtOperation {
 
     protected final Logger logger = LoggerFactory.getLogger(AbstractOperation.class);
 
@@ -27,20 +27,18 @@ public abstract class AbstractOperation {
 
 
     public AbstractOperation(RdtSupport rdtSupport) {
+        if (rdtSupport == null) {
+            throw new IllegalArgumentException("rdt support must not be null.");
+        }
         this.rdtSupport = rdtSupport;
         this.rdtResolver = rdtSupport.getRdtResolver();
         this.properties = rdtSupport.getProperties();
         this.fillBuilder = RdtFillBuilder.of(rdtSupport);
     }
 
-    public RdtResolver getRdtResolver() {
-        return rdtResolver;
-    }
 
-    public abstract <T> T findById(Class<T> entityClass, Object id);
 
-    protected abstract <T> List<T> findByIdIn(Class<T> entityClass, String idKey, Collection<Object> ids);
-
+    @Override
     public <T> List<T> findByIdIn(Class<T> entityClass, Collection<Object> ids) {
         if (ids == null || ids.size() == 0) {
             throw new IllegalArgumentException("ids must be not empty.");
@@ -56,65 +54,65 @@ public abstract class AbstractOperation {
         return findByIdIn(entityClass, getPrimaryId(entityClass), ids);
     }
 
-    protected <T> T save(T entity) {
+
+
+    @Override
+    public <T> T save(T entity) {
         if (entity == null) {
             throw new NullPointerException("entity must be not null.");
         }
         return save(entity, (Class<T>)entity.getClass());
     }
 
-    protected abstract <T> T save(T entity, Class<T> entityClass);
 
-    protected  <T> Collection<T> saveAll(Collection<T> data) {
-        if (data == null || data.size() == 0) {
+    @Override
+    public <T> Collection<T> saveAll(Collection<T> collection) {
+        if (collection == null || collection.size() == 0) {
             throw new IllegalArgumentException("data must be not empty.");
         }
-        return saveAll(data, (Class<T>) data.iterator().next().getClass());
+        return saveAll(collection, (Class<T>) collection.iterator().next().getClass());
     }
+
+
+    protected abstract <T> List<T> findByIdIn(Class<T> entityClass, String idKey, Collection<Object> ids);
+
+    protected abstract <T> T save(T entity, Class<T> entityClass);
 
     protected abstract <T> Collection<T> saveAll(Collection<T> data, Class<T> entityClass);
 
-    /**
-     * 获取以key值为key的map数据
-     * @param data
-     * @param key
-     * @param <T>
-     * @return
-     */
-    protected <T> Map<Object, T> getKeyMap(Collection<T> data, String key) {
+
+    @Override
+    public <T> Map<Object, T> getKeyMap(Collection<T> data, String key) {
         return rdtSupport.getKeyMap(data, key);
     }
 
-
+    @Override
     public ClassModel getClassModel(Class entityClass) {
         return rdtSupport.getClassModel(entityClass);
     }
 
+    @Override
     public String getPrimaryId(Class entityClass) {
         return rdtSupport.getPrimaryId(entityClass);
     }
 
-    public Map<Object, Object> getBeforeData(Object entity) {
-        return getBeforeData(entity, true);
+    @Override
+    public Map<Object, Object> getCurrentMapData(Object data) {
+        return getCurrentMapData(data, true);
     }
 
 
-    /**
-     * 获取base class之前的数据
-     * @param entity
-     * @param check 如果为true时仅在use property时查询
-     * @return key: id, val: domain
-     */
-    public Map<Object, Object> getBeforeData(Object entity, boolean check) {
+    @Override
+    public Map<Object, Object> getCurrentMapData(Object data, boolean check) {
         Map<Object, Object> result = new HashMap<Object, Object>(16);
-        if (entity != null) {
-            entity = parseEntityData(entity);
+        if (data != null) {
+            data = parseEntityData(data);
             Class entityClass = null;
             boolean flag = false;
             String idKey = null;
             ClassModel classModel = null;
 
-            for (Object current : (Collection) entity) {
+            for (Object current : (Collection) data) {
                 if (current == null) {
                     continue;
                 }
@@ -142,24 +140,24 @@ public abstract class AbstractOperation {
                 if (check && classModel.getUsedPropertySet().isEmpty()) {
                     logger.debug("{} has no used property, and use check so not to load before data", classModel.getClassName());
                 } else {
-                    //查找之前的数据
-                    Collection<Object> dataList = null;
+                    //查找数据
+                    Collection<Object> resultDataList = null;
                     Set<Object> resultKeys = result.keySet();
                     if (!resultKeys.isEmpty()) {
                         if (resultKeys.size() > 1) {
-                            dataList = findByIdIn(entityClass, idKey, result.keySet());
+                            resultDataList = findByIdIn(entityClass, idKey, result.keySet());
                         } else {
-                            dataList = new ArrayList<Object>();
+                            resultDataList = new ArrayList<Object>();
                             Object modelData = findById(entityClass, resultKeys.iterator().next());
                             if (modelData != null) {
-                                dataList.add(modelData);
+                                resultDataList.add(modelData);
                             }
                         }
                     }
-                    if (dataList != null) {
-                        for (Object data : dataList) {
-                            Object idKeyVal = rdtResolver.getPropertyValue(data, idKey);
-                            result.put(idKeyVal, data);
+                    if (resultDataList != null) {
+                        for (Object resultData : resultDataList) {
+                            Object idKeyVal = rdtResolver.getPropertyValue(resultData, idKey);
+                            result.put(idKeyVal, resultData);
                         }
                     }
                 }
@@ -210,24 +208,22 @@ public abstract class AbstractOperation {
         return (Collection<Object>) entity;
     }
 
-    /**
-     * 更新当前数据所有相关冗余字段数据
-     * @param entity
-     */
-    public void updateRelevant(Object entity) throws Exception {
-        Collection<Object> dataList = parseEntityData(entity);
+    public RdtResolver getRdtResolver() {
+        return rdtResolver;
+    }
+
+
+    @Override
+    public void updateRelevant(Object multiData) {
+        Collection<Object> dataList = parseEntityData(multiData);
         for (Object data : dataList) {
             updateMulti(data);
         }
     }
 
-    /**
-     * 通过更新数据前的数据以及当前数据去更新所有相关冗余字段数据
-     * @param entity
-     * @param beforeKeyDataMap
-     */
-    public void updateRelevant(Object entity, Map<Object, Object> beforeKeyDataMap) {
-        Collection<Object> dataList = parseEntityData(entity);
+    @Override
+    public void updateRelevant(Object multiData, Map<Object, Object> beforeKeyDataMap) {
+        Collection<Object> dataList = parseEntityData(multiData);
         String idKey = null;
 
         boolean isLoad = beforeKeyDataMap != null && !beforeKeyDataMap.isEmpty();
@@ -249,10 +245,7 @@ public abstract class AbstractOperation {
     }
 
 
-    /**
-     * 更新当前对象的所有相关冗余字段数据
-     * @param current
-     */
+    @Override
     public void updateMulti(Object current) {
         Object before = null;
         try {
@@ -264,16 +257,18 @@ public abstract class AbstractOperation {
     }
 
 
-    /**
-     * 根据当前对象与之前对象数据对比进行更新相关字段
-     * @param current
-     * @param before
-     */
+    @Override
     public void updateMulti(Object current, Object before) {
         updateMulti(current, before, false);
     }
 
-    private void updateMulti(Object current, Object before, boolean allUsedPropertysChange) {
+    /**
+     * 更新逻辑具体实现
+     * @param current
+     * @param before
+     * @param allUsedPropertysChange
+     */
+    protected void updateMulti(Object current, Object before, boolean allUsedPropertysChange) {
         if (current == null) return;
         //获取当前entity的class
         Class entityClass = current.getClass();
@@ -594,19 +589,23 @@ public abstract class AbstractOperation {
     protected abstract <T> List<T> findByFillManyKeyExecute(Class<T> entityClass, List<Column> conditionColumnValues, Set<Column> columnValues, List<Object> conditionGroupValue);
 
 
-
-    public void fill(Collection<?> collection) {
+    @Override
+    public void fillForShow(Collection<?> collection) {
         fill(collection, true, false, false);
     }
 
-    /**
-     * 根据关系填充对应字段列
-     *
-     * @param collection
-     * @param allowedNullValue 是否允许条件列的值为空
-     * @param checkValue       为true时对应条件值的个数必须等于所匹配的结果个数,反之抛出异常
-     * @param clear            为true时会清除未匹配到数据的字段值
-     */
+    @Override
+    public void fillForSave(Collection<?> collection) {
+        fillForSave(collection, false);
+    }
+
+    @Override
+    public void fillForSave(Collection<?> collection, boolean allowedNullValue) {
+        fill(collection, allowedNullValue, true, true);
+    }
+
+
+    @Override
     public void fill(Collection<?> collection, boolean allowedNullValue, boolean checkValue, boolean clear) {
         FillRSModel fillRSModel = new FillRSModel();
         //处理数据关系

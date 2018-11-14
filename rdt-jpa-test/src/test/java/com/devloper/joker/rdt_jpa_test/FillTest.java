@@ -43,7 +43,7 @@ public class FillTest extends ApplicationTests  {
         vo.setUsername2(getUserRandomName());
 
         List<UserRoleVO> results = Arrays.asList(vo);
-        coreResolver.fill(results);
+        rdtOperation.fillForShow(results);
         logger.info("results: {}", JsonUtils.toJson(results));
     }
 
@@ -62,7 +62,7 @@ public class FillTest extends ApplicationTests  {
 
         List<UserRoleVO> results = Arrays.asList(vo);
         try {
-            coreResolver.fill(results, false, true, true);
+            rdtOperation.fill(results, false, true, true);
             logger.info("results: {}", JsonUtils.toJson(results));
         } catch (Exception e) {
             if (e instanceof FillNotAllowedValueException) {
@@ -99,7 +99,7 @@ public class FillTest extends ApplicationTests  {
         vo.setUsername2(getUserRandomName());
 
         List<UserRoleVO> results = Arrays.asList(vo);
-        coreResolver.fill(results, true, true, true);
+        rdtOperation.fill(results, true, true, true);
         logger.info("results: {}", JsonUtils.toJson(results));
     }
 
@@ -118,7 +118,7 @@ public class FillTest extends ApplicationTests  {
         vo.setUsername2(getUserRandomName());
 
         List<UserRoleVO> results = Arrays.asList(vo);
-        coreResolver.fill(results, true, false, true);
+        rdtOperation.fill(results, true, false, true);
 
         Assert.assertNull("roleId2应该为null", vo.getRoleId2());
         Assert.assertNull("roleName2应该为null", vo.getRoleName2());
@@ -139,7 +139,7 @@ public class FillTest extends ApplicationTests  {
             results.add(vo);
         }
 
-        coreResolver.fill(results);
+        rdtOperation.fillForShow(results);
         logger.info("results: {}", JsonUtils.toJson(results));
     }
 
@@ -147,14 +147,14 @@ public class FillTest extends ApplicationTests  {
     @Test
     public void fill() throws Exception {
         List<UserRoleComplexVO> results = getUserRoleVoList();
-        coreResolver.fill(results);
+        rdtOperation.fillForShow(results);
         logger.info("results: {}", JsonUtils.toJson(results));
     }
 
     @Test
     public void fill2() throws Exception {
         List<User> users = userService.findAll();
-        coreResolver.fill(users);
+        rdtOperation.fillForShow(users);
         logger.info("results: {}", JsonUtils.toJson(users));
     }
 
@@ -165,7 +165,7 @@ public class FillTest extends ApplicationTests  {
         users.get(0).setType(99);
         objectList.addAll(users);
         objectList.addAll(getUserRoleVoList());
-        coreResolver.fill(objectList);
+        rdtOperation.fillForShow(objectList);
         logger.info("results: {}", JsonUtils.toJson(objectList));
     }
 
@@ -178,7 +178,7 @@ public class FillTest extends ApplicationTests  {
         results.get(2).setUserArray(JSON.parseArray(JsonUtils.toJson(users), User.class).toArray(new User[users.size()]));
         results.get(0).setComplexVOList(getUserRoleVoList());
 
-        coreResolver.fill(results);
+        rdtOperation.fillForShow(results);
         logger.info("results: {}", JsonUtils.toJson(results));
     }
 

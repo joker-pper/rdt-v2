@@ -4,6 +4,7 @@ import com.devloper.joker.rdt_jpa_test.rdt.JpaOperation;
 import com.devloper.joker.rdt_jpa_test.repository.RoleRepository;
 import com.devloper.joker.rdt_jpa_test.repository.UserRepository;
 import com.devloper.joker.rdt_jpa_test.service.IUserService;
+import com.devloper.joker.redundant.operation.RdtOperation;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -28,7 +29,7 @@ public class ApplicationTests {
 	protected RoleRepository roleRepository;
 
 	@Resource
-	protected JpaOperation coreResolver;
+	protected RdtOperation rdtOperation;
 
 	@Resource
 	protected IUserService userService;
