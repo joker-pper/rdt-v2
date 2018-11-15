@@ -6,7 +6,7 @@ import com.devloper.joker.redundant.annotation.base.RdtBaseField;
 import com.devloper.joker.redundant.model.ClassModel;
 import com.devloper.joker.redundant.model.Column;
 import com.devloper.joker.redundant.utils.*;
-import org.apache.commons.lang.StringUtils;
+import com.devloper.joker.redundant.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -13,7 +13,7 @@ import com.devloper.joker.redundant.model.commons.RdtRelyTargetColumnModel;
 import com.devloper.joker.redundant.resolver.RdtResolver;
 import com.devloper.joker.redundant.utils.ClassUtils;
 import com.devloper.joker.redundant.utils.PojoUtils;
-import org.apache.commons.lang.StringUtils;
+import com.devloper.joker.redundant.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -899,9 +899,9 @@ public class RdtPropertiesBuilder {
      */
     private void loadExtraClass(Class currentClass) {
         Set<Class> extraClassSet = properties.getExtraClassSet();
+        builderClass(currentClass);
         if (!properties.hasPackageContainsClass(currentClass) && !extraClassSet.contains(currentClass)) {
             extraClassSet.add(currentClass);
-            builderClass(currentClass);
         }
     }
 }
