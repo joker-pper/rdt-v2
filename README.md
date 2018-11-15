@@ -11,7 +11,7 @@
 对数据操作层进行抽象,可根据具体场景自行实现/覆盖数据层数据的操作方法
 基于方法可定制化,均可覆盖大部分所提供解析的方法
 支持持久化数据相关的冗余数据更新
-支持vo,dto,pojo等的数据列表填充(提供多组参数适用性高,并对传入的数据进行条件分类,减少数据层的操作次数)
+支持vo,dto,pojo等的数据列表填充(提供多组参数值配置,适用性高,并对传入的数据进行条件分类,减少数据层的操作次数)
 ````
 
    
@@ -33,7 +33,7 @@ rdt-jpa及rdt-spring-mongodb为已提供的数据层操作实现,可作为具体
 
 > 注解介绍: [详情](https://github.com/joker-pper/rdt-v2/wiki/Rdt%E6%B3%A8%E8%A7%A3%E4%BB%8B%E7%BB%8D)
 
-> api介绍 [详情](https://github.com/joker-pper/rdt-v2/blob/master/rdt-core/src/main/java/com/devloper/joker/redundant/operation/RdtOperation.java)
+> api介绍: [详情](https://github.com/joker-pper/rdt-v2/blob/master/rdt-core/src/main/java/com/devloper/joker/redundant/operation/RdtOperation.java)
 
 
 >使用配置:
