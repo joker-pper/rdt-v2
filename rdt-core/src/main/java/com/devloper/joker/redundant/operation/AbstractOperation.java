@@ -390,39 +390,34 @@ public abstract class AbstractOperation implements RdtOperation {
         final Map<String, Object> conditionMap = new LinkedHashMap<String, Object>(16);
         final Map<String, Object> updateLogMap = new LinkedHashMap<String, Object>(16);
 
-        final Map<String, Object> conditionDataMap = new LinkedHashMap<String, Object>(16);
-        final Map<String, Object> updateDataMap = new LinkedHashMap<String, Object>(16);
-
-        rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
-            @Override
-            public void execute(ModifyCondition modifyCondition, String targetProperty, Object targetPropertyVal) {
-                String property = modifyCondition.getColumn().getProperty();
-                conditionDataMap.put(property, targetPropertyVal);
-                if (logDetail) {
-                    conditionMap.put(property + symbol + targetProperty, targetPropertyVal);
-                } else {
-                    conditionMap.put(property, targetPropertyVal);
+        if (logger.isDebugEnabled()) {
+            rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
+                @Override
+                public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
+                    String property = modifyCondition.getColumn().getProperty();
+                    if (logDetail) {
+                        conditionMap.put(property + symbol + targetProperty, targetPropertyVal);
+                    } else {
+                        conditionMap.put(property, targetPropertyVal);
+                    }
                 }
-            }
-        });
+            });
 
-
-        rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
-            @Override
-            public void execute(ModifyColumn modifyColumn, String targetProperty, Object targetPropertyVal) {
-                String property = modifyColumn.getColumn().getProperty();
-                updateDataMap.put(property, targetPropertyVal);
-                if (logDetail) {
-                    updateLogMap.put(property + symbol + targetProperty, targetPropertyVal);
-                } else {
-                    updateLogMap.put(property, targetPropertyVal);
+            rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
+                @Override
+                public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
+                    String property = modifyColumn.getColumn().getProperty();
+                    if (logDetail) {
+                        updateLogMap.put(property + symbol + targetProperty, targetPropertyVal);
+                    } else {
+                        updateLogMap.put(property, targetPropertyVal);
+                    }
                 }
-            }
-        });
-
+            });
+        }
 
         try {
-            updateModifyDescribeSimpleImpl(classModel, modifyClassModel, describe, vo, conditionDataMap, updateDataMap);
+            updateModifyDescribeSimpleImpl(classModel, modifyClassModel, describe, vo);
             logger.debug("{} modify about {}【{}={}】data, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
                     describe.getIndex(), rdtResolver.toJson(conditionMap), rdtResolver.toJson(updateLogMap));
         } catch (Exception e) {
@@ -439,10 +434,8 @@ public abstract class AbstractOperation implements RdtOperation {
      * @param modifyClassModel 要修改的实体对象信息
      * @param describe
      * @param vo
-     * @param conditionValMap 条件约束数据
-     * @param updateValMap    更新字段数据
      */
-    protected abstract void updateModifyDescribeSimpleImpl(final ClassModel classModel, final ClassModel modifyClassModel, final ModifyDescribe describe, final ChangedVo vo, final Map<String, Object> conditionValMap, final Map<String, Object> updateValMap);
+    protected abstract void updateModifyDescribeSimpleImpl(final ClassModel classModel, final ClassModel modifyClassModel, final ModifyDescribe describe, final ChangedVo vo);
 
 
     protected void updateModifyRelyDescribeSimple(final ClassModel classModel, final ChangedVo vo) {
@@ -465,6 +458,39 @@ public abstract class AbstractOperation implements RdtOperation {
         }
     }
 
+    protected Map getModelTypeProcessingCriteriaMap(ModifyRelyDescribe describe, String relyProperty) {
+        List<Object> unknowNotExistValList = describe.getUnknowNotExistValList();
+        List<Object> valList = describe.getValList();
+        Map allMap = new HashMap(16);
+        if (!valList.isEmpty()) {
+            if (unknowNotExistValList.isEmpty()) {
+                allMap.put(relyProperty, valList);
+            } else {
+                //满足在valList 或 非unknowNotExistValList时
+
+                Map notValMap = new HashMap(16);
+                notValMap.put(relyProperty, unknowNotExistValList);
+
+                Map notMap = new HashMap(16);
+                notMap.put("not", notValMap);
+
+                Map inMap = new HashMap(16);
+                inMap.put(relyProperty, valList);
+
+                allMap.put("or", Arrays.asList(inMap, notMap));
+
+            }
+        } else {
+            if (!unknowNotExistValList.isEmpty()) {
+                Map notMap = new HashMap(16);
+                notMap.put(relyProperty, unknowNotExistValList);
+                allMap.put("not", notMap);
+            }
+        }
+        return allMap;
+    }
+
+
     /**
      * 处理当前保存实体值变化时所要修改相关实体类的字段数据的业务逻辑(存在依赖时)
      * @param classModel
@@ -479,38 +505,39 @@ public abstract class AbstractOperation implements RdtOperation {
         final Map<String, Object> conditionLogMap = new LinkedHashMap<String, Object>(16);
         final Map<String, Object> updateLogMap = new LinkedHashMap<String, Object>(16);
 
-        final Map<String, Object> conditionDataMap = new LinkedHashMap<String, Object>(16);
-        final Map<String, Object> updateDataMap = new LinkedHashMap<String, Object>(16);
-
-        rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
-            @Override
-            public void execute(ModifyCondition modifyCondition, String targetProperty, Object targetPropertyVal) {
-                String property = modifyCondition.getColumn().getProperty();
-                conditionDataMap.put(property, targetPropertyVal);
-                if (logDetail) {
-                    conditionLogMap.put(property + symbol + targetProperty, targetPropertyVal);
-                } else {
-                    conditionLogMap.put(property, targetPropertyVal);
-                }
-            }
-        });
-
-        rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
-            @Override
-            public void execute(ModifyColumn modifyColumn, String targetProperty, Object targetPropertyVal) {
-                updateDataMap.put(modifyColumn.getColumn().getProperty(), targetPropertyVal);
-                if (logDetail) {
-                    updateLogMap.put(modifyColumn.getColumn().getProperty() + symbol + targetProperty, targetPropertyVal);
-                } else {
-                    updateLogMap.put(modifyColumn.getColumn().getProperty(), targetPropertyVal);
-                }
-            }
-        });
-
         RdtLog rdtLog = new RdtLog(conditionLogMap, updateLogMap);
 
+        if (logger.isDebugEnabled()) {
+            rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
+                @Override
+                public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
+                    String property = modifyCondition.getColumn().getProperty();
+                    if (logDetail) {
+                        conditionLogMap.put(property + symbol + targetProperty, targetPropertyVal);
+                    } else {
+                        conditionLogMap.put(property, targetPropertyVal);
+                    }
+                }
+            });
+
+            rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
+                @Override
+                public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
+                    if (logDetail) {
+                        updateLogMap.put(modifyColumn.getColumn().getProperty() + symbol + targetProperty, targetPropertyVal);
+                    } else {
+                        updateLogMap.put(modifyColumn.getColumn().getProperty(), targetPropertyVal);
+                    }
+                }
+            });
+
+            String relyProperty = relyColumn.getProperty();
+            rdtLog.putConditionTop(getModelTypeProcessingCriteriaMap(describe, relyProperty));
+        }
+
+
         try {
-            updateModifyRelyDescribeSimpleImpl(classModel, modifyClassModel, vo, conditionDataMap, updateDataMap, relyColumn, group, describe, rdtLog);
+            updateModifyRelyDescribeSimpleImpl(classModel, modifyClassModel, vo, relyColumn, group, describe);
 
             logger.debug("{} modify about {}【{}={}】data with rely column - 【name: {}, group: {} 】 , index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
                     relyColumn.getProperty(), group, describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
@@ -530,15 +557,12 @@ public abstract class AbstractOperation implements RdtOperation {
      * @param classModel
      * @param modifyClassModel
      * @param vo
-     * @param conditionValMap
-     * @param updateValMap
      * @param relyColumn 依赖列,modifyClassModel中的column
      * @param group
      * @param describe
-     * @param rdtLog
      * @return
      */
-    protected abstract void updateModifyRelyDescribeSimpleImpl(final ClassModel classModel, final ClassModel modifyClassModel, final ChangedVo vo, final Map<String, Object> conditionValMap, final Map<String, Object> updateValMap, final Column relyColumn, final int group, final ModifyRelyDescribe describe, RdtLog rdtLog);
+    protected abstract void updateModifyRelyDescribeSimpleImpl(final ClassModel classModel, final ClassModel modifyClassModel, final ChangedVo vo, final Column relyColumn, final int group, final ModifyRelyDescribe describe);
 
 
 

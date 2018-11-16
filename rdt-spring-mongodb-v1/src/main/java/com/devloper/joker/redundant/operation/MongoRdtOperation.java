@@ -128,75 +128,111 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
         }
     }
 
-
     @Override
-    protected void updateModifyDescribeSimpleImpl(ClassModel classModel, ClassModel modifyClassModel, ModifyDescribe describe, ChangedVo vo, Map<String, Object> conditionValMap, Map<String, Object> updateValMap) {
-        Criteria criteria = new Criteria();
-        Update update = new Update();
-        for (String property: conditionValMap.keySet()) {
-            criteria.and(property).is(conditionValMap.get(property));
-        }
-        for (String property: updateValMap.keySet()) {
-            update.set(property, updateValMap.get(property));
-        }
+    protected void updateModifyDescribeSimpleImpl(ClassModel classModel, final ClassModel modifyClassModel, ModifyDescribe describe, ChangedVo vo) {
+        final Criteria criteria = new Criteria();
+        final Update update = new Update();
+
+        //设置查询条件
+        rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
+            @Override
+            public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
+                String property = modifyCondition.getColumn().getProperty();
+                criteria.and(property).is(targetPropertyVal);
+            }
+        });
+
+        //设置更新值
+        rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
+            @Override
+            public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
+                String property = modifyColumn.getColumn().getProperty();
+                update.set(property, targetPropertyVal);
+            }
+        });
+
         updateMulti(criteria, update, modifyClassModel.getCurrentClass());
     }
 
     @Override
-    protected void updateModifyRelyDescribeSimpleImpl(ClassModel classModel, ClassModel modifyClassModel, ChangedVo vo, Map<String, Object> conditionValMap, Map<String, Object> updateValMap, Column relyColumn, int group, ModifyRelyDescribe describe, RdtLog rdtLog) {
-        Criteria criteria = new Criteria();
+    protected void updateModifyRelyDescribeSimpleImpl(ClassModel classModel, ClassModel modifyClassModel, ChangedVo vo, Column relyColumn, int group, ModifyRelyDescribe describe) {
+        final Criteria criteria = new Criteria();
+        final Update update = new Update();
         String relyProperty = relyColumn.getProperty();
 
         modelTypeCriteriaProcessing(describe, criteria, relyProperty);
 
-        //将筛选类型的条件添加到log中
-        rdtLog.putConditionTop(getCriteriaToMap(criteria));
+        //设置查询条件
+        rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
+            @Override
+            public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
+                String property = modifyCondition.getColumn().getProperty();
+                criteria.and(property).is(targetPropertyVal);
+            }
+        });
 
-        //获取为当前classModel的条件约束
-        for (String property: conditionValMap.keySet()) {
-            criteria.and(property).is(conditionValMap.get(property));
-        }
+        //设置更新值
+        rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
+            @Override
+            public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
+                String property = modifyColumn.getColumn().getProperty();
+                update.set(property, targetPropertyVal);
+            }
+        });
 
-        Update update = new Update();
-        for (String property: updateValMap.keySet()) {
-            update.set(property, updateValMap.get(property));
-        }
         updateMulti(criteria, update, modifyClassModel.getCurrentClass());
     }
 
     @Override
-    protected void updateModifyDescribeOneImpl(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ClassModel modifyClassModel, ModifyDescribe describe, ChangedVo vo, Map<String, Object> conditionValMap, Map<String, Object> updateValMap) {
-        Criteria criteria = new Criteria();
-        Update update = new Update();
+    protected void updateModifyDescribeOneImpl(final ClassModel classModel, final ClassModel complexClassModel, final ComplexAnalysis complexAnalysis, ClassModel modifyClassModel, ModifyDescribe describe, ChangedVo vo) {
+        final Criteria criteria = new Criteria();
+        final Update update = new Update();
 
-        for (String property: conditionValMap.keySet()) {
-            criteria.and(property).is(conditionValMap.get(property));
-        }
-        for (String property: updateValMap.keySet()) {
-            update.set(property, updateValMap.get(property));
-        }
+        rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
+            @Override
+            public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
+                String property = getModifyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, modifyCondition);
+                criteria.and(property).is(targetPropertyVal); //用作查询条件
+            }
+        });
+
+        rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
+            @Override
+            public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
+                String property = getModifyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, modifyColumn);
+                update.set(property, targetPropertyVal); //用作更新值
+            }
+        });
+
         updateMulti(criteria, update, modifyClassModel.getCurrentClass());
     }
 
     @Override
-    protected void updateModifyRelyDescribeOneImpl(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ClassModel modifyClassModel, ModifyRelyDescribe describe, ChangedVo vo, Map<String, Object> conditionValMap, Map<String, Object> updateValMap, Column relyColumn, int group, RdtLog rdtLog) {
-        Criteria criteria = new Criteria();
+    protected void updateModifyRelyDescribeOneImpl(final ClassModel classModel, final ClassModel complexClassModel, final ComplexAnalysis complexAnalysis, ClassModel modifyClassModel, ModifyRelyDescribe describe, ChangedVo vo, Column relyColumn, int group) {
 
-        Update update = new Update();
+        final Criteria criteria = new Criteria();
+        final Update update = new Update();
+
         String relyProperty = getModifyRelyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, relyColumn);
 
         modelTypeCriteriaProcessing(describe, criteria, relyProperty);
 
-        //将筛选类型的条件添加到log中
-        rdtLog.putConditionTop(getCriteriaToMap(criteria));
+        rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
+            @Override
+            public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
+                String property = getModifyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, modifyCondition);
+                criteria.and(property).is(targetPropertyVal); //用作查询条件
+            }
+        });
 
-        for (String property: conditionValMap.keySet()) {
-            criteria.and(property).is(conditionValMap.get(property));
-        }
+        rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
+            @Override
+            public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
+                String property = getModifyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, modifyColumn);
+                update.set(property, targetPropertyVal); //用作更新值
+            }
+        });
 
-        for (String property: updateValMap.keySet()) {
-            update.set(property, updateValMap.get(property));
-        }
         updateMulti(criteria, update, modifyClassModel.getCurrentClass());
     }
 
@@ -220,7 +256,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
 
         rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
             @Override
-            public void execute(ModifyColumn modifyColumn, String targetProperty, Object targetPropertyVal) {
+            public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
                 String property = modifyColumn.getColumn().getProperty();
                 updateValMap.put(property, targetPropertyVal);
                 if (logDetail) {
@@ -278,7 +314,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
 
         rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
             @Override
-            public void execute(ModifyColumn modifyColumn, String targetProperty, Object targetPropertyVal) {
+            public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
                 String property = modifyColumn.getColumn().getProperty();
                 updateValMap.put(property, targetPropertyVal);
                 if (logDetail) {
@@ -376,7 +412,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
 
         rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
             @Override
-            public void execute(ModifyCondition condition, String targetProperty, Object targetPropertyVal) {
+            public void execute(ModifyCondition condition, int position, String targetProperty, Object targetPropertyVal) {
                 String property = condition.getColumn().getProperty();
                 conditionValMap.put(property, targetPropertyVal);//存放此对象条件属性值的信息
 

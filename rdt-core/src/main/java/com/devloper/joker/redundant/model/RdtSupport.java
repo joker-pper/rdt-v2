@@ -383,7 +383,7 @@ public class RdtSupport {
 
     public static abstract class ModifyColumnCallBack {
 
-        public abstract void execute(ModifyColumn modifyColumn, String targetProperty, Object targetPropertyVal);
+        public abstract void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal);
     }
 
     /**
@@ -394,6 +394,8 @@ public class RdtSupport {
      */
     public void doModifyColumnHandle(ChangedVo vo, ModifyDescribe describe, ModifyColumnCallBack callBack) {
         List<ModifyColumn> modifyColumnList = describe.getColumnList();
+        int index = 0;
+
         for (ModifyColumn modifyColumn : modifyColumnList) {
             String targetProperty = modifyColumn.getTargetColumn().getProperty();
             Object val = vo.getCurrentVal(targetProperty);
@@ -402,14 +404,14 @@ public class RdtSupport {
             } catch (Exception e) {
                 logger.warn("rdt cast val error", e);
             }
-            callBack.execute(modifyColumn, targetProperty, val);
+            callBack.execute(modifyColumn, index ++, targetProperty, val);
         }
     }
 
 
     public static abstract class ModifyConditionCallBack {
 
-        public abstract void execute(ModifyCondition modifyCondition, String targetProperty, Object targetPropertyVal);
+        public abstract void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal);
     }
 
     /**
@@ -420,10 +422,11 @@ public class RdtSupport {
      */
     public void doModifyConditionHandle(ChangedVo vo, ModifyDescribe describe, ModifyConditionCallBack callBack) {
         List<ModifyCondition> conditionList = describe.getConditionList();
+        int index = 0;
         for (ModifyCondition modifyCondition : conditionList) {
             String targetProperty = modifyCondition.getTargetColumn().getProperty();
             Object val = vo.getCurrentVal(targetProperty);
-            callBack.execute(modifyCondition, targetProperty, val);
+            callBack.execute(modifyCondition, index ++, targetProperty, val);
         }
 
     }

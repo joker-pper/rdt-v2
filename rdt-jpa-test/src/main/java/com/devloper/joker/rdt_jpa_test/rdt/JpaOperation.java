@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.util.*;
 
 @Component
@@ -17,7 +18,8 @@ public class JpaOperation extends AbstractJpaOperation {
         super(rdtSupport);
     }
 
-    @Resource
+    //@Resource
+    @PersistenceContext
     @Override
     public void setEntityManager(EntityManager entityManager) {
         super.setEntityManager(entityManager);

@@ -41,66 +41,96 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
     }
 
     @Override
-    protected void updateModifyDescribeSimpleImpl(ClassModel classModel, ClassModel modifyClassModel, ModifyDescribe describe, ChangedVo vo, Map<String, Object> conditionValMap, Map<String, Object> updateValMap) {
+    protected void updateModifyDescribeSimpleImpl(ClassModel classModel, ClassModel modifyClassModel, ModifyDescribe describe, ChangedVo vo) {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("UPDATE " + modifyClassModel.getClassName());
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("UPDATE " + modifyClassModel.getClassName() + " SET ");
+        final Map<String, Object> conditionDataMap = new LinkedHashMap<String, Object>(16);
+        final Map<String, Object> updateDataMap = new LinkedHashMap<String, Object>(16);
 
-        for (String property : updateValMap.keySet()) {
-            sb.append(property + "=:" + property + ", ");
-        }
+        rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
+            @Override
+            public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
+                if (position == 0) {
+                    sb.append(" SET ");
+                }
+                String property = modifyColumn.getColumn().getProperty();
+                sb.append(property + "=:" + property + ", ");
+                updateDataMap.put(property, targetPropertyVal);
+            }
+        });
+
         int index = sb.lastIndexOf(", ");
         int length = sb.length();
 
         if (index == length - 2) {
             sb.delete(index, length - 1);
         }
+        final String andText = " AND ";
 
-        if (!conditionValMap.isEmpty()) {
-            sb.append("WHERE ");
-            String andText = " AND ";
-            for (String property: conditionValMap.keySet()) {
+        rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
+            @Override
+            public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
+                if (position == 0) {
+                    sb.append(" WHERE ");
+                }
+                String property = modifyCondition.getColumn().getProperty();
                 sb.append(property + " =:" + property + andText);
+                conditionDataMap.put(property, targetPropertyVal);
             }
+        });
 
-            index = sb.lastIndexOf(andText);
-            length = sb.length();
 
-            if (index == length - andText.length()) {
-                sb.delete(index, length);
-            }
+        index = sb.lastIndexOf(andText);
+        length = sb.length();
+
+        if (index == length - andText.length()) {
+            sb.delete(index, length);
         }
+
         Query query = entityManager.createQuery(sb.toString());
-        for (String property : updateValMap.keySet()) {
-            query.setParameter(property, updateValMap.get(property));
+        for (String property : updateDataMap.keySet()) {
+            query.setParameter(property, updateDataMap.get(property));
         }
 
-        for (String property : conditionValMap.keySet()) {
-            query.setParameter(property, conditionValMap.get(property));
+        for (String property : conditionDataMap.keySet()) {
+            query.setParameter(property, conditionDataMap.get(property));
         }
         query.executeUpdate();
     }
 
     @Override
-    protected void updateModifyRelyDescribeSimpleImpl(ClassModel classModel, ClassModel modifyClassModel, ChangedVo vo, Map<String, Object> conditionValMap, Map<String, Object> updateValMap, Column relyColumn, int group, ModifyRelyDescribe describe, RdtLog rdtLog) {
+    protected void updateModifyRelyDescribeSimpleImpl(ClassModel classModel, ClassModel modifyClassModel, ChangedVo vo,  Column relyColumn, int group, ModifyRelyDescribe describe) {
         Class entityClass = modifyClassModel.getCurrentClass();
-        CriteriaPredicateBuilder builder = CriteriaPredicateBuilder.of(entityManager);
-        CriteriaUpdate criteriaUpdate = builder.createCriteriaUpdate(entityClass);
-        Root root = criteriaUpdate.from(entityClass);
-        for (String property : updateValMap.keySet()) {
-            criteriaUpdate.set(property, updateValMap.get(property));
-        }
-        List<Predicate> predicateList = new ArrayList<Predicate>();
-        for (String property : conditionValMap.keySet()) {
-            predicateList.add(builder.eq(root.get(property), conditionValMap.get(property)));
-        }
+        final CriteriaPredicateBuilder builder = CriteriaPredicateBuilder.of(entityManager);
+        final CriteriaUpdate criteriaUpdate = builder.createCriteriaUpdate(entityClass);
+        final Root root = criteriaUpdate.from(entityClass);
+
+        //设置更新值
+        rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
+            @Override
+            public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
+                String property = modifyColumn.getColumn().getProperty();
+                criteriaUpdate.set(property, targetPropertyVal);
+            }
+        });
+
+
+        //设置查询条件
+        final List<Predicate> predicateList = new ArrayList<Predicate>(16);
+        rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
+            @Override
+            public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
+                String property = modifyCondition.getColumn().getProperty();
+                predicateList.add(builder.eq(root.get(property), targetPropertyVal));
+            }
+        });
 
         String relyProperty = relyColumn.getProperty();
-        Predicate processingPredicate = modelTypeCriteriaProcessing(describe, relyProperty, builder, root, rdtLog);
+        Predicate processingPredicate = modelTypeCriteriaProcessing(describe, relyProperty, builder, root);
         if (processingPredicate != null) {
             predicateList.add(processingPredicate);
         }
-
         if (!predicateList.isEmpty()) {
             criteriaUpdate.where(predicateList.toArray(new Predicate[predicateList.size()]));
         }
@@ -109,41 +139,23 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
 
 
 
-    protected Predicate modelTypeCriteriaProcessing(ModifyRelyDescribe describe, String relyProperty, CriteriaPredicateBuilder builder, Root root, RdtLog rdtLog) {
+    protected Predicate modelTypeCriteriaProcessing(ModifyRelyDescribe describe, String relyProperty, CriteriaPredicateBuilder builder, Root root) {
         List<Object> unknowNotExistValList = describe.getUnknowNotExistValList();
         List<Object> valList = describe.getValList();
         Path relyPropertyPath = root.get(relyProperty);
         Predicate predicate = null;
-        Map allMap = new HashMap();
         if (!valList.isEmpty()) {
             if (unknowNotExistValList.isEmpty()) {
                 predicate = builder.criteriaIn(relyPropertyPath, valList);
-                allMap.put(relyProperty, valList);
             } else {
                 //满足在valList 或 非unknowNotExistValList时
                 predicate = builder.or(builder.criteriaIn(relyPropertyPath, valList), builder.criteriaNotIn(relyPropertyPath, unknowNotExistValList));
-
-                Map notValMap = new HashMap();
-                notValMap.put(relyProperty, unknowNotExistValList);
-
-                Map notMap = new HashMap();
-                notMap.put("not", notValMap);
-
-                Map inMap = new HashMap();
-                inMap.put(relyProperty, valList);
-
-                allMap.put("or", Arrays.asList(inMap, notMap));
-
             }
         } else {
             if (!unknowNotExistValList.isEmpty()) {
                 predicate = builder.criteriaNotIn(relyPropertyPath, unknowNotExistValList);
-                Map notMap = new HashMap();
-                notMap.put(relyProperty, unknowNotExistValList);
-                allMap.put("not", notMap);
             }
         }
-        rdtLog.putConditionTop(allMap);
         return predicate;
     }
 

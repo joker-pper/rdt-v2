@@ -1,7 +1,7 @@
 logging:
   level:
     root: INFO
-    #org.springframework.data: debug
+    org.springframework.data: debug
     com.devloper.joker.redundant: debug
     com.devloper.joker.rdt_sbm.rdt: trace
 
