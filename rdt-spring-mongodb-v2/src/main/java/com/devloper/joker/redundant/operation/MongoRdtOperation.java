@@ -220,7 +220,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
         rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
             @Override
             public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
-                String property = getModifyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, modifyCondition);
+                String property = getModifyRelyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, modifyCondition);
                 criteria.and(property).is(targetPropertyVal); //用作查询条件
             }
         });
@@ -228,7 +228,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
         rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
             @Override
             public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
-                String property = getModifyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, modifyColumn);
+                String property = getModifyRelyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, modifyColumn);
                 update.set(property, targetPropertyVal); //用作更新值
             }
         });
@@ -451,7 +451,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
         }
 
         //处理log条件map
-        Map criteriaObjectMap = rdtResolver.deepClone(getCriteriaToMap(criteria));
+        Map criteriaObjectMap = rdtResolver.deepClone(getCriteriaToMap(criteria));;
         Map<String, Object> currentConditionLogMap = new LinkedHashMap<String, Object>(criteriaObjectMap);
         if (!super.getLogDetail()) {
             conditionLogMap.putAll(currentConditionLogMap);
