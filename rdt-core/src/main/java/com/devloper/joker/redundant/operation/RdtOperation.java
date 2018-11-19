@@ -63,7 +63,7 @@ public interface RdtOperation {
     ClassModel getClassModel(Class entityClass);
 
     /**
-     * 获取当前持久化类数据列表当前持久化的map数据
+     * 根据数据列表的id值获取当前持久化的map数据
      * @param data 单实体/array/list数据
      * @param check 如果为true时仅在有use property时查询
      * @return key: id, val: domain data
@@ -72,7 +72,7 @@ public interface RdtOperation {
 
 
     /**
-     * 获取当前持久化类数据列表当前持久化的map数据(默认check)
+     *  getCurrentMapData(data, true)
      */
     Map<Object, Object> getCurrentMapData(Object data);
 
@@ -120,10 +120,18 @@ public interface RdtOperation {
     void fill(Collection<?> collection, boolean allowedNullValue, boolean checkValue, boolean clear);
 
     /**
-     * 用于填充展示数据列表的方法,忽略约束性
+     * fillForShow(collection, false)
      * @param collection
      */
     void fillForShow(Collection<?> collection);
+
+    /**
+     * 用于填充展示数据列表的方法,忽略约束性
+     * @param collection
+     * @param clear 是否清除未找到的值
+     */
+    void fillForShow(Collection<?> collection, boolean clear);
+
 
     /**
      * fillForSave(collection, false)

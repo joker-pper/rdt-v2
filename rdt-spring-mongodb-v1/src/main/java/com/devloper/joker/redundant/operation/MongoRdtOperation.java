@@ -451,7 +451,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
         }
 
         //处理log条件map
-        Map criteriaObjectMap = Prototype.of(getCriteriaToMap(criteria)).deepClone().getModel();
+        Map criteriaObjectMap = rdtResolver.deepClone(getCriteriaToMap(criteria));;
         Map<String, Object> currentConditionLogMap = new LinkedHashMap<String, Object>(criteriaObjectMap);
         if (!super.getLogDetail()) {
             conditionLogMap.putAll(currentConditionLogMap);

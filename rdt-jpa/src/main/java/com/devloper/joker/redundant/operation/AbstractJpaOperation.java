@@ -2,8 +2,6 @@ package com.devloper.joker.redundant.operation;
 
 import com.devloper.joker.redundant.fill.FillOneKeyModel;
 import com.devloper.joker.redundant.model.*;
-import org.springframework.data.repository.CrudRepository;
-
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.criteria.*;
@@ -19,25 +17,6 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
 
     public void setEntityManager(EntityManager entityManager) {
         this.entityManager = entityManager;
-    }
-
-    public abstract CrudRepository getCrudRepository(Class entityClass);
-
-    public abstract CrudRepository getActualCrudRepository(Class entityClass);
-
-    @Override
-    protected <T> T save(T entity, Class<T> entityClass) {
-        return (T)getCrudRepository(entityClass).save(entity);
-    }
-
-    @Override
-    protected <T> Collection<T> saveAll(Collection<T> data, Class<T> entityClass) {
-        return (Collection<T>)getCrudRepository(entityClass).saveAll(data);
-    }
-
-    @Override
-    protected <T> List<T> findByIdIn(Class<T> entityClass, String idKey, Collection<Object> ids) {
-        return new ArrayList<T>((Collection) getCrudRepository(entityClass).findAllById(ids));
     }
 
     @Override

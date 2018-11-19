@@ -149,7 +149,7 @@ public class RdtSupport {
     public ModifyDescribe getDeepCloneModifyDescribe(ModifyDescribe describe) {
         if (describe != null) {
             if (properties.getDeepCloneChangedModify()) {
-                ModifyDescribe cloned = Prototype.of(describe).deepClone().getModel();
+                ModifyDescribe cloned = rdtResolver.deepClone(describe);
 
                 List<ModifyColumn> clonedColumnList = cloned.getColumnList();
                 List<ModifyColumn> columnList = describe.getColumnList();
@@ -219,7 +219,7 @@ public class RdtSupport {
     public ModifyRelyDescribe getDeepCloneModifyRelyDescribe(ModifyRelyDescribe describe) {
         if (describe != null) {
             if (properties.getDeepCloneChangedModify()) {
-                ModifyRelyDescribe cloned = Prototype.of(describe).deepClone().getModel();
+                ModifyRelyDescribe cloned = rdtResolver.deepClone(describe);
                 cloned.getRelyColumn().setField(describe.getRelyColumn().getField());
                 List<ModifyColumn> clonedColumnList = cloned.getColumnList();
                 List<ModifyColumn> columnList = describe.getColumnList();

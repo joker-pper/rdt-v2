@@ -1,6 +1,6 @@
 # rdt-v2
 
-基于注解构建完成后的关系更新/填充实体字段的框架
+> rdt-v2是基于注解维护实体对象之间的冗余字段关系,然后可以进行批量更新或自动填充自动数据,避免重复编写逻辑代码及减少复杂关系维护的操作框架.
 
 特性：
 
@@ -103,8 +103,9 @@ rdt-jpa及rdt-spring-mongodb为已提供的数据层操作实现,可作为具体
         return rdtProperties().builder(rdtResolver());
     }
     
-    //持久层操作对象,默认提供mongodb与jpa的支持,但需要情况提供对应的方法实现,
-    //可以覆盖已存在的实现方法。未存在的可继承Operation父类,实现具体的查询/更新方法即可。
+    //持久层操作对象,默认提供mongodb与jpa的一些支持,但可能仍需要情况来提供
+    //对应的方法实现,也可以覆盖已存在的实现方法。
+    //未存在的可继承相关Operation父类,实现具体的查询/更新方法即可。
     public MongoRdtOperation mongoRdtOperation() {
         MongoRdtOperation operation = new MongoRdtOperation(rdtSupport()) {
         };
@@ -112,9 +113,30 @@ rdt-jpa及rdt-spring-mongodb为已提供的数据层操作实现,可作为具体
         return operation;
     }
 
+> api使用
+
+```
+//更新方法
+
+//更新当前对象的所有相关冗余字段数据
+updateMulti(Object current);
+
+//根据当前对象与之前对象数据对比后,更新被引用字段值所发生改变后的相关冗余字段数据
+updateMulti(Object current, Object before);
+
+//填充方法
+fill(Collection<?> collection, boolean allowedNullValue, boolean checkValue, boolean clear);
+fillForShow(Collection<?> collection);
+//填充所要展示的数据字段
+fillForShow(Collection<?> collection, boolean clear);
+//填充所要保存的数据字段
+fillForSave(Collection<?> collection, boolean allowedNullValue);
+
+```
+
 
 示例项目:
 
- rdt-spring-mongodb-test 
+ rdt-spring-mongodb-test (包含更新示例)
  
  rdt-jpa-test (包含填充及更新示例)

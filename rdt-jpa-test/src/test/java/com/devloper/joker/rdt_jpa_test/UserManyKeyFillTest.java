@@ -17,8 +17,15 @@ public class UserManyKeyFillTest extends ApplicationTests  {
         UserManyKeyVo vo = new UserManyKeyVo();
         vo.setUserId(2L);
         vo.setUsername("用户2");
+        vo.setUserRoleName("占个位"); //将会被替换掉
         results.add(vo);
         rdtOperation.fillForShow(results);
+        logger.info("results: {}", JsonUtils.toJson(results));
+
+        //测试数据不存在时清空相关的属性值
+        vo.setUsername("用户233");
+
+        rdtOperation.fillForShow(results, true);
         logger.info("results: {}", JsonUtils.toJson(results));
     }
 

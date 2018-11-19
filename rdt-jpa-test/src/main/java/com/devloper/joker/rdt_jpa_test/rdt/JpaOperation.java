@@ -26,6 +26,21 @@ public class JpaOperation extends AbstractJpaOperation {
     }
 
     @Override
+    protected <T> T save(T entity, Class<T> entityClass) {
+        return (T)getCrudRepository(entityClass).save(entity);
+    }
+
+    @Override
+    protected <T> Collection<T> saveAll(Collection<T> data, Class<T> entityClass) {
+        return (Collection<T>)getCrudRepository(entityClass).saveAll(data);
+    }
+
+    @Override
+    protected <T> List<T> findByIdIn(Class<T> entityClass, String idKey, Collection<Object> ids) {
+        return new ArrayList<T>((Collection) getCrudRepository(entityClass).findAllById(ids));
+    }
+
+    @Override
     public <T> T findById(Class<T> entityClass, Object id) {
         Optional optional = getCrudRepository(entityClass).findById(id);
         if (optional.isPresent()) {
@@ -34,19 +49,12 @@ public class JpaOperation extends AbstractJpaOperation {
         return null;
     }
 
-    @Override
     public CrudRepository getCrudRepository(Class entityClass) {
         return RepositoryUtils.getCrudRepository(entityClass);
     }
 
-    @Override
     public CrudRepository getActualCrudRepository(Class entityClass) {
         return RepositoryUtils.getActualCrudRepository(entityClass);
-    }
-
-    @Override
-    public <T> T save(T entity) {
-        return super.save(entity);
     }
 
 }

@@ -5,6 +5,7 @@ import com.devloper.joker.redundant.annotation.base.RdtBaseEntity;
 import com.devloper.joker.redundant.annotation.base.RdtBaseField;
 import com.devloper.joker.redundant.model.ClassModel;
 import com.devloper.joker.redundant.model.Column;
+import com.devloper.joker.redundant.support.Prototype;
 import com.devloper.joker.redundant.utils.*;
 import com.devloper.joker.redundant.utils.StringUtils;
 import org.slf4j.Logger;
@@ -385,6 +386,10 @@ public abstract class RdtResolver {
      */
     public <T> T cast(Object obj, Class<T> clazz) {
         return TypeUtils.cast(obj, clazz);
+    }
+
+    public <T> T deepClone(T entity) {
+        return Prototype.of(entity).deepClone().getModel();
     }
 
     /**

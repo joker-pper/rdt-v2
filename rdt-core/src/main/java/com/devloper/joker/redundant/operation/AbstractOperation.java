@@ -615,7 +615,11 @@ public abstract class AbstractOperation implements RdtOperation {
 
     @Override
     public void fillForShow(Collection<?> collection) {
-        fill(collection, true, false, false);
+        fillForShow(collection, false);
+    }
+    @Override
+    public void fillForShow(Collection<?> collection, boolean clear) {
+        fill(collection, true, false, clear);
     }
 
     @Override
