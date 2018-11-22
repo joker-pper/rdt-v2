@@ -140,7 +140,7 @@ public interface RdtOperation {
     /**
      * 用于填充展示数据列表的方法,忽略约束性
      * @param collection
-     * @param onlyTransient 所否只填充为transient的column
+     * @param onlyTransient 是否只填充为transient的column
      * @param clear 是否清除未找到的值
      */
     void fillForShow(Collection<?> collection, boolean onlyTransient, boolean clear);
