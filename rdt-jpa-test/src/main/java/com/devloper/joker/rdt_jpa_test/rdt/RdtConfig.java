@@ -54,7 +54,7 @@ public class RdtConfig {
 
             @Override
             protected Class<?>[] columnTransientAnnotations() {
-                return new Class[] {Transient.class};
+                return new Class[] {Transient.class, javax.persistence.Transient.class};
             }
 
             @Override

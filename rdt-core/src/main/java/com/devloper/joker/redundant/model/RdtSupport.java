@@ -147,8 +147,12 @@ public class RdtSupport {
 
 
     public ModifyDescribe getDeepCloneModifyDescribe(ModifyDescribe describe) {
+        return getDeepCloneModifyDescribe(describe, true);
+    }
+
+    public ModifyDescribe getDeepCloneModifyDescribe(ModifyDescribe describe, boolean withConfig) {
         if (describe != null) {
-            if (properties.getDeepCloneChangedModify()) {
+            if (!withConfig || properties.getDeepCloneChangedModify()) {
                 ModifyDescribe cloned = rdtResolver.deepClone(describe);
 
                 List<ModifyColumn> clonedColumnList = cloned.getColumnList();
@@ -216,9 +220,9 @@ public class RdtSupport {
         }
     }
 
-    public ModifyRelyDescribe getDeepCloneModifyRelyDescribe(ModifyRelyDescribe describe) {
+    public ModifyRelyDescribe getDeepCloneModifyRelyDescribe(ModifyRelyDescribe describe, boolean withConfig) {
         if (describe != null) {
-            if (properties.getDeepCloneChangedModify()) {
+            if (!withConfig || properties.getDeepCloneChangedModify()) {
                 ModifyRelyDescribe cloned = rdtResolver.deepClone(describe);
                 cloned.getRelyColumn().setField(describe.getRelyColumn().getField());
                 List<ModifyColumn> clonedColumnList = cloned.getColumnList();
@@ -233,6 +237,10 @@ public class RdtSupport {
             }
         }
         return describe;
+    }
+
+    public ModifyRelyDescribe getDeepCloneModifyRelyDescribe(ModifyRelyDescribe describe) {
+        return getDeepCloneModifyRelyDescribe(describe, true);
     }
 
 
@@ -429,5 +437,40 @@ public class RdtSupport {
             callBack.execute(modifyCondition, index ++, targetProperty, val);
         }
 
+    }
+
+    /**
+     * 获取和onlyTransient配置处理后的ModifyDescribe,用于填充
+     * @param describe
+     * @param onlyTransient 是否只保留transient的column
+     */
+    public ModifyDescribe getModifyDescribeForFill(ModifyDescribe describe, boolean onlyTransient) {
+        if (!onlyTransient) {
+            return describe;
+        }
+        ModifyDescribe current = getDeepCloneModifyDescribe(describe, false);
+        List<ModifyColumn> columnList = current.getColumnList();
+        for (Iterator<ModifyColumn> columnIterator = columnList.iterator(); columnIterator.hasNext();) {
+            if (!columnIterator.next().getColumn().getIsTransient()) {
+                //仅保留为transient的column
+                columnIterator.remove();
+            }
+        }
+        return current;
+    }
+
+    public ModifyRelyDescribe getModifyRelyDescribeForFill(ModifyRelyDescribe describe, boolean onlyTransient) {
+        if (!onlyTransient) {
+            return describe;
+        }
+        ModifyRelyDescribe current = getDeepCloneModifyRelyDescribe(describe, false);
+        List<ModifyColumn> columnList = current.getColumnList();
+        for (Iterator<ModifyColumn> columnIterator = columnList.iterator(); columnIterator.hasNext();) {
+            if (!columnIterator.next().getColumn().getIsTransient()) {
+                //仅保留为transient的column
+                columnIterator.remove();
+            }
+        }
+        return current;
     }
 }

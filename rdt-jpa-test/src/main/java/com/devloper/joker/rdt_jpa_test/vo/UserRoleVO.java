@@ -2,15 +2,12 @@ package com.devloper.joker.rdt_jpa_test.vo;
 
 import com.devloper.joker.rdt_jpa_test.domain.Role;
 import com.devloper.joker.rdt_jpa_test.domain.User;
-import com.devloper.joker.redundant.annotation.RdtMany;
-import com.devloper.joker.redundant.annotation.RdtOne;
 import com.devloper.joker.redundant.annotation.field.RdtField;
 import com.devloper.joker.redundant.annotation.field.RdtFieldCondition;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
 
 
 @Data

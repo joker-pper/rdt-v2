@@ -105,6 +105,10 @@ public interface RdtOperation {
      */
     void updateRelevant(Object data, Map<Object, Object> beforeKeyDataMap);
 
+    /**
+     * fill(collection, allowedNullValue, checkValue, clear, false);
+     */
+    void fill(Collection<?> collection, boolean allowedNullValue, boolean checkValue, boolean clear);
 
     /**
      * 填充数据列表的核心方法,根据当前集合数据、参数以及关系填充所引用target持久化类的字段值
@@ -112,25 +116,36 @@ public interface RdtOperation {
      * @param allowedNullValue 是否允许条件列值为null,为false时存在null值会抛出 FillNotAllowedValueException 异常
      * @param checkValue 为true时对应条件值的个数必须等于所匹配的结果个数,反之抛出 FillNotAllowedDataException 异常
      * @param clear 为true时会清除未匹配到数据的字段值
+     * @param onlyTransient 为true时只填充为transient的column
      *
      * 异常类:
      * @see     com.devloper.joker.redundant.fill.FillNotAllowedValueException
      * @see     com.devloper.joker.redundant.fill.FillNotAllowedDataException
      */
-    void fill(Collection<?> collection, boolean allowedNullValue, boolean checkValue, boolean clear);
+    void fill(Collection<?> collection, boolean allowedNullValue, boolean checkValue, boolean clear, boolean onlyTransient);
+
 
     /**
-     * fillForShow(collection, false)
+     * fillForShow(collection, false),默认只填充transient的列
      * @param collection
      */
     void fillForShow(Collection<?> collection);
 
+
+    /**
+     * fillForShow(collection, true, false)
+     */
+    void fillForShow(Collection<?> collection, boolean clear);
+
     /**
      * 用于填充展示数据列表的方法,忽略约束性
      * @param collection
+     * @param onlyTransient 所否只填充为transient的column
      * @param clear 是否清除未找到的值
      */
-    void fillForShow(Collection<?> collection, boolean clear);
+    void fillForShow(Collection<?> collection, boolean onlyTransient, boolean clear);
+
+
 
 
     /**

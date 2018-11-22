@@ -617,9 +617,15 @@ public abstract class AbstractOperation implements RdtOperation {
     public void fillForShow(Collection<?> collection) {
         fillForShow(collection, false);
     }
+
     @Override
     public void fillForShow(Collection<?> collection, boolean clear) {
-        fill(collection, true, false, clear);
+        fillForShow(collection, true, clear);
+    }
+
+    @Override
+    public void fillForShow(Collection<?> collection, boolean onlyTransient, boolean clear) {
+        fill(collection, true, false, clear, onlyTransient);
     }
 
     @Override
@@ -629,15 +635,19 @@ public abstract class AbstractOperation implements RdtOperation {
 
     @Override
     public void fillForSave(Collection<?> collection, boolean allowedNullValue) {
-        fill(collection, allowedNullValue, true, true);
+        fill(collection, allowedNullValue, true, true, false);
     }
-
 
     @Override
     public void fill(Collection<?> collection, boolean allowedNullValue, boolean checkValue, boolean clear) {
+        fill(collection, allowedNullValue, checkValue, clear, false);
+    }
+
+    @Override
+    public void fill(Collection<?> collection, boolean allowedNullValue, boolean checkValue, boolean clear, boolean onlyTransient) {
         FillRSModel fillRSModel = new FillRSModel();
         //处理数据关系
-        fillRelationshipHandle(fillRSModel, collection, allowedNullValue, checkValue, clear);
+        fillRelationshipHandle(fillRSModel, collection, allowedNullValue, checkValue, clear, onlyTransient);
 
         //多条件时每组条件值都要进行查询,优先处理
         Map<Class, FillManyKeyModel> fillManyKeyModelMap = fillRSModel.getFillManyKeyModelMap();
@@ -716,9 +726,10 @@ public abstract class AbstractOperation implements RdtOperation {
      * @param withNullKeyValue
      * @param checkValue
      * @param clear
+     * @param onlyTransient 为true时只填充为transient的column
      */
-    protected void fillRelationshipHandle(FillRSModel fillRSModel, Collection<?> collection, final boolean withNullKeyValue, final boolean checkValue, final boolean clear) {
-        fillBuilder.fillRelationshipHandle(fillRSModel, collection, withNullKeyValue, checkValue, clear);
+    protected void fillRelationshipHandle(FillRSModel fillRSModel, Collection<?> collection, final boolean withNullKeyValue, final boolean checkValue, final boolean clear, boolean onlyTransient) {
+        fillBuilder.fillRelationshipHandle(fillRSModel, collection, withNullKeyValue, checkValue, clear, onlyTransient);
     }
 
 

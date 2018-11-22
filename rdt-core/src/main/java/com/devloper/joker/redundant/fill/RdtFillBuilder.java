@@ -375,8 +375,9 @@ public class RdtFillBuilder {
      * @param allowedNullValue 是否允许指定为对应持久化类的字段值为空
      * @param checkValue
      * @param clear
+     * @param onlyTransient
      */
-    public void fillRelationshipHandle(final FillRSModel fillRSModel, Collection<?> collection, final boolean allowedNullValue, final boolean checkValue, final boolean clear) {
+    public void fillRelationshipHandle(final FillRSModel fillRSModel, Collection<?> collection, final boolean allowedNullValue, final boolean checkValue, final boolean clear, final boolean onlyTransient) {
         if (collection != null && !collection.isEmpty()) {
             for (final Object data : collection) {
                 if (data != null) {
@@ -397,6 +398,7 @@ public class RdtFillBuilder {
                         support.doModifyDescribeHandle(entityClassModel, dataClassModel, new RdtSupport.ModifyDescribeCallBack() {
                             @Override
                             public void execute(ClassModel entityClassModel, ClassModel dataClassModel, ModifyDescribe describe) {
+                                describe = support.getModifyDescribeForFill(describe, onlyTransient);
                                 List<ModifyCondition> conditionList = describe.getConditionList();
                                 List<ModifyColumn> columnList = describe.getColumnList();
 
@@ -420,6 +422,7 @@ public class RdtFillBuilder {
                         support.doModifyRelyDescribeHandle(entityClassModel, dataClassModel, new RdtSupport.ModifyRelyDescribeCallBack() {
                             @Override
                             public void execute(ClassModel entityClassModel, ClassModel dataClassModel, Column relyColumn, int group, ModifyRelyDescribe describe) {
+                                describe = support.getModifyRelyDescribeForFill(describe, onlyTransient);
                                 List<ModifyCondition> conditionList = describe.getConditionList();
                                 List<ModifyColumn> columnList = describe.getColumnList();
                                 if (!columnList.isEmpty()) {
@@ -471,7 +474,7 @@ public class RdtFillBuilder {
                                 }
                             }
                         }
-                        fillRelationshipHandle(fillRSModel, toHandleList, allowedNullValue, checkValue, clear);
+                        fillRelationshipHandle(fillRSModel, toHandleList, allowedNullValue, checkValue, clear, onlyTransient);
                     }
                 }
             }
