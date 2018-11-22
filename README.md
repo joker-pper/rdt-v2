@@ -120,9 +120,8 @@ rdt-jpa及rdt-spring-mongodb为已提供的数据层操作实现,可作为具体
 
 /***
 * 现有商品和订单两个实体
-* 订单中持久化商品id,商品购买状态,未持久化商品名称(只是为了展示填充字段)
-* 当商品的价格改变时会更新订单中未付款的数据
-*
+* 订单中持久化商品id,商品购买状态(1 已完成 2: 未付款),商品价格,未持久化商品名称(只是为了展示填充字段)
+* 当商品的价格改变时会更新相关订单中未付款的price数据
 **/
 
 @Entity
@@ -172,6 +171,10 @@ public class Order {
 
 
 }
+
+
+//测试代码片段
+
 
     @Resource
     private IGoodsService goodsService;
@@ -250,16 +253,15 @@ public class Order {
 > api使用
 
 ```
-//更新方法
+    //更新方法
+    //更新当前对象的所有相关冗余字段数据
+    updateMulti(Object current);
 
-//更新当前对象的所有相关冗余字段数据
-updateMulti(Object current);
-
-//根据当前对象与之前对象数据对比后,更新被引用字段值所发生改变后的相关冗余字段数据
-updateMulti(Object current, Object before);
+    //根据当前对象与之前对象数据对比后,更新被引用字段值所发生改变后的相关冗余字段数据
+    updateMulti(Object current, Object before);
 
 
-  /**
+    /**
      * fill(collection, allowedNullValue, checkValue, clear, false);
      */
     void fill(Collection<?> collection, boolean allowedNullValue, boolean checkValue, boolean clear);
@@ -291,6 +293,13 @@ updateMulti(Object current, Object before);
      */
     void fillForShow(Collection<?> collection, boolean clear);
 
+    /**
+     * 用于填充展示数据列表的方法,忽略约束性
+     * @param collection
+     * @param onlyTransient 所否只填充为transient的column
+     * @param clear 是否清除未找到的值
+     */
+    void fillForShow(Collection<?> collection, boolean onlyTransient, boolean clear);
 
 ```
 
