@@ -1,9 +1,9 @@
 package com.devloper.joker.redundant.operation;
 
+import com.devloper.joker.redundant.core.RdtConfiguration;
 import com.devloper.joker.redundant.fill.FillOneKeyModel;
 import com.devloper.joker.redundant.model.*;
 import com.devloper.joker.redundant.support.DataSupport;
-import com.devloper.joker.redundant.support.Prototype;
 import com.devloper.joker.redundant.utils.StringUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -17,8 +17,8 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
 
     protected MongoTemplate mongoTemplate;
 
-    public MongoRdtOperation(RdtSupport rdtSupport) {
-        super(rdtSupport);
+    public MongoRdtOperation(RdtConfiguration configuration) {
+        super(configuration);
     }
 
     public void setMongoTemplate(MongoTemplate mongoTemplate) {
@@ -134,7 +134,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
         final Update update = new Update();
 
         //设置查询条件
-        rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
+        configuration.doModifyConditionHandle(vo, describe, new RdtConfiguration.ModifyConditionCallBack() {
             @Override
             public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
                 String property = modifyCondition.getColumn().getProperty();
@@ -143,7 +143,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
         });
 
         //设置更新值
-        rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
+        configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
             @Override
             public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
                 String property = modifyColumn.getColumn().getProperty();
@@ -163,7 +163,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
         modelTypeCriteriaProcessing(describe, criteria, relyProperty);
 
         //设置查询条件
-        rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
+        configuration.doModifyConditionHandle(vo, describe, new RdtConfiguration.ModifyConditionCallBack() {
             @Override
             public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
                 String property = modifyCondition.getColumn().getProperty();
@@ -172,7 +172,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
         });
 
         //设置更新值
-        rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
+        configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
             @Override
             public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
                 String property = modifyColumn.getColumn().getProperty();
@@ -188,7 +188,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
         final Criteria criteria = new Criteria();
         final Update update = new Update();
 
-        rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
+        configuration.doModifyConditionHandle(vo, describe, new RdtConfiguration.ModifyConditionCallBack() {
             @Override
             public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
                 String property = getModifyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, modifyCondition);
@@ -196,7 +196,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
             }
         });
 
-        rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
+        configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
             @Override
             public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
                 String property = getModifyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, modifyColumn);
@@ -217,7 +217,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
 
         modelTypeCriteriaProcessing(describe, criteria, relyProperty);
 
-        rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
+        configuration.doModifyConditionHandle(vo, describe, new RdtConfiguration.ModifyConditionCallBack() {
             @Override
             public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
                 String property = getModifyRelyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, modifyCondition);
@@ -225,7 +225,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
             }
         });
 
-        rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
+        configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
             @Override
             public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
                 String property = getModifyRelyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, modifyColumn);
@@ -254,7 +254,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
         final String symbol = super.getSymbol();
         final boolean logDetail = super.getLogDetail();
 
-        rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
+        configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
             @Override
             public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
                 String property = modifyColumn.getColumn().getProperty();
@@ -312,7 +312,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
         final String symbol = super.getSymbol();
         final boolean logDetail = super.getLogDetail();
 
-        rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
+        configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
             @Override
             public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
                 String property = modifyColumn.getColumn().getProperty();
@@ -410,7 +410,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
 
         final Map<String, String> conditionPropertyMap = new HashMap<String, String>();
 
-        rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
+        configuration.doModifyConditionHandle(vo, describe, new RdtConfiguration.ModifyConditionCallBack() {
             @Override
             public void execute(ModifyCondition condition, int position, String targetProperty, Object targetPropertyVal) {
                 String property = condition.getColumn().getProperty();
@@ -527,7 +527,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
                                 String relyProperty = relyColumn.getProperty();
                                 Object relyPropertyVal = rdtResolver.getPropertyValue(result, relyProperty);
 
-                                flag = rdtSupport.isMatchedType(describe, relyPropertyVal);
+                                flag = configuration.isMatchedType(describe, relyPropertyVal);
                             }
 
                             if (flag) {

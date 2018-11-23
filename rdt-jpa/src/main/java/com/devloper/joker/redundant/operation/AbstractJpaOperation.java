@@ -1,5 +1,6 @@
 package com.devloper.joker.redundant.operation;
 
+import com.devloper.joker.redundant.core.RdtConfiguration;
 import com.devloper.joker.redundant.fill.FillOneKeyModel;
 import com.devloper.joker.redundant.model.*;
 import javax.persistence.EntityManager;
@@ -11,8 +12,8 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
 
     public EntityManager entityManager;
 
-    public AbstractJpaOperation(RdtSupport rdtSupport) {
-        super(rdtSupport);
+    public AbstractJpaOperation(RdtConfiguration configuration) {
+        super(configuration);
     }
 
     public void setEntityManager(EntityManager entityManager) {
@@ -27,7 +28,7 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
         final Map<String, Object> conditionDataMap = new LinkedHashMap<String, Object>(16);
         final Map<String, Object> updateDataMap = new LinkedHashMap<String, Object>(16);
 
-        rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
+        configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
             @Override
             public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
                 if (position == 0) {
@@ -47,7 +48,7 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
         }
         final String andText = " AND ";
 
-        rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
+        configuration.doModifyConditionHandle(vo, describe, new RdtConfiguration.ModifyConditionCallBack() {
             @Override
             public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
                 if (position == 0) {
@@ -86,7 +87,7 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
         final Root root = criteriaUpdate.from(entityClass);
 
         //设置更新值
-        rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
+        configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
             @Override
             public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
                 String property = modifyColumn.getColumn().getProperty();
@@ -97,7 +98,7 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
 
         //设置查询条件
         final List<Predicate> predicateList = new ArrayList<Predicate>(16);
-        rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
+        configuration.doModifyConditionHandle(vo, describe, new RdtConfiguration.ModifyConditionCallBack() {
             @Override
             public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
                 String property = modifyCondition.getColumn().getProperty();

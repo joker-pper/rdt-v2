@@ -12,6 +12,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.persistence.Transient;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -27,6 +29,7 @@ public class UserManyKeyRelyVo {
     private String currentName;
 
     //不同类型时: user -> roleName role -> createTime
+    @Transient
     @RdtFieldRely(property = "type", targetPropertys = {"roleName", "createTime"})
     private String currentValue;
 

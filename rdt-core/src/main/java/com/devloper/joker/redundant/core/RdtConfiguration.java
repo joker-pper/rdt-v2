@@ -1,17 +1,15 @@
-package com.devloper.joker.redundant.model;
+package com.devloper.joker.redundant.core;
 
 
-import com.devloper.joker.redundant.builder.RdtPropertiesBuilder;
-import com.devloper.joker.redundant.resolver.RdtResolver;
-import com.devloper.joker.redundant.support.Prototype;
+import com.devloper.joker.redundant.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-public class RdtSupport {
+public class RdtConfiguration {
 
-    protected final  Logger logger = LoggerFactory.getLogger(getClass());
+    protected final Logger logger = LoggerFactory.getLogger(getClass());
 
     private RdtProperties properties;
 
@@ -23,7 +21,12 @@ public class RdtSupport {
 
     private Map<Class, List<ComplexAnalysis>> complexAnalysisResultListMap = new HashMap<Class, List<ComplexAnalysis>>(16);
 
-    public RdtSupport(RdtProperties properties, RdtPropertiesBuilder propertiesBuilder, RdtResolver rdtResolver) {
+    /**
+     * 储存当前describe在onlyTransient处理后的信息
+     */
+    private Map<ModifyDescribe, ModifyDescribe> transientModifyDescribeCacheMap = new HashMap<ModifyDescribe, ModifyDescribe>(16);
+
+    public RdtConfiguration(RdtProperties properties, RdtPropertiesBuilder propertiesBuilder, RdtResolver rdtResolver) {
         this.properties = properties;
         this.rdtResolver = rdtResolver;
         this.propertiesBuilder = propertiesBuilder;
@@ -248,23 +251,28 @@ public class RdtSupport {
     public List<List<ComplexModel>> getComplexModelParseResult(Class complexClass) {
         List<List<ComplexModel>> results = complexResultListMap.get(complexClass);
         if (results == null) {
-            results = new ArrayList<List<ComplexModel>>();
-            complexResultListMap.put(complexClass, results);
-
-            List<ComplexModel> complexObjects = properties.getClassComplexModelsMap().get(complexClass);
-            if (complexObjects != null) {
-                for (ComplexModel complexObject : complexObjects) {
-                    if (complexObject.getOwnerBase()) {
-                        List<ComplexModel> result = new ArrayList<ComplexModel>();
-                        result.add(complexObject);
-                        results.add(result);
-                    } else {
-                        List<List<ComplexModel>> currents = getComplexModelParseResult(complexObject.getOwnerType());
-                        for (List<ComplexModel> current : currents) {
-                            List<ComplexModel> result = new ArrayList<ComplexModel>();
-                            result.add(complexObject);
-                            result.addAll(current);
-                            results.add(result);
+            synchronized (RdtConfiguration.class) {
+                results = complexResultListMap.get(complexClass);
+                boolean flag = results == null;
+                if (flag) {
+                    results = new ArrayList<List<ComplexModel>>();
+                    complexResultListMap.put(complexClass, results);
+                    List<ComplexModel> complexObjects = properties.getClassComplexModelsMap().get(complexClass);
+                    if (complexObjects != null) {
+                        for (ComplexModel complexObject : complexObjects) {
+                            if (complexObject.getOwnerBase()) {
+                                List<ComplexModel> result = new ArrayList<ComplexModel>();
+                                result.add(complexObject);
+                                results.add(result);
+                            } else {
+                                List<List<ComplexModel>> currents = getComplexModelParseResult(complexObject.getOwnerType());
+                                for (List<ComplexModel> current : currents) {
+                                    List<ComplexModel> result = new ArrayList<ComplexModel>();
+                                    result.add(complexObject);
+                                    result.addAll(current);
+                                    results.add(result);
+                                }
+                            }
                         }
                     }
                 }
@@ -279,18 +287,22 @@ public class RdtSupport {
      * @return
      */
     public List<ComplexAnalysis> getComplexAnalysisList(Class complexClass) {
-        List<ComplexAnalysis> complexAnalysisList = complexAnalysisResultListMap.get(complexClass);
-        if (complexAnalysisList == null) {
-            complexAnalysisList = new ArrayList<ComplexAnalysis>(16);
-            complexAnalysisResultListMap.put(complexClass, complexAnalysisList);
-            List<List<ComplexModel>> complexResults = getComplexModelParseResult(complexClass);
-            for (List<ComplexModel> complexResult : complexResults) {
-                ComplexAnalysis complexAnalysis = getComplexAnalysis(complexResult);
-                complexAnalysisList.add(complexAnalysis);
+        List<ComplexAnalysis> result = complexAnalysisResultListMap.get(complexClass);
+        if (result == null) {
+            synchronized (RdtConfiguration.class) {
+                result = complexAnalysisResultListMap.get(complexClass);
+                if (result == null) {
+                    result = new ArrayList<ComplexAnalysis>(16);
+                    complexAnalysisResultListMap.put(complexClass, result);
+                    List<List<ComplexModel>> complexResults = getComplexModelParseResult(complexClass);
+                    for (List<ComplexModel> complexResult : complexResults) {
+                        ComplexAnalysis complexAnalysis = getComplexAnalysis(complexResult);
+                        result.add(complexAnalysis);
+                    }
+                }
             }
-            //logger.warn("{} -- getComplexAnalysisList init...", complexClass.getName());
         }
-        return complexAnalysisList;
+        return result;
     }
 
     /**
@@ -448,29 +460,51 @@ public class RdtSupport {
         if (!onlyTransient) {
             return describe;
         }
-        ModifyDescribe current = getDeepCloneModifyDescribe(describe, false);
-        List<ModifyColumn> columnList = current.getColumnList();
-        for (Iterator<ModifyColumn> columnIterator = columnList.iterator(); columnIterator.hasNext();) {
-            if (!columnIterator.next().getColumn().getIsTransient()) {
-                //仅保留为transient的column
-                columnIterator.remove();
+        ModifyDescribe result = transientModifyDescribeCacheMap.get(describe);
+        if (result == null) {
+            synchronized (RdtConfiguration.class) {
+                result = transientModifyDescribeCacheMap.get(describe);
+                if (result == null) {
+                    ModifyDescribe current = getDeepCloneModifyDescribe(describe, false);
+                    List<ModifyColumn> columnList = current.getColumnList();
+                    for (Iterator<ModifyColumn> columnIterator = columnList.iterator(); columnIterator.hasNext();) {
+                        if (!columnIterator.next().getColumn().getIsTransient()) {
+                            //仅保留为transient的column
+                            columnIterator.remove();
+                        }
+                    }
+                    result = current;
+                    transientModifyDescribeCacheMap.put(describe, result);
+                }
             }
         }
-        return current;
+        return result;
     }
 
     public ModifyRelyDescribe getModifyRelyDescribeForFill(ModifyRelyDescribe describe, boolean onlyTransient) {
         if (!onlyTransient) {
             return describe;
         }
-        ModifyRelyDescribe current = getDeepCloneModifyRelyDescribe(describe, false);
-        List<ModifyColumn> columnList = current.getColumnList();
-        for (Iterator<ModifyColumn> columnIterator = columnList.iterator(); columnIterator.hasNext();) {
-            if (!columnIterator.next().getColumn().getIsTransient()) {
-                //仅保留为transient的column
-                columnIterator.remove();
+
+        ModifyDescribe result = transientModifyDescribeCacheMap.get(describe);
+
+        if (result == null) {
+            synchronized (RdtConfiguration.class) {
+                result = transientModifyDescribeCacheMap.get(describe);
+                if (result == null) {
+                    ModifyRelyDescribe current = getDeepCloneModifyRelyDescribe(describe, false);
+                    List<ModifyColumn> columnList = current.getColumnList();
+                    for (Iterator<ModifyColumn> columnIterator = columnList.iterator(); columnIterator.hasNext();) {
+                        if (!columnIterator.next().getColumn().getIsTransient()) {
+                            //仅保留为transient的column
+                            columnIterator.remove();
+                        }
+                    }
+                    result = current;
+                    transientModifyDescribeCacheMap.put(describe, result);
+                }
             }
         }
-        return current;
+        return (ModifyRelyDescribe) result;
     }
 }

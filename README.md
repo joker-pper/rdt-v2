@@ -99,19 +99,19 @@ rdt-jpa及rdt-spring-mongodb为已提供的数据层操作实现,可作为具体
     }
 
     //作为读取配置的对象
-    public RdtSupport rdtSupport() {
-        return rdtProperties().builder(rdtResolver());
-    }
-    
-    //持久层操作对象,默认提供mongodb与jpa的一些支持,但可能仍需要情况来提供
-    //对应的方法实现,也可以覆盖已存在的实现方法。
-    //未存在的可继承相关Operation父类,实现具体的查询/更新方法即可。
-    public MongoRdtOperation mongoRdtOperation() {
-        MongoRdtOperation operation = new MongoRdtOperation(rdtSupport()) {
-        };
-        operation.setMongoTemplate(mongoTemplate);
-        return operation;
-    }
+     public RdtConfiguration rdtConfiguration() {
+         return RdtConfigurationBuilder.build(rdtProperties(), rdtResolver());
+     }
+ 
+     //持久层操作对象,默认提供mongodb与jpa的一些支持,但可能仍需要情况来提供
+     //对应的方法实现,也可以覆盖已存在的实现方法。
+     //未存在的可继承相关Operation父类,实现具体的查询/更新方法即可。
+     public RdtOperation mongoRdtOperation() {
+         MongoRdtOperation operation = new MongoRdtOperation(rdtConfiguration()) {
+         };
+         operation.setMongoTemplate(mongoTemplate);
+         return operation;
+     }   
     
     
 > example  (jpa-test示例)

@@ -1,8 +1,10 @@
 package com.devloper.joker.redundant.operation;
 
+import com.devloper.joker.redundant.core.RdtConfiguration;
+import com.devloper.joker.redundant.core.RdtProperties;
 import com.devloper.joker.redundant.fill.*;
 import com.devloper.joker.redundant.model.*;
-import com.devloper.joker.redundant.resolver.RdtResolver;
+import com.devloper.joker.redundant.core.RdtResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +19,7 @@ public abstract class AbstractOperation implements RdtOperation {
 
     protected RdtResolver rdtResolver;
 
-    protected RdtSupport rdtSupport;
+    protected RdtConfiguration configuration;
 
     protected String symbol = "->";
 
@@ -25,15 +27,14 @@ public abstract class AbstractOperation implements RdtOperation {
 
     protected RdtFillBuilder fillBuilder;
 
-
-    public AbstractOperation(RdtSupport rdtSupport) {
-        if (rdtSupport == null) {
-            throw new IllegalArgumentException("rdt support must not be null.");
+    public AbstractOperation(RdtConfiguration configuration) {
+        if (configuration == null) {
+            throw new IllegalArgumentException("rdt configuration must not be null.");
         }
-        this.rdtSupport = rdtSupport;
-        this.rdtResolver = rdtSupport.getRdtResolver();
-        this.properties = rdtSupport.getProperties();
-        this.fillBuilder = RdtFillBuilder.of(rdtSupport);
+        this.configuration = configuration;
+        this.rdtResolver = configuration.getRdtResolver();
+        this.properties = configuration.getProperties();
+        this.fillBuilder = RdtFillBuilder.of(configuration);
     }
 
 
@@ -83,17 +84,17 @@ public abstract class AbstractOperation implements RdtOperation {
 
     @Override
     public <T> Map<Object, T> getKeyMap(Collection<T> data, String key) {
-        return rdtSupport.getKeyMap(data, key);
+        return configuration.getKeyMap(data, key);
     }
 
     @Override
     public ClassModel getClassModel(Class entityClass) {
-        return rdtSupport.getClassModel(entityClass);
+        return configuration.getClassModel(entityClass);
     }
 
     @Override
     public String getPrimaryId(Class entityClass) {
-        return rdtSupport.getPrimaryId(entityClass);
+        return configuration.getPrimaryId(entityClass);
     }
 
     @Override
@@ -365,10 +366,10 @@ public abstract class AbstractOperation implements RdtOperation {
         final List<String> changedPropertys = vo.getChangedPropertys();
         for (Class relaxedClass : changedRelaxedClassSet) {
             ClassModel currentClassModel = properties.getClassModel(relaxedClass); //要修改的classModel
-            rdtSupport.doModifyDescribeHandle(classModel, currentClassModel, new RdtSupport.ModifyDescribeCallBack() {
+            configuration.doModifyDescribeHandle(classModel, currentClassModel, new RdtConfiguration.ModifyDescribeCallBack() {
                 @Override
                 public void execute(ClassModel classModel, ClassModel currentClassModel, ModifyDescribe describe) {
-                    ModifyDescribe currentDescribe = rdtSupport.getModifyDescribe(describe, changedPropertys); //获取当前的修改条件
+                    ModifyDescribe currentDescribe = configuration.getModifyDescribe(describe, changedPropertys); //获取当前的修改条件
                     if (currentDescribe != null) {
                         updateModifyDescribeSimple(classModel, currentClassModel, currentDescribe, vo);
                     }
@@ -391,7 +392,7 @@ public abstract class AbstractOperation implements RdtOperation {
         final Map<String, Object> updateLogMap = new LinkedHashMap<String, Object>(16);
 
         if (logger.isDebugEnabled()) {
-            rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
+            configuration.doModifyConditionHandle(vo, describe, new RdtConfiguration.ModifyConditionCallBack() {
                 @Override
                 public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
                     String property = modifyCondition.getColumn().getProperty();
@@ -403,7 +404,7 @@ public abstract class AbstractOperation implements RdtOperation {
                 }
             });
 
-            rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
+            configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
                 @Override
                 public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
                     String property = modifyColumn.getColumn().getProperty();
@@ -445,10 +446,10 @@ public abstract class AbstractOperation implements RdtOperation {
         for (Class relaxedClass : changedRelaxedClassSet) {
             ClassModel modifyClassModel = properties.getClassModel(relaxedClass); //要修改的classModel
 
-            rdtSupport.doModifyRelyDescribeHandle(classModel, modifyClassModel, new RdtSupport.ModifyRelyDescribeCallBack() {
+            configuration.doModifyRelyDescribeHandle(classModel, modifyClassModel, new RdtConfiguration.ModifyRelyDescribeCallBack() {
                 @Override
                 public void execute(ClassModel classModel, ClassModel currentClassModel, Column relyColumn, int group, ModifyRelyDescribe describe) {
-                    ModifyRelyDescribe currentDescribe = rdtSupport.getModifyRelyDescribe(describe, changedPropertys);
+                    ModifyRelyDescribe currentDescribe = configuration.getModifyRelyDescribe(describe, changedPropertys);
                     if (currentDescribe != null) {
                         updateModifyRelyDescribeSimple(classModel, currentClassModel, vo, relyColumn, group, currentDescribe);
                     }
@@ -508,7 +509,7 @@ public abstract class AbstractOperation implements RdtOperation {
         RdtLog rdtLog = new RdtLog(conditionLogMap, updateLogMap);
 
         if (logger.isDebugEnabled()) {
-            rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
+            configuration.doModifyConditionHandle(vo, describe, new RdtConfiguration.ModifyConditionCallBack() {
                 @Override
                 public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
                     String property = modifyCondition.getColumn().getProperty();
@@ -520,7 +521,7 @@ public abstract class AbstractOperation implements RdtOperation {
                 }
             });
 
-            rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
+            configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
                 @Override
                 public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
                     if (logDetail) {

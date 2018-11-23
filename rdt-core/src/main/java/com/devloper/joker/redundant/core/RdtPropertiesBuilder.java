@@ -1,4 +1,4 @@
-package com.devloper.joker.redundant.builder;
+package com.devloper.joker.redundant.core;
 
 import com.devloper.joker.redundant.annotation.RdtMany;
 import com.devloper.joker.redundant.annotation.RdtOne;
@@ -10,7 +10,6 @@ import com.devloper.joker.redundant.annotation.rely.*;
 import com.devloper.joker.redundant.model.*;
 import com.devloper.joker.redundant.model.commons.RdtRelyModel;
 import com.devloper.joker.redundant.model.commons.RdtRelyTargetColumnModel;
-import com.devloper.joker.redundant.resolver.RdtResolver;
 import com.devloper.joker.redundant.utils.ClassUtils;
 import com.devloper.joker.redundant.utils.PojoUtils;
 import com.devloper.joker.redundant.utils.StringUtils;
@@ -136,7 +135,6 @@ public class RdtPropertiesBuilder {
         for (Class targetClass : targetClassModifyRelyDescribeMap.keySet()) {
             Map<Column, Map<Integer, List<ModifyRelyDescribe>>> relyColumnDataMap = targetClassModifyRelyDescribeMap.get(targetClass);
             if (relyColumnDataMap == null) continue;
-            classModel.getTargetRelyModifyClassSet().add(targetClass);
 
             for (Column relyColumn : relyColumnDataMap.keySet()) {
                 Map<Integer, List<ModifyRelyDescribe>> groupDataMap = relyColumnDataMap.get(relyColumn);

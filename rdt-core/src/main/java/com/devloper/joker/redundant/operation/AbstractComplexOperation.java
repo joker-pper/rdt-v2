@@ -1,13 +1,14 @@
 package com.devloper.joker.redundant.operation;
 
+import com.devloper.joker.redundant.core.RdtConfiguration;
 import com.devloper.joker.redundant.model.*;
 
 import java.util.*;
 
 public abstract class AbstractComplexOperation extends AbstractOperation {
 
-    public AbstractComplexOperation(RdtSupport rdtSupport) {
-        super(rdtSupport);
+    public AbstractComplexOperation(RdtConfiguration configuration) {
+        super(configuration);
     }
 
     @Override
@@ -30,25 +31,25 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
             final List<String> changedPropertys = vo.getChangedPropertys();
             for (Class complexClass : complexClassSet) {
                 //获取complexClass所拥有的复杂关系对象组合
-                List<ComplexAnalysis> complexAnalysisList = rdtSupport.getComplexAnalysisList(complexClass);
+                List<ComplexAnalysis> complexAnalysisList = configuration.getComplexAnalysisList(complexClass);
                 ClassModel complexClassModel = getClassModel(complexClass);
                 for (final ComplexAnalysis complexAnalysis : complexAnalysisList) {
                     if (complexAnalysis.getHasMany()) { //包含many时
 
-                        rdtSupport.doModifyDescribeHandle(classModel, complexClassModel, new RdtSupport.ModifyDescribeCallBack() {
+                        configuration.doModifyDescribeHandle(classModel, complexClassModel, new RdtConfiguration.ModifyDescribeCallBack() {
                             @Override
                             public void execute(ClassModel classModel, ClassModel currentClassModel, ModifyDescribe describe) {
-                                ModifyDescribe currentDescribe = rdtSupport.getModifyDescribe(describe, changedPropertys); //获取当前的修改条件
+                                ModifyDescribe currentDescribe = configuration.getModifyDescribe(describe, changedPropertys); //获取当前的修改条件
                                 if (currentDescribe != null) {
                                     updateModifyDescribeMany(classModel, currentClassModel, complexAnalysis, currentDescribe, vo);
                                 }
                             }
                         });
 
-                        rdtSupport.doModifyRelyDescribeHandle(classModel, complexClassModel, new RdtSupport.ModifyRelyDescribeCallBack() {
+                        configuration.doModifyRelyDescribeHandle(classModel, complexClassModel, new RdtConfiguration.ModifyRelyDescribeCallBack() {
                             @Override
                             public void execute(ClassModel classModel, ClassModel currentClassModel, Column relyColumn, int group, ModifyRelyDescribe describe) {
-                                ModifyRelyDescribe currentDescribe = rdtSupport.getModifyRelyDescribe(describe, changedPropertys);
+                                ModifyRelyDescribe currentDescribe = configuration.getModifyRelyDescribe(describe, changedPropertys);
                                 if (currentDescribe != null) {
                                     updateModifyRelyDescribeMany(classModel, currentClassModel, complexAnalysis, currentDescribe, vo, relyColumn, group);
                                 }
@@ -57,19 +58,19 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
 
                     } else { //全部为one时
 
-                        rdtSupport.doModifyDescribeHandle(classModel, complexClassModel, new RdtSupport.ModifyDescribeCallBack() {
+                        configuration.doModifyDescribeHandle(classModel, complexClassModel, new RdtConfiguration.ModifyDescribeCallBack() {
                             @Override
                             public void execute(ClassModel classModel, ClassModel currentClassModel, ModifyDescribe describe) {
-                                ModifyDescribe currentDescribe = rdtSupport.getModifyDescribe(describe, changedPropertys); //获取当前的修改条件
+                                ModifyDescribe currentDescribe = configuration.getModifyDescribe(describe, changedPropertys); //获取当前的修改条件
                                 if (currentDescribe != null) {
                                     updateModifyDescribeOne(classModel, currentClassModel, complexAnalysis, currentDescribe, vo);
                                 }
                             }
                         });
-                        rdtSupport.doModifyRelyDescribeHandle(classModel, complexClassModel, new RdtSupport.ModifyRelyDescribeCallBack() {
+                        configuration.doModifyRelyDescribeHandle(classModel, complexClassModel, new RdtConfiguration.ModifyRelyDescribeCallBack() {
                             @Override
                             public void execute(ClassModel classModel, ClassModel currentClassModel, Column relyColumn, int group, ModifyRelyDescribe describe) {
-                                ModifyRelyDescribe currentDescribe = rdtSupport.getModifyRelyDescribe(describe, changedPropertys);
+                                ModifyRelyDescribe currentDescribe = configuration.getModifyRelyDescribe(describe, changedPropertys);
                                 if (currentDescribe != null) {
                                     updateModifyRelyDescribeOne(classModel, currentClassModel, complexAnalysis, currentDescribe, vo, relyColumn, group);
                                 }
@@ -101,7 +102,7 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
 
 
         if (logger.isDebugEnabled()) {
-            rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
+            configuration.doModifyConditionHandle(vo, describe, new RdtConfiguration.ModifyConditionCallBack() {
                 @Override
                 public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
                     String property = getModifyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, modifyCondition);
@@ -112,7 +113,7 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
                     }
                 }
             });
-            rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
+            configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
                 @Override
                 public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
                     String property = getModifyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, modifyColumn);
@@ -155,7 +156,7 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
         RdtLog rdtLog = new RdtLog(conditionLogMap, updateLogMap);
 
         if (logger.isDebugEnabled()) {
-            rdtSupport.doModifyConditionHandle(vo, describe, new RdtSupport.ModifyConditionCallBack() {
+            configuration.doModifyConditionHandle(vo, describe, new RdtConfiguration.ModifyConditionCallBack() {
                 @Override
                 public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
                     String property = getModifyRelyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, modifyCondition);
@@ -168,7 +169,7 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
                 }
             });
 
-            rdtSupport.doModifyColumnHandle(vo, describe, new RdtSupport.ModifyColumnCallBack() {
+            configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
                 @Override
                 public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
                     String property = getModifyRelyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, modifyColumn);

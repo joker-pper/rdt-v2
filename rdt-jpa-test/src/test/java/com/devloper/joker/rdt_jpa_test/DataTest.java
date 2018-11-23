@@ -74,6 +74,11 @@ public class DataTest extends ApplicationTests {
         logger.info("results: {}", JsonUtils.toJson(users));
     }
 
+    @Test
+    public void test() {
+        MapVo vo = new MapVo();
+        vo.test(1231);
+    }
 
 
 }

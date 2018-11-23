@@ -88,7 +88,7 @@ public class UserManyKeyRelyFillTest extends ApplicationTests  {
         vo7.setCurrentValue("adadaad");
         results.add(vo7);
 
-        rdtOperation.fill(results, true, false, true);
+        rdtOperation.fillForShow(results, true, true);
         logger.info("results: {}", JsonUtils.toJson(results));
     }
 

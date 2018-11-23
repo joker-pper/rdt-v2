@@ -1,8 +1,9 @@
 package com.devloper.joker.redundant.fill;
 
+import com.devloper.joker.redundant.core.RdtConfiguration;
 import com.devloper.joker.redundant.model.*;
 import com.devloper.joker.redundant.model.commons.RdtRelyModel;
-import com.devloper.joker.redundant.resolver.RdtResolver;
+import com.devloper.joker.redundant.core.RdtResolver;
 import com.devloper.joker.redundant.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,22 +14,22 @@ public class RdtFillBuilder {
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private RdtSupport support;
+    private RdtConfiguration configuration;
     private RdtResolver rdtResolver;
 
-    private RdtFillBuilder(RdtSupport support) {
-        this.support = support;
+    private RdtFillBuilder(RdtConfiguration support) {
+        this.configuration = support;
         this.rdtResolver = support.getRdtResolver();
     }
 
-    public static RdtFillBuilder of(RdtSupport support) {
+    public static RdtFillBuilder of(RdtConfiguration support) {
         return new RdtFillBuilder(support);
     }
 
     public void setFillKeyData(FillOneKeyModel fillOneKeyModel, Class entityClass, List<Object> entityList, boolean checkValue, boolean clear) {
         int keyValuesSize = fillOneKeyModel.getKeyValues().size();
         String key = fillOneKeyModel.getKey();
-        Map<Object, Object> entityDataMap = support.getKeyMap(entityList, key);
+        Map<Object, Object> entityDataMap = configuration.getKeyMap(entityList, key);
 
         if (checkValue) {
             //查找的结果值必须与key value的个数相同
@@ -121,7 +122,7 @@ public class RdtFillBuilder {
                 String text = null;
 
                 if (logger.isDebugEnabled()) {
-                    waitClassModel = support.getClassModel(waitFillData.getClass());
+                    waitClassModel = configuration.getClassModel(waitFillData.getClass());
                     String primaryId = waitClassModel.getPrimaryId();
                     text = StringUtils.isNotEmpty(primaryId) ? getConditionMark(primaryId, rdtResolver.getPropertyValue(waitFillData, primaryId)) : "";
                 }
@@ -383,22 +384,22 @@ public class RdtFillBuilder {
                 if (data != null) {
                     //获取当前数据的类型
                     final Class dataClass = data.getClass();
-                    ClassModel dataClassModel = support.getClassModel(dataClass);
+                    ClassModel dataClassModel = configuration.getClassModel(dataClass);
                     if (dataClassModel == null) {
                         logger.debug("rdt not contains class {}, so builder for fill now.", dataClass.getName());
-                        support.builderClass(dataClass);
-                        dataClassModel = support.getClassModel(dataClass);
+                        configuration.builderClass(dataClass);
+                        dataClassModel = configuration.getClassModel(dataClass);
                     }
                     final Map<Class, List<ModifyDescribe>> targetClassModifyDescribeMap = dataClassModel.getTargetClassModifyDescribeMap();
 
                     for (final Class entityClass : targetClassModifyDescribeMap.keySet()) {
                         //当前的修改信息
-                        ClassModel entityClassModel = support.getClassModel(entityClass);
+                        ClassModel entityClassModel = configuration.getClassModel(entityClass);
                         //基于entity data 修改 data model的数据
-                        support.doModifyDescribeHandle(entityClassModel, dataClassModel, new RdtSupport.ModifyDescribeCallBack() {
+                        configuration.doModifyDescribeHandle(entityClassModel, dataClassModel, new RdtConfiguration.ModifyDescribeCallBack() {
                             @Override
                             public void execute(ClassModel entityClassModel, ClassModel dataClassModel, ModifyDescribe describe) {
-                                describe = support.getModifyDescribeForFill(describe, onlyTransient);
+                                describe = configuration.getModifyDescribeForFill(describe, onlyTransient);
                                 List<ModifyCondition> conditionList = describe.getConditionList();
                                 List<ModifyColumn> columnList = describe.getColumnList();
 
@@ -418,11 +419,11 @@ public class RdtFillBuilder {
                     }
 
                     for (final Class entityClass : dataClassModel.getTargetRelyModifyClassSet()) {
-                        ClassModel entityClassModel = support.getClassModel(entityClass);
-                        support.doModifyRelyDescribeHandle(entityClassModel, dataClassModel, new RdtSupport.ModifyRelyDescribeCallBack() {
+                        ClassModel entityClassModel = configuration.getClassModel(entityClass);
+                        configuration.doModifyRelyDescribeHandle(entityClassModel, dataClassModel, new RdtConfiguration.ModifyRelyDescribeCallBack() {
                             @Override
                             public void execute(ClassModel entityClassModel, ClassModel dataClassModel, Column relyColumn, int group, ModifyRelyDescribe describe) {
-                                describe = support.getModifyRelyDescribeForFill(describe, onlyTransient);
+                                describe = configuration.getModifyRelyDescribeForFill(describe, onlyTransient);
                                 List<ModifyCondition> conditionList = describe.getConditionList();
                                 List<ModifyColumn> columnList = describe.getColumnList();
                                 if (!columnList.isEmpty()) {
@@ -432,7 +433,7 @@ public class RdtFillBuilder {
                                     } else {
                                         //获取当前依赖字段的值
                                         Object relyColumnValue = rdtResolver.getPropertyValue(data, relyColumn.getProperty());
-                                        if (support.isMatchedType(describe, relyColumnValue)) {
+                                        if (configuration.isMatchedType(describe, relyColumnValue)) {
                                             if (conditionSize == 1) {
                                                 initOneKeyModelData(fillRSModel, entityClassModel, dataClassModel, describe, data, allowedNullValue);
                                             } else {

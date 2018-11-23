@@ -1,12 +1,13 @@
 package com.devloper.joker.redundant.operation;
 
+import com.devloper.joker.redundant.core.RdtConfiguration;
 import com.devloper.joker.redundant.model.*;
 
 
 public abstract class AbstractMongoOperation extends AbstractComplexOperation {
 
-    public AbstractMongoOperation(RdtSupport rdtSupport) {
-        super(rdtSupport);
+    public AbstractMongoOperation(RdtConfiguration configuration) {
+        super(configuration);
     }
 
     @Override

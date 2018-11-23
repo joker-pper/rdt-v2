@@ -1,10 +1,11 @@
 package com.devloper.joker.rdt_sbm.rdt;
 
 import com.alibaba.fastjson.JSON;
-import com.devloper.joker.redundant.model.RdtProperties;
-import com.devloper.joker.redundant.model.RdtSupport;
+import com.devloper.joker.redundant.core.RdtConfiguration;
+import com.devloper.joker.redundant.core.RdtConfigurationBuilder;
+import com.devloper.joker.redundant.core.RdtProperties;
 import com.devloper.joker.redundant.operation.MongoRdtOperation;
-import com.devloper.joker.redundant.resolver.RdtResolver;
+import com.devloper.joker.redundant.core.RdtResolver;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,7 +13,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.query.SerializationUtils;
 
 import javax.annotation.Resource;
 import java.lang.reflect.Field;
@@ -83,15 +83,14 @@ public class RdtConfig {
     }
 
     @Bean
-    public RdtSupport rdtSupport() {
-        return rdtProperties().builder(rdtResolver());
+    public RdtConfiguration rdtConfiguration() {
+        return RdtConfigurationBuilder.build(rdtProperties(), rdtResolver());
     }
 
     @Bean
     public MongoRdtOperation mongoRdtOperation() {
-        MongoRdtOperation operation = new MongoRdtOperation(rdtSupport()) {
+        MongoRdtOperation operation = new MongoRdtOperation(rdtConfiguration()) {
         };
-
         operation.setMongoTemplate(mongoTemplate);
         return operation;
     }

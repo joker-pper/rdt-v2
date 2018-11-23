@@ -1,15 +1,13 @@
-package com.devloper.joker.redundant.model;
+package com.devloper.joker.redundant.core;
 
-import com.devloper.joker.redundant.resolver.RdtResolver;
-import com.devloper.joker.redundant.builder.RdtPropertiesBuilder;
+import com.devloper.joker.redundant.model.ClassModel;
+import com.devloper.joker.redundant.model.ComplexModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 public class RdtProperties {
-
-    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     /**
      * 扫描的包
@@ -83,21 +81,6 @@ public class RdtProperties {
     public RdtProperties(String basePackage) {
         this.basePackage = basePackage;
     }
-
-    public RdtSupport builder(RdtResolver rdtResolver) {
-        if (rdtResolver == null) throw new IllegalArgumentException("rdt resolver must be not null");
-        RdtPropertiesBuilder propertiesResolver = new RdtPropertiesBuilder(rdtResolver, this);
-        //获取该包下的所有类文件
-        List<Class> classList = rdtResolver.getClasses(basePackage);
-        if (classList != null) packageClassList.addAll(classList);
-
-        for (Class currentClass : packageClassList) {
-            propertiesResolver.builderClass(currentClass);
-        }
-        logger.debug("rdt load package class complete, package class size {}, extra class size {}.", packageClassList.size(), extraClassSet.size());
-        return new RdtSupport(this, propertiesResolver, rdtResolver);
-    }
-
 
     public String getBasePackage() {
         return basePackage;

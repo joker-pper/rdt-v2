@@ -1,4 +1,4 @@
-package com.devloper.joker.redundant.resolver;
+package com.devloper.joker.redundant.core;
 
 import com.devloper.joker.redundant.annotation.RdtId;
 import com.devloper.joker.redundant.annotation.base.RdtBaseEntity;

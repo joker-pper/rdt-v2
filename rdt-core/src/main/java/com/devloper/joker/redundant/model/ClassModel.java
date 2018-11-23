@@ -43,11 +43,6 @@ public class ClassModel {
     private Map<Class, Map<Column, Map<Integer, List<ModifyRelyDescribe>>>> targetClassModifyRelyDescribeMap = new LinkedHashMap<Class, Map<Column, Map<Integer, List<ModifyRelyDescribe>>>>(16) ;
 
     /**
-     * 当前类中依赖字段所对应的class列表
-     */
-    private Set<Class> targetRelyModifyClassSet = new LinkedHashSet<Class>(16);
-
-    /**
      * 当前类拥有的关联对象列表,依赖于注解@RdtOne,@RdtMany(用于文档型更新/子对象填充)
      */
     private List<ComplexModel> complexModelList = new ArrayList<ComplexModel>(16);
@@ -201,12 +196,11 @@ public class ClassModel {
         this.targetClassModifyRelyDescribeMap = targetClassModifyRelyDescribeMap;
     }
 
+    /**
+     * 当前类中依赖字段所对应的class列表
+     */
     public Set<Class> getTargetRelyModifyClassSet() {
-        return targetRelyModifyClassSet;
-    }
-
-    public void setTargetRelyModifyClassSet(Set<Class> targetRelyModifyClassSet) {
-        this.targetRelyModifyClassSet = targetRelyModifyClassSet;
+        return targetClassModifyRelyDescribeMap.keySet();
     }
 
     public List<ComplexModel> getComplexModelList() {

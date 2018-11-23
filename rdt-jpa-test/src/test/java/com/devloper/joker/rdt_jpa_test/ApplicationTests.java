@@ -1,6 +1,5 @@
 package com.devloper.joker.rdt_jpa_test;
 
-import com.devloper.joker.rdt_jpa_test.rdt.JpaOperation;
 import com.devloper.joker.rdt_jpa_test.repository.RoleRepository;
 import com.devloper.joker.rdt_jpa_test.repository.UserRepository;
 import com.devloper.joker.rdt_jpa_test.service.IUserService;

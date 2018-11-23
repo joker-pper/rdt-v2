@@ -43,7 +43,7 @@ public class FillTest extends ApplicationTests  {
         vo.setUsername2(getUserRandomName());
 
         List<UserRoleVO> results = Arrays.asList(vo);
-        rdtOperation.fillForShow(results);
+        rdtOperation.fillForShow(results, false,false);
         logger.info("results: {}", JsonUtils.toJson(results));
     }
 
@@ -62,7 +62,7 @@ public class FillTest extends ApplicationTests  {
 
         List<UserRoleVO> results = Arrays.asList(vo);
         try {
-            rdtOperation.fill(results, false, true, true);
+            rdtOperation.fillForSave(results, false);
             logger.info("results: {}", JsonUtils.toJson(results));
         } catch (Exception e) {
             if (e instanceof FillNotAllowedValueException) {
@@ -139,7 +139,7 @@ public class FillTest extends ApplicationTests  {
             results.add(vo);
         }
 
-        rdtOperation.fillForShow(results);
+        rdtOperation.fillForShow(results, false,false);
         logger.info("results: {}", JsonUtils.toJson(results));
     }
 
@@ -147,14 +147,14 @@ public class FillTest extends ApplicationTests  {
     @Test
     public void fill() throws Exception {
         List<UserRoleComplexVO> results = getUserRoleVoList();
-        rdtOperation.fillForShow(results);
+        rdtOperation.fillForShow(results, false,false);
         logger.info("results: {}", JsonUtils.toJson(results));
     }
 
     @Test
     public void fill2() throws Exception {
         List<User> users = userService.findAll();
-        rdtOperation.fillForShow(users);
+        rdtOperation.fillForShow(users, false,false);
         logger.info("results: {}", JsonUtils.toJson(users));
     }
 
@@ -165,7 +165,7 @@ public class FillTest extends ApplicationTests  {
         users.get(0).setType(99);
         objectList.addAll(users);
         objectList.addAll(getUserRoleVoList());
-        rdtOperation.fillForShow(objectList);
+        rdtOperation.fillForShow(objectList, false,false);
         logger.info("results: {}", JsonUtils.toJson(objectList));
     }
 
@@ -178,7 +178,7 @@ public class FillTest extends ApplicationTests  {
         results.get(2).setUserArray(JSON.parseArray(JsonUtils.toJson(users), User.class).toArray(new User[users.size()]));
         results.get(0).setComplexVOList(getUserRoleVoList());
 
-        rdtOperation.fillForShow(results);
+        rdtOperation.fillForShow(results, false,false);
         logger.info("results: {}", JsonUtils.toJson(results));
     }
 

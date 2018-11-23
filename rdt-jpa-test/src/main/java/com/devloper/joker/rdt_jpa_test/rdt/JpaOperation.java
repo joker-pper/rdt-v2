@@ -1,12 +1,11 @@
 package com.devloper.joker.rdt_jpa_test.rdt;
 
 import com.devloper.joker.rdt_jpa_test.core.RepositoryUtils;
-import com.devloper.joker.redundant.model.*;
+import com.devloper.joker.redundant.core.RdtConfiguration;
 import com.devloper.joker.redundant.operation.AbstractJpaOperation;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.*;
@@ -14,8 +13,8 @@ import java.util.*;
 @Component
 public class JpaOperation extends AbstractJpaOperation {
 
-    public JpaOperation(RdtSupport rdtSupport) {
-        super(rdtSupport);
+    public JpaOperation(RdtConfiguration configuration) {
+        super(configuration);
     }
 
     //@Resource

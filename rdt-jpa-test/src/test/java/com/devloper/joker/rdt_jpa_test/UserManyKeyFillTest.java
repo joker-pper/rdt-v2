@@ -19,13 +19,13 @@ public class UserManyKeyFillTest extends ApplicationTests  {
         vo.setUsername("用户2");
         vo.setUserRoleName("占个位"); //将会被替换掉
         results.add(vo);
-        rdtOperation.fillForShow(results);
+        rdtOperation.fillForShow(results, false, false);
         logger.info("results: {}", JsonUtils.toJson(results));
 
         //测试数据不存在时清空相关的属性值
         vo.setUsername("用户233");
 
-        rdtOperation.fillForShow(results, true);
+        rdtOperation.fillForShow(results, false, true);
         logger.info("results: {}", JsonUtils.toJson(results));
     }
 
@@ -46,7 +46,7 @@ public class UserManyKeyFillTest extends ApplicationTests  {
             vo.setUsername("用户" + val);
             results.add(vo);
         }
-        rdtOperation.fillForShow(results);
+        rdtOperation.fillForSave(results);
         logger.info("results: {}", JsonUtils.toJson(results));
     }
 
@@ -62,7 +62,7 @@ public class UserManyKeyFillTest extends ApplicationTests  {
             results.add(vo);
             set.add(vo);
         }
-        rdtOperation.fillForShow(results);
+        rdtOperation.fillForSave(results);
         logger.info("results: {}", JsonUtils.toJson(results));
     }
 
