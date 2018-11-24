@@ -6,12 +6,14 @@ import com.devloper.joker.rdt_jpa_test.domain.Order;
 import com.devloper.joker.rdt_jpa_test.service.IGoodsService;
 import com.devloper.joker.rdt_jpa_test.service.IOrderService;
 import com.devloper.joker.rdt_jpa_test.support.JsonUtils;
+import com.devloper.joker.redundant.fill.FillType;
 import org.junit.Test;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -41,10 +43,11 @@ public class GoodsAndOrderTest extends ApplicationTests {
             order.setGoodsId("1");
             //设置商品名称,由于设置为@Transient不会被保存
             order.setGoodsName(goods.getName());
-            order.setPrice(2333);
+            order.setPrice(goods.getPrice());
             order.setType(new Random().nextInt(2) + 1);
             orderList.add(order);
         }
+
         orderService.saveAll(orderList);
     }
 
@@ -74,6 +77,21 @@ public class GoodsAndOrderTest extends ApplicationTests {
         logger.info("result: {}", JsonUtils.toJson(orderService.findAll()));
     }
 
+    @Test
+    public void newOrderWithFill() {
+        Order order = new Order();
+        order.setId("222");
+        order.setGoodsId("1");
+        order.setType(2);
+        //save填充需要持久化的price字段
+        rdtOperation.fillForSave(Arrays.asList(order));
+        logger.info("result: {}", JsonUtils.toJson(order));
+
+        //show填充当前数据中未持久化的goodsName字段
+        rdtOperation.fillForShow(Arrays.asList(order));
+        logger.info("result: {}", JsonUtils.toJson(order));
+    }
+
 
     @Test
     public void findAllOrderWithFill() {
@@ -83,8 +101,10 @@ public class GoodsAndOrderTest extends ApplicationTests {
         logger.info("result: {}", JsonUtils.toJson(orderList));
         logger.info("----------------------------------------------------");
         //会填充所有字段
-        rdtOperation.fillForShow(orderList, false, true);
+        rdtOperation.fillForShow(orderList, false, FillType.ALL);
         logger.info("result: {}", JsonUtils.toJson(orderList));
     }
+
+
 
 }

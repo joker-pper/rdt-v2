@@ -33,8 +33,6 @@ rdt-jpa及rdt-spring-mongodb为已提供的数据层操作实现,可作为具体
 
 > 注解介绍: [详情](https://github.com/joker-pper/rdt-v2/wiki/Rdt%E6%B3%A8%E8%A7%A3%E4%BB%8B%E7%BB%8D)
 
-> api介绍: [详情](https://github.com/joker-pper/rdt-v2/blob/master/rdt-core/src/main/java/com/devloper/joker/redundant/operation/RdtOperation.java)
-
 
 >使用配置:
 	
@@ -114,7 +112,7 @@ rdt-jpa及rdt-spring-mongodb为已提供的数据层操作实现,可作为具体
      }   
     
     
-> example  (jpa-test示例)
+> example  (jpa-test示例, [test文件](https://github.com/joker-pper/rdt-v2/blob/master/rdt-jpa-test/src/test/java/com/devloper/joker/rdt_jpa_test/GoodsAndOrderTest.java))
 
 ```
 
@@ -173,15 +171,18 @@ public class Order {
 }
 
 
-//测试代码片段
-
+//测试代码片段 
+ 
+ 	@Resource
+ 	private RdtOperation rdtOperation;
 
     @Resource
     private IGoodsService goodsService;
 
     @Resource
     private IOrderService orderService;
-
+    
+    
     /**
      * 初始化数据
      */
@@ -200,10 +201,11 @@ public class Order {
             order.setGoodsId("1");
             //设置商品名称,由于设置为@Transient不会被保存
             order.setGoodsName(goods.getName());
-            order.setPrice(2333);
+            order.setPrice(goods.getPrice());
             order.setType(new Random().nextInt(2) + 1);
             orderList.add(order);
         }
+
         orderService.saveAll(orderList);
     }
 
@@ -233,6 +235,21 @@ public class Order {
         logger.info("result: {}", JsonUtils.toJson(orderService.findAll()));
     }
 
+    @Test
+    public void newOrderWithFill() {
+        Order order = new Order();
+        order.setId("222");
+        order.setGoodsId("1");
+        order.setType(2);
+        //save填充需要持久化的price字段
+        rdtOperation.fillForSave(Arrays.asList(order));
+        logger.info("result: {}", JsonUtils.toJson(order));
+
+        //show填充当前数据中未持久化的goodsName字段
+        rdtOperation.fillForShow(Arrays.asList(order));
+        logger.info("result: {}", JsonUtils.toJson(order));
+    }
+
 
     @Test
     public void findAllOrderWithFill() {
@@ -242,15 +259,17 @@ public class Order {
         logger.info("result: {}", JsonUtils.toJson(orderList));
         logger.info("----------------------------------------------------");
         //会填充所有字段
-        rdtOperation.fillForShow(orderList, false, true);
+        rdtOperation.fillForShow(orderList, false, FillType.ALL);
         logger.info("result: {}", JsonUtils.toJson(orderList));
     }
+
+    
 
 ```
 
 
 
-> api使用
+> api使用  [更多查看接口方法详情](https://github.com/joker-pper/rdt-v2/blob/master/rdt-core/src/main/java/com/devloper/joker/redundant/operation/RdtOperation.java)
 
 ```
     //更新方法
@@ -259,48 +278,10 @@ public class Order {
 
     //根据当前对象与之前对象数据对比后,更新被引用字段值所发生改变后的相关冗余字段数据
     updateMulti(Object current, Object before);
-
-
-    /**
-     * fill(collection, allowedNullValue, checkValue, clear, false);
-     */
-    void fill(Collection<?> collection, boolean allowedNullValue, boolean checkValue, boolean clear);
-
-    /**
-     * 填充数据列表的核心方法,根据当前集合数据、参数以及关系填充所引用target持久化类的字段值
-     * @param collection 当前需要进行填充的数据列表(支持不同类型的数据)
-     * @param allowedNullValue 是否允许条件列值为null,为false时存在null值会抛出 FillNotAllowedValueException 异常
-     * @param checkValue 为true时对应条件值的个数必须等于所匹配的结果个数,反之抛出 FillNotAllowedDataException 异常
-     * @param clear 为true时会清除未匹配到数据的字段值
-     * @param onlyTransient 为true时只填充为transient的column
-     *
-     * 异常类:
-     * @see     com.devloper.joker.redundant.fill.FillNotAllowedValueException
-     * @see     com.devloper.joker.redundant.fill.FillNotAllowedDataException
-     */
-    void fill(Collection<?> collection, boolean allowedNullValue, boolean checkValue, boolean clear, boolean onlyTransient);
-
-
-    /**
-     * fillForShow(collection, false),默认只填充transient的列
-     * @param collection
-     */
+    
     void fillForShow(Collection<?> collection);
-
-
-    /**
-     * fillForShow(collection, true, false)
-     */
-    void fillForShow(Collection<?> collection, boolean clear);
-
-    /**
-     * 用于填充展示数据列表的方法,忽略约束性
-     * @param collection
-     * @param onlyTransient 是否只填充为transient的column
-     * @param clear 是否清除未找到的值
-     */
-    void fillForShow(Collection<?> collection, boolean onlyTransient, boolean clear);
-
+    
+    void fillForSave(Collection<?> collection);
 ```
 
 

@@ -2,6 +2,7 @@ package com.devloper.joker.rdt_jpa_test;
 
 import com.devloper.joker.rdt_jpa_test.support.JsonUtils;
 import com.devloper.joker.rdt_jpa_test.vo.UserManyKeyRelyVo;
+import com.devloper.joker.redundant.fill.FillType;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -88,7 +89,7 @@ public class UserManyKeyRelyFillTest extends ApplicationTests  {
         vo7.setCurrentValue("adadaad");
         results.add(vo7);
 
-        rdtOperation.fillForShow(results, true, true);
+        rdtOperation.fillForShow(results, true, FillType.TRANSIENT);
         logger.info("results: {}", JsonUtils.toJson(results));
     }
 

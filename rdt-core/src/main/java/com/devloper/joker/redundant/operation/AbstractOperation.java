@@ -621,12 +621,12 @@ public abstract class AbstractOperation implements RdtOperation {
 
     @Override
     public void fillForShow(Collection<?> collection, boolean clear) {
-        fillForShow(collection, true, clear);
+        fillForShow(collection, clear, FillType.TRANSIENT);
     }
 
     @Override
-    public void fillForShow(Collection<?> collection, boolean onlyTransient, boolean clear) {
-        fill(collection, true, false, clear, onlyTransient);
+    public void fillForShow(Collection<?> collection, boolean clear, FillType fillType) {
+        fill(collection, true, false, clear, fillType);
     }
 
     @Override
@@ -636,19 +636,24 @@ public abstract class AbstractOperation implements RdtOperation {
 
     @Override
     public void fillForSave(Collection<?> collection, boolean allowedNullValue) {
-        fill(collection, allowedNullValue, true, true, false);
+        fillForSave(collection, allowedNullValue, FillType.PERSISTENT);
+    }
+
+    @Override
+    public void fillForSave(Collection<?> collection, boolean allowedNullValue, FillType fillType) {
+        fill(collection, allowedNullValue, true, true, fillType);
     }
 
     @Override
     public void fill(Collection<?> collection, boolean allowedNullValue, boolean checkValue, boolean clear) {
-        fill(collection, allowedNullValue, checkValue, clear, false);
+        fill(collection, allowedNullValue, checkValue, clear, FillType.ALL);
     }
 
     @Override
-    public void fill(Collection<?> collection, boolean allowedNullValue, boolean checkValue, boolean clear, boolean onlyTransient) {
+    public void fill(Collection<?> collection, boolean allowedNullValue, boolean checkValue, boolean clear, FillType fillType) {
         FillRSModel fillRSModel = new FillRSModel();
         //处理数据关系
-        fillRelationshipHandle(fillRSModel, collection, allowedNullValue, checkValue, clear, onlyTransient);
+        fillRelationshipHandle(fillRSModel, collection, allowedNullValue, checkValue, clear, fillType);
 
         //多条件时每组条件值都要进行查询,优先处理
         Map<Class, FillManyKeyModel> fillManyKeyModelMap = fillRSModel.getFillManyKeyModelMap();
@@ -722,15 +727,9 @@ public abstract class AbstractOperation implements RdtOperation {
 
     /**
      * 处理关系
-     * @param fillRSModel
-     * @param collection
-     * @param withNullKeyValue
-     * @param checkValue
-     * @param clear
-     * @param onlyTransient 为true时只填充为transient的column
      */
-    protected void fillRelationshipHandle(FillRSModel fillRSModel, Collection<?> collection, final boolean withNullKeyValue, final boolean checkValue, final boolean clear, boolean onlyTransient) {
-        fillBuilder.fillRelationshipHandle(fillRSModel, collection, withNullKeyValue, checkValue, clear, onlyTransient);
+    protected void fillRelationshipHandle(FillRSModel fillRSModel, Collection<?> collection, final boolean withNullKeyValue, final boolean checkValue, final boolean clear, FillType fillType) {
+        fillBuilder.fillRelationshipHandle(fillRSModel, collection, withNullKeyValue, checkValue, clear, fillType);
     }
 
 

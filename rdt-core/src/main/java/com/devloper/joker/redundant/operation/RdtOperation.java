@@ -1,5 +1,6 @@
 package com.devloper.joker.redundant.operation;
 
+import com.devloper.joker.redundant.fill.FillType;
 import com.devloper.joker.redundant.model.ClassModel;
 
 import java.util.Collection;
@@ -106,7 +107,7 @@ public interface RdtOperation {
     void updateRelevant(Object data, Map<Object, Object> beforeKeyDataMap);
 
     /**
-     * fill(collection, allowedNullValue, checkValue, clear, false);
+     * fill(collection, allowedNullValue, checkValue, clear, FillType.ALL);
      */
     void fill(Collection<?> collection, boolean allowedNullValue, boolean checkValue, boolean clear);
 
@@ -116,13 +117,13 @@ public interface RdtOperation {
      * @param allowedNullValue 是否允许条件列值为null,为false时存在null值会抛出 FillNotAllowedValueException 异常
      * @param checkValue 为true时对应条件值的个数必须等于所匹配的结果个数,反之抛出 FillNotAllowedDataException 异常
      * @param clear 为true时会清除未匹配到数据的字段值
-     * @param onlyTransient 为true时只填充为transient的column
+     * @param fillType 填充类型,为TRANSIENT时只填充为transient的column(用于填充展示时),ALL时为全部(填充条件下所有的column),PERSISTENT只填充为持久化的column(主要用于填充保存时)
      *
      * 异常类:
      * @see     com.devloper.joker.redundant.fill.FillNotAllowedValueException
      * @see     com.devloper.joker.redundant.fill.FillNotAllowedDataException
      */
-    void fill(Collection<?> collection, boolean allowedNullValue, boolean checkValue, boolean clear, boolean onlyTransient);
+    void fill(Collection<?> collection, boolean allowedNullValue, boolean checkValue, boolean clear, FillType fillType);
 
 
     /**
@@ -133,18 +134,18 @@ public interface RdtOperation {
 
 
     /**
-     * fillForShow(collection, true, false)
+     *  fillForShow(collection, clear, FillType.TRANSIENT);
      */
     void fillForShow(Collection<?> collection, boolean clear);
 
     /**
      * 用于填充展示数据列表的方法,忽略约束性
+     * fill(collection, true, false, clear, fillType);
      * @param collection
-     * @param onlyTransient 是否只填充为transient的column
      * @param clear 是否清除未找到的值
+     * @param fillType
      */
-    void fillForShow(Collection<?> collection, boolean onlyTransient, boolean clear);
-
+    void fillForShow(Collection<?> collection, boolean clear, FillType fillType);
 
 
 
@@ -155,9 +156,17 @@ public interface RdtOperation {
     void fillForSave(Collection<?> collection);
 
     /**
-     * 对持久化数据保存的填充
-     * @param collection
-     * @param allowedNullValue 是否允许条件列值为null
+     *  fillForSave(collection, allowedNullValue, FillType.PERSISTENT);
      */
     void fillForSave(Collection<?> collection, boolean allowedNullValue);
+
+    /**
+     * 对持久化数据保存的填充,默认check, 条件值的个数必须不等于所匹配的结果个数时会抛出FillNotAllowedDataException 异常
+     * fill(collection, allowedNullValue, true, true, fillType);
+     * @param collection
+     * @param allowedNullValue 是否允许条件列值为null,为false时存在null值会抛出 FillNotAllowedValueException 异常
+     * @param fillType
+     *
+     */
+    void fillForSave(Collection<?> collection, boolean allowedNullValue, FillType fillType);
 }

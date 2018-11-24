@@ -2,6 +2,7 @@ package com.devloper.joker.rdt_jpa_test;
 
 import com.devloper.joker.rdt_jpa_test.support.JsonUtils;
 import com.devloper.joker.rdt_jpa_test.vo.UserManyKeyVo;
+import com.devloper.joker.redundant.fill.FillType;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -19,13 +20,13 @@ public class UserManyKeyFillTest extends ApplicationTests  {
         vo.setUsername("用户2");
         vo.setUserRoleName("占个位"); //将会被替换掉
         results.add(vo);
-        rdtOperation.fillForShow(results, false, false);
+        rdtOperation.fillForShow(results, false, FillType.ALL);
         logger.info("results: {}", JsonUtils.toJson(results));
 
         //测试数据不存在时清空相关的属性值
         vo.setUsername("用户233");
 
-        rdtOperation.fillForShow(results, false, true);
+        rdtOperation.fillForShow(results, false, FillType.ALL);
         logger.info("results: {}", JsonUtils.toJson(results));
     }
 

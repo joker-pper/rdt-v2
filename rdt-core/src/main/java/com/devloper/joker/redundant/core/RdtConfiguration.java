@@ -1,6 +1,7 @@
 package com.devloper.joker.redundant.core;
 
 
+import com.devloper.joker.redundant.fill.FillType;
 import com.devloper.joker.redundant.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,9 +23,14 @@ public class RdtConfiguration {
     private Map<Class, List<ComplexAnalysis>> complexAnalysisResultListMap = new HashMap<Class, List<ComplexAnalysis>>(16);
 
     /**
-     * 储存当前describe在onlyTransient处理后的信息
+     * 储存当前describe只保留transient列的信息
      */
     private Map<ModifyDescribe, ModifyDescribe> transientModifyDescribeCacheMap = new HashMap<ModifyDescribe, ModifyDescribe>(16);
+
+    /**
+     * 储存当前describe只保留persistent列的信息
+     */
+    private Map<ModifyDescribe, ModifyDescribe> persistentModifyDescribeCacheMap = new HashMap<ModifyDescribe, ModifyDescribe>(16);
 
     public RdtConfiguration(RdtProperties properties, RdtPropertiesBuilder propertiesBuilder, RdtResolver rdtResolver) {
         this.properties = properties;
@@ -454,54 +460,63 @@ public class RdtConfiguration {
     /**
      * 获取和onlyTransient配置处理后的ModifyDescribe,用于填充
      * @param describe
-     * @param onlyTransient 是否只保留transient的column
+     * @param type 填充类型
      */
-    public ModifyDescribe getModifyDescribeForFill(ModifyDescribe describe, boolean onlyTransient) {
-        if (!onlyTransient) {
+    public ModifyDescribe getModifyDescribeForFill(ModifyDescribe describe, FillType type) {
+        if (FillType.ALL == type) {
             return describe;
         }
-        ModifyDescribe result = transientModifyDescribeCacheMap.get(describe);
+
+        boolean isPersistentType = FillType.PERSISTENT == type;
+        Map<ModifyDescribe, ModifyDescribe> describeMap = isPersistentType ? persistentModifyDescribeCacheMap : transientModifyDescribeCacheMap;
+        ModifyDescribe result = describeMap.get(describe);
+
         if (result == null) {
             synchronized (RdtConfiguration.class) {
-                result = transientModifyDescribeCacheMap.get(describe);
+                result = describeMap.get(describe);
                 if (result == null) {
                     ModifyDescribe current = getDeepCloneModifyDescribe(describe, false);
                     List<ModifyColumn> columnList = current.getColumnList();
                     for (Iterator<ModifyColumn> columnIterator = columnList.iterator(); columnIterator.hasNext();) {
-                        if (!columnIterator.next().getColumn().getIsTransient()) {
-                            //仅保留为transient的column
+                        boolean isTransient = columnIterator.next().getColumn().getIsTransient();
+                        //为只填充持久化列时,移除非持久化的列,反正移除持久化的列
+                        boolean remove = isPersistentType ? isTransient : !isTransient;
+                        if (remove) {
                             columnIterator.remove();
                         }
                     }
                     result = current;
-                    transientModifyDescribeCacheMap.put(describe, result);
+                    describeMap.put(describe, result);
                 }
             }
         }
         return result;
     }
 
-    public ModifyRelyDescribe getModifyRelyDescribeForFill(ModifyRelyDescribe describe, boolean onlyTransient) {
-        if (!onlyTransient) {
+    public ModifyRelyDescribe getModifyRelyDescribeForFill(ModifyRelyDescribe describe, FillType type) {
+        if (FillType.ALL == type) {
             return describe;
         }
-
-        ModifyDescribe result = transientModifyDescribeCacheMap.get(describe);
+        boolean isPersistentType = FillType.PERSISTENT == type;
+        Map<ModifyDescribe, ModifyDescribe> describeMap = isPersistentType ? persistentModifyDescribeCacheMap : transientModifyDescribeCacheMap;
+        ModifyDescribe result = describeMap.get(describe);
 
         if (result == null) {
             synchronized (RdtConfiguration.class) {
-                result = transientModifyDescribeCacheMap.get(describe);
+                result = describeMap.get(describe);
                 if (result == null) {
                     ModifyRelyDescribe current = getDeepCloneModifyRelyDescribe(describe, false);
                     List<ModifyColumn> columnList = current.getColumnList();
                     for (Iterator<ModifyColumn> columnIterator = columnList.iterator(); columnIterator.hasNext();) {
-                        if (!columnIterator.next().getColumn().getIsTransient()) {
-                            //仅保留为transient的column
+                        boolean isTransient = columnIterator.next().getColumn().getIsTransient();
+                        //为只填充持久化列时,移除非持久化的列,反正移除持久化的列
+                        boolean remove = isPersistentType ? isTransient : !isTransient;
+                        if (remove) {
                             columnIterator.remove();
                         }
                     }
                     result = current;
-                    transientModifyDescribeCacheMap.put(describe, result);
+                    describeMap.put(describe, result);
                 }
             }
         }
