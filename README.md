@@ -172,10 +172,7 @@ public class Order {
 
 
     //测试代码片段 
- 
- 
- 	@Resource
- 	private RdtOperation rdtOperation;
+
 
     @Resource
     private IGoodsService goodsService;
@@ -183,6 +180,8 @@ public class Order {
     @Resource
     private IOrderService orderService;
     
+    @Resource
+    private RdtOperation rdtOperation;
     
     /**
      * 初始化数据
@@ -270,7 +269,7 @@ public class Order {
 
 
 
-> api使用  [更多查看接口方法详情](https://github.com/joker-pper/rdt-v2/blob/master/rdt-core/src/main/java/com/devloper/joker/redundant/operation/RdtOperation.java)
+> api使用  [查看接口方法详情](https://github.com/joker-pper/rdt-v2/blob/master/rdt-core/src/main/java/com/devloper/joker/redundant/operation/RdtOperation.java)
 
 ```
     //更新方法
