@@ -83,7 +83,7 @@ public class GoodsAndOrderTest extends ApplicationTests {
         order.setId("222");
         order.setGoodsId("1");
         order.setType(2);
-        //save填充需要持久化的price字段
+        //save填充当前数据中要持久化的price字段
         rdtOperation.fillForSave(Arrays.asList(order));
         logger.info("result: {}", JsonUtils.toJson(order));
 

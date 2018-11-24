@@ -479,7 +479,7 @@ public class RdtConfiguration {
                     List<ModifyColumn> columnList = current.getColumnList();
                     for (Iterator<ModifyColumn> columnIterator = columnList.iterator(); columnIterator.hasNext();) {
                         boolean isTransient = columnIterator.next().getColumn().getIsTransient();
-                        //为只填充持久化列时,移除非持久化的列,反正移除持久化的列
+                        //为只填充持久化列时,移除非持久化的列,反之移除持久化的列
                         boolean remove = isPersistentType ? isTransient : !isTransient;
                         if (remove) {
                             columnIterator.remove();
@@ -509,7 +509,7 @@ public class RdtConfiguration {
                     List<ModifyColumn> columnList = current.getColumnList();
                     for (Iterator<ModifyColumn> columnIterator = columnList.iterator(); columnIterator.hasNext();) {
                         boolean isTransient = columnIterator.next().getColumn().getIsTransient();
-                        //为只填充持久化列时,移除非持久化的列,反正移除持久化的列
+                        //为只填充持久化列时,移除非持久化的列,反之移除持久化的列
                         boolean remove = isPersistentType ? isTransient : !isTransient;
                         if (remove) {
                             columnIterator.remove();
