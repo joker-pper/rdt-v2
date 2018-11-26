@@ -248,7 +248,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
         final Map<String, Object> updateLogMap = new LinkedHashMap<String, Object>(16);
 
         //统一处理
-        updateManyDataConditionHandle(classModel, complexClassModel, complexAnalysis, modifyClassModel, describe, vo, criteria, conditionValMap, conditionLogMap,null);
+        updateManyDataConditionRelationshipHandle(classModel, complexClassModel, complexAnalysis, modifyClassModel, describe, vo, criteria, conditionValMap, conditionLogMap,null);
 
         final String analysisPrefix = complexAnalysis.getPrefix() + ".";
 
@@ -287,7 +287,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
         final Map<String, Object> updateLogMap = new LinkedHashMap<String, Object>(16);
         Map<String, Object> conditionLogMap = new LinkedHashMap<String, Object>(16); //查询条件log数据
 
-        updateManyDataConditionHandle(classModel, complexClassModel, complexAnalysis, modifyClassModel, describe, vo, criteria, conditionValMap, conditionLogMap, relyColumn);
+        updateManyDataConditionRelationshipHandle(classModel, complexClassModel, complexAnalysis, modifyClassModel, describe, vo, criteria, conditionValMap, conditionLogMap, relyColumn);
 
         final String analysisPrefix = complexAnalysis.getPrefix() + ".";
 
@@ -363,7 +363,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
      * @param conditionLogMap 条件log对象
      * @param relyColumn
      */
-    protected void updateManyDataConditionHandle(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ClassModel modifyClassModel, ModifyDescribe describe, final ChangedVo vo, Criteria criteria,  final Map<String, Object> conditionValMap, final Map<String, Object> conditionLogMap, final Column relyColumn) {
+    protected void updateManyDataConditionRelationshipHandle(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ClassModel modifyClassModel, ModifyDescribe describe, final ChangedVo vo, Criteria criteria, final Map<String, Object> conditionValMap, final Map<String, Object> conditionLogMap, final Column relyColumn) {
         if (criteria == null) throw new IllegalArgumentException("criteria must not null");
         if (describe == null) throw new IllegalArgumentException("describe must not null");
         List<Boolean> oneList = complexAnalysis.getOneList();
@@ -404,7 +404,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
 
         final Criteria lastCriteria = stack.pop();
 
-        final Map<String, String> conditionPropertyMap = new HashMap<String, String>();
+        final Map<String, String> conditionPropertyMap = new HashMap<String, String>(16);
 
         configuration.doModifyConditionHandle(vo, describe, new RdtConfiguration.ModifyConditionCallBack() {
             @Override
@@ -446,53 +446,62 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
             }
         }
 
+        updateManyDataConditionRelationshipLogHandle(criteria, conditionPropertyMap, conditionLogMap);
+    }
+
+    protected void updateManyDataConditionRelationshipLogHandle(Criteria criteria, Map<String, String> conditionPropertyMap, Map<String, Object> conditionLogMap) {
         if (isLoggerSupport()) {
             //处理log条件map
-            Map criteriaObjectMap = rdtResolver.deepClone(getCriteriaToMap(criteria));;
-            Map<String, Object> currentConditionLogMap = new LinkedHashMap<String, Object>(criteriaObjectMap);
-            if (!getIsLogDetail()) {
-                conditionLogMap.putAll(currentConditionLogMap);
-            } else {
-                if (!currentConditionLogMap.isEmpty()) {
-                    for (String key : currentConditionLogMap.keySet()) {
-                        Object val = currentConditionLogMap.get(key);
-                        if (val instanceof Map) {
-                            handleComplexConditionLogMap((Map) val, key, conditionPropertyMap);
-                        }
-                        conditionLogMap.put(key, val);
-                    }
-                }
-            }
+            conditionLogMap.putAll(getParsedCriteriaMark(criteria, conditionPropertyMap));
         }
-
     }
 
 
-    protected void handleComplexConditionLogMap(Map<String, Object> valMap, String parentKey, Map<String, String> conditionPropertyMap) {
-        if (valMap != null) {
-            if ("$elemMatch".equals(parentKey)) {
-                Iterator<Map.Entry<String, Object>> iterator = valMap.entrySet().iterator();
-                Map<String, Object> newMap = new LinkedHashMap<String, Object>();
-                while(iterator.hasNext()){
-                    Map.Entry<String, Object> currentEntry = iterator.next();
-                    String currentKey = currentEntry.getKey();
+    protected Map<String, Object> getParsedCriteriaMark(Criteria criteria, Map<String, String> conditionPropertyMap) {
+        Map criteriaObjectMap = rdtResolver.deepClone(getCriteriaToMap(criteria));
+
+        if (criteria.equals(conditionPropertyMap)) {
+            logger.warn("rdt parse criteria result has problem, the deep clone object must be not equals.");
+            return new HashMap<String, Object>(16);
+        }
+
+        Map<String, Object> currentConditionLogMap = new LinkedHashMap<String, Object>(criteriaObjectMap);
+
+        if (getIsLogDetail()) {
+            parseCriteriaMark(currentConditionLogMap, false, conditionPropertyMap);
+        }
+
+        return currentConditionLogMap;
+    }
+
+
+
+    protected void parseCriteriaMark(Map<String, Object> valMap, boolean isElemMatch, Map<String, String> conditionPropertyMap) {
+        if (valMap != null && !valMap.isEmpty()) {
+            Iterator<Map.Entry<String, Object>> iterator = valMap.entrySet().iterator();
+            Map<String, Object> newMap = new LinkedHashMap<String, Object>(16);
+
+            while (iterator.hasNext()) {
+                Map.Entry<String, Object> currentEntry = iterator.next();
+                String currentKey = currentEntry.getKey();
+                Object currentValue = currentEntry.getValue();
+
+                if (isElemMatch) {
                     String targetProperty = conditionPropertyMap.get(currentKey);
                     if (targetProperty != null) {
-                        newMap.put(currentKey + super.getSymbol() + targetProperty, valMap.get(currentKey));
+                        newMap.put(getPropertyMark(currentKey, targetProperty), valMap.get(currentKey));
                         iterator.remove();
                     }
                 }
-                valMap.putAll(newMap);
-            } else {
-                for (String key : valMap.keySet()) {
-                    Object val = valMap.get(key);
-                    if (val instanceof Map) {
-                        handleComplexConditionLogMap((Map<String, Object>) val, key, conditionPropertyMap);
-                    }
+                if (currentValue instanceof Map) {
+                    parseCriteriaMark((Map<String, Object>)currentValue, "$elemMatch".equals(currentKey), conditionPropertyMap);
                 }
             }
+            valMap.putAll(newMap);
         }
+
     }
+
 
 
     protected void updateManyData(List<Object> dataList, final ClassModel complexClassModel, final ClassModel modifyClassModel, final ComplexAnalysis complexAnalysis, final Map<String, Object> conditionValMap, final Map<String, Object> updateValMap, final boolean saveAll, final ModifyRelyDescribe describe, final Column relyColumn) {
