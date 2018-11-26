@@ -121,7 +121,7 @@ public class RdtFillBuilder {
                 ClassModel waitClassModel = null;
                 String text = null;
 
-                if (logger.isDebugEnabled()) {
+                if (logger.isDebugEnabled() || logger.isInfoEnabled()) {
                     waitClassModel = configuration.getClassModel(waitFillData.getClass());
                     String primaryId = waitClassModel.getPrimaryId();
                     text = StringUtils.isNotEmpty(primaryId) ? getConditionMark(primaryId, rdtResolver.getPropertyValue(waitFillData, primaryId)) : "";

@@ -23,8 +23,6 @@ public abstract class AbstractOperation implements RdtOperation {
 
     protected String symbol = "->";
 
-    protected Boolean logDetail = true;
-
     protected RdtFillBuilder fillBuilder;
 
     public AbstractOperation(RdtConfiguration configuration) {
@@ -351,8 +349,8 @@ public abstract class AbstractOperation implements RdtOperation {
         updateModifyRelyDescribeSimple(classModel, changedVo);
     }
 
-    protected void handlerThrowException(Exception e) {
-        if (Boolean.TRUE.equals(properties.getThrowException())) {
+    protected void handlerUpdateThrowException(Exception e) {
+        if (Boolean.TRUE.equals(properties.getIsUpdateThrowException())) {
             if (e instanceof RuntimeException) {
                 throw (RuntimeException) e;
             } else {
@@ -360,6 +358,18 @@ public abstract class AbstractOperation implements RdtOperation {
             }
         }
     }
+
+    protected boolean isLoggerSupport() {
+        return logger.isDebugEnabled();
+    }
+
+    protected String getPropertyMark(String property, String targetProperty) {
+        if (getIsLogDetail()) {
+            return property + symbol + targetProperty;
+        }
+        return property;
+    }
+
 
     protected void updateModifyDescribeSimple(final ClassModel classModel, final ChangedVo vo) {
         Set<Class> changedRelaxedClassSet = classModel.getChangedRelaxedClassSet();
@@ -388,31 +398,21 @@ public abstract class AbstractOperation implements RdtOperation {
      * @param vo
      */
     protected void updateModifyDescribeSimple(final ClassModel classModel, final ClassModel modifyClassModel, final ModifyDescribe describe, final ChangedVo vo) {
-        final Map<String, Object> conditionMap = new LinkedHashMap<String, Object>(16);
+        final Map<String, Object> conditionLogMap = new LinkedHashMap<String, Object>(16);
         final Map<String, Object> updateLogMap = new LinkedHashMap<String, Object>(16);
 
-        if (logger.isDebugEnabled()) {
+        if (isLoggerSupport()) {
             configuration.doModifyConditionHandle(vo, describe, new RdtConfiguration.ModifyConditionCallBack() {
                 @Override
                 public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
-                    String property = modifyCondition.getColumn().getProperty();
-                    if (logDetail) {
-                        conditionMap.put(property + symbol + targetProperty, targetPropertyVal);
-                    } else {
-                        conditionMap.put(property, targetPropertyVal);
-                    }
+                    conditionLogMap.put(getPropertyMark(modifyCondition.getColumn().getProperty(), targetProperty), targetPropertyVal);
                 }
             });
 
             configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
                 @Override
                 public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
-                    String property = modifyColumn.getColumn().getProperty();
-                    if (logDetail) {
-                        updateLogMap.put(property + symbol + targetProperty, targetPropertyVal);
-                    } else {
-                        updateLogMap.put(property, targetPropertyVal);
-                    }
+                    updateLogMap.put(getPropertyMark(modifyColumn.getColumn().getProperty(), targetProperty), targetPropertyVal);
                 }
             });
         }
@@ -420,12 +420,12 @@ public abstract class AbstractOperation implements RdtOperation {
         try {
             updateModifyDescribeSimpleImpl(classModel, modifyClassModel, describe, vo);
             logger.debug("{} modify about {}【{}={}】data, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
-                    describe.getIndex(), rdtResolver.toJson(conditionMap), rdtResolver.toJson(updateLogMap));
+                    describe.getIndex(), rdtResolver.toJson(conditionLogMap), rdtResolver.toJson(updateLogMap));
         } catch (Exception e) {
             logger.warn("{} modify about {}【{}={}】data error, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
-                    describe.getIndex(), rdtResolver.toJson(conditionMap), rdtResolver.toJson(updateLogMap));
+                    describe.getIndex(), rdtResolver.toJson(conditionLogMap), rdtResolver.toJson(updateLogMap));
             logger.warn("rdt update field has error", e);
-            handlerThrowException(e);
+            handlerUpdateThrowException(e);
         }
     }
 
@@ -508,27 +508,18 @@ public abstract class AbstractOperation implements RdtOperation {
 
         RdtLog rdtLog = new RdtLog(conditionLogMap, updateLogMap);
 
-        if (logger.isDebugEnabled()) {
+        if (isLoggerSupport()) {
             configuration.doModifyConditionHandle(vo, describe, new RdtConfiguration.ModifyConditionCallBack() {
                 @Override
                 public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
-                    String property = modifyCondition.getColumn().getProperty();
-                    if (logDetail) {
-                        conditionLogMap.put(property + symbol + targetProperty, targetPropertyVal);
-                    } else {
-                        conditionLogMap.put(property, targetPropertyVal);
-                    }
+                    conditionLogMap.put(getPropertyMark(modifyCondition.getColumn().getProperty(), targetProperty), targetPropertyVal);
                 }
             });
 
             configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
                 @Override
                 public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
-                    if (logDetail) {
-                        updateLogMap.put(modifyColumn.getColumn().getProperty() + symbol + targetProperty, targetPropertyVal);
-                    } else {
-                        updateLogMap.put(modifyColumn.getColumn().getProperty(), targetPropertyVal);
-                    }
+                    updateLogMap.put(getPropertyMark(modifyColumn.getColumn().getProperty(), targetProperty), targetPropertyVal);
                 }
             });
 
@@ -547,7 +538,7 @@ public abstract class AbstractOperation implements RdtOperation {
             logger.warn("{} modify about {}【{}={}】data with rely column error - 【name: {}, group: {} 】 , index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
                     relyColumn.getProperty(), group, describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
             logger.warn("rdt update field with rely has error", e);
-            handlerThrowException(e);
+            handlerUpdateThrowException(e);
         }
 
     }
@@ -819,11 +810,8 @@ public abstract class AbstractOperation implements RdtOperation {
         this.symbol = symbol;
     }
 
-    public Boolean getLogDetail() {
-        return logDetail;
+    public Boolean getIsLogDetail() {
+        return properties.getIsLogDetail();
     }
 
-    public void setLogDetail(Boolean logDetail) {
-        this.logDetail = logDetail;
-    }
 }

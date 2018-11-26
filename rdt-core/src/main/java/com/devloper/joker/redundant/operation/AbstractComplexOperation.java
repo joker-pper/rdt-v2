@@ -101,27 +101,19 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
         final Map<String, Object> updateLogMap = new LinkedHashMap<String, Object>(16);
 
 
-        if (logger.isDebugEnabled()) {
+        if (isLoggerSupport()) {
             configuration.doModifyConditionHandle(vo, describe, new RdtConfiguration.ModifyConditionCallBack() {
                 @Override
                 public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
                     String property = getModifyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, modifyCondition);
-                    if (logDetail) {
-                        conditionLogMap.put(property + symbol + targetProperty, targetPropertyVal);
-                    } else {
-                        conditionLogMap.put(property, targetPropertyVal);
-                    }
+                    conditionLogMap.put(getPropertyMark(property, targetProperty), targetPropertyVal);
                 }
             });
             configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
                 @Override
                 public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
                     String property = getModifyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, modifyColumn);
-                    if (logDetail) {
-                        updateLogMap.put(property + symbol + targetProperty, targetPropertyVal);
-                    } else {
-                        updateLogMap.put(property + targetProperty, targetPropertyVal);
-                    }
+                    updateLogMap.put(getPropertyMark(property, targetProperty), targetPropertyVal);
                 }
             });
         }
@@ -135,7 +127,7 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
             logger.warn("{} modify about {}【{}={}】data with complex【{}】 has error, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
                     complexAnalysis.getPrefix(), describe.getIndex(), rdtResolver.toJson(conditionLogMap), rdtResolver.toJson(updateLogMap));
             logger.warn("rdt update field has error", e);
-            handlerThrowException(e);
+            handlerUpdateThrowException(e);
         }
     }
 
@@ -155,17 +147,12 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
 
         RdtLog rdtLog = new RdtLog(conditionLogMap, updateLogMap);
 
-        if (logger.isDebugEnabled()) {
+        if (isLoggerSupport()) {
             configuration.doModifyConditionHandle(vo, describe, new RdtConfiguration.ModifyConditionCallBack() {
                 @Override
                 public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
                     String property = getModifyRelyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, modifyCondition);
-
-                    if (logDetail) {
-                        conditionLogMap.put(property + symbol + targetProperty, targetPropertyVal);
-                    } else {
-                        conditionLogMap.put(property, targetPropertyVal);
-                    }
+                    conditionLogMap.put(getPropertyMark(property, targetProperty), targetPropertyVal);
                 }
             });
 
@@ -173,11 +160,7 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
                 @Override
                 public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
                     String property = getModifyRelyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, modifyColumn);
-                    if (logDetail) {
-                        updateLogMap.put(property + symbol + targetProperty, targetPropertyVal);
-                    } else {
-                        updateLogMap.put(property, targetPropertyVal);
-                    }
+                    updateLogMap.put(getPropertyMark(property, targetProperty), targetPropertyVal);
                 }
             });
             String relyProperty = getModifyRelyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, relyColumn);
@@ -195,7 +178,7 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
                     complexAnalysis.getPrefix(), relyColumn.getProperty(), group, describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
 
             logger.warn("rdt update field has error", e);
-            handlerThrowException(e);
+            handlerUpdateThrowException(e);
         }
     }
 
@@ -227,7 +210,7 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
                     complexAnalysis.getPrefix(), describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
 
             logger.warn("rdt update field has error", e);
-            handlerThrowException(e);
+            handlerUpdateThrowException(e);
         }
     }
 
@@ -255,7 +238,7 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
                     complexAnalysis.getPrefix(), relyColumn.getProperty(), group, describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
 
             logger.warn("rdt update field has error", e);
-            handlerThrowException(e);
+            handlerUpdateThrowException(e);
         }
     }
 

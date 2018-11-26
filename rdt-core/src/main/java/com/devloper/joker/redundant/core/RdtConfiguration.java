@@ -116,6 +116,25 @@ public class RdtConfiguration {
         return result;
     }
 
+    /**
+     * 判断两个值是否匹配
+     * @param current
+     * @param target
+     * @return
+     */
+    public boolean isMatchedValue(Object current, Object target) {
+        if (current == null && target == null) {
+            return true;
+        }
+
+        if (current != null) {
+            return current.equals(target);
+        }
+
+        return false;
+    }
+
+
 
     /**
      * 获取classModel中关于entityClass的修改信息

@@ -70,7 +70,7 @@ public class RdtConfig {
         RdtProperties properties = new RdtProperties();
         properties.setBasePackage(basePackage);
         properties.setDeepCloneChangedModify(false);
-        properties.setThrowException(true);
+        properties.setIsUpdateThrowException(true);
         return properties;
     }
 

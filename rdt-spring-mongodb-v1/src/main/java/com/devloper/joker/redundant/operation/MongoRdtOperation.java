@@ -238,7 +238,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
 
 
     @Override
-    protected void updateModifyDescribeManyImpl(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ClassModel modifyClassModel, ModifyDescribe describe, ChangedVo vo, RdtLog rdtLog) {
+    protected void updateModifyDescribeManyImpl(final ClassModel classModel, final ClassModel complexClassModel, final ComplexAnalysis complexAnalysis, final ClassModel modifyClassModel, final ModifyDescribe describe, final ChangedVo vo, RdtLog rdtLog) {
         Criteria criteria = new Criteria();
 
         final Map<String, Object> conditionValMap = new HashMap<String, Object>(16);  //存放比较属性值的map
@@ -251,46 +251,27 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
         updateManyDataConditionHandle(classModel, complexClassModel, complexAnalysis, modifyClassModel, describe, vo, criteria, conditionValMap, conditionLogMap,null);
 
         final String analysisPrefix = complexAnalysis.getPrefix() + ".";
-        final String symbol = super.getSymbol();
-        final boolean logDetail = super.getLogDetail();
 
         configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
             @Override
             public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
                 String property = modifyColumn.getColumn().getProperty();
                 updateValMap.put(property, targetPropertyVal);
-                if (logDetail) {
-                    updateLogMap.put(analysisPrefix + property + symbol + targetProperty, targetPropertyVal);
-                } else {
-                    updateLogMap.put(analysisPrefix + property, targetPropertyVal);
+                if (isLoggerSupport()) {
+                    updateLogMap.put(getPropertyMark(analysisPrefix + property, targetProperty), targetPropertyVal);
                 }
-
             }
         });
 
         Class modifyClass = modifyClassModel.getCurrentClass();
         Query query = new Query(criteria);
-
-        long pageSize = properties.getPageSize();
-        if (pageSize == -1) { //直接查询全部然后处理
-            List<Object> dataList = mongoTemplate.find(query, modifyClass);
-            updateManyData(dataList, complexClassModel, modifyClassModel, complexAnalysis, conditionValMap, updateValMap, properties.getComplexBySaveAll(), null, null);
-        } else {
-            long total = mongoTemplate.count(query, modifyClass);
-            if (total > 0) {
-                long totalPage = (total % pageSize == 0) ? total / pageSize : total / pageSize + 1;
-                for (int i = 0; i < totalPage; i ++) {
-                    Pageable pageable = getPageable(i, pageSize);
-                    if (pageable != null) query.with(pageable);
-                    List<Object> dataList = mongoTemplate.find(query, modifyClass);
-                    updateManyData(dataList, complexClassModel, modifyClassModel, complexAnalysis, conditionValMap, updateValMap, properties.getComplexBySaveAll(), null, null);
-                    if (pageable == null) {
-                        logger.warn("getPageable(long page, long size) return null, so have no by limit page update data");
-                        break;
-                    }
-                }
+        doWithPageableCallBack(query, modifyClass, new PageableCallBack() {
+            @Override
+            void run(List data) {
+                updateManyData(data, complexClassModel, modifyClassModel, complexAnalysis, conditionValMap, updateValMap, properties.getComplexBySaveAll(), null, null);
             }
-        }
+        });
+
 
         //设置log
         rdtLog.setCondition(conditionLogMap);
@@ -298,7 +279,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
     }
 
     @Override
-    protected void updateModifyRelyDescribeManyImpl(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ClassModel modifyClassModel, ModifyRelyDescribe describe, ChangedVo vo, Column relyColumn, int group, RdtLog rdtLog) {
+    protected void updateModifyRelyDescribeManyImpl(final ClassModel classModel, final ClassModel complexClassModel, final ComplexAnalysis complexAnalysis, final ClassModel modifyClassModel, final ModifyRelyDescribe describe, final ChangedVo vo, final Column relyColumn, int group, RdtLog rdtLog) {
         Criteria criteria = new Criteria();
 
         final Map<String, Object> conditionValMap = new HashMap<String, Object>(16);  //存放比较属性值的map
@@ -309,18 +290,15 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
         updateManyDataConditionHandle(classModel, complexClassModel, complexAnalysis, modifyClassModel, describe, vo, criteria, conditionValMap, conditionLogMap, relyColumn);
 
         final String analysisPrefix = complexAnalysis.getPrefix() + ".";
-        final String symbol = super.getSymbol();
-        final boolean logDetail = super.getLogDetail();
 
         configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
             @Override
             public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
                 String property = modifyColumn.getColumn().getProperty();
                 updateValMap.put(property, targetPropertyVal);
-                if (logDetail) {
-                    updateLogMap.put(analysisPrefix + property + symbol + targetProperty, targetPropertyVal);
-                } else {
-                    updateLogMap.put(analysisPrefix + property, targetPropertyVal);
+
+                if (isLoggerSupport()) {
+                    updateLogMap.put(getPropertyMark(analysisPrefix + property, targetProperty), targetPropertyVal);
                 }
             }
         });
@@ -328,31 +306,49 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
         Class modifyClass = modifyClassModel.getCurrentClass();
 
         Query query = new Query(criteria);
+        doWithPageableCallBack(query, modifyClass, new PageableCallBack() {
+            @Override
+            void run(List data) {
+                updateManyData(data, complexClassModel, modifyClassModel, complexAnalysis, conditionValMap, updateValMap, properties.getComplexBySaveAll(), describe, relyColumn);
+            }
+        });
 
+        rdtLog.setCondition(conditionLogMap);
+        rdtLog.setUpdate(updateLogMap);
+    }
+
+    protected abstract class PageableCallBack<T> {
+        abstract void run(List<T> data);
+    }
+
+    protected void doWithPageableCallBack(Query query, Class entityClass, PageableCallBack callBack) {
+        if (callBack == null) {
+            return;
+        }
         long pageSize = properties.getPageSize();
-        if (pageSize == -1) { //直接查询全部然后处理
-            List<Object> dataList = mongoTemplate.find(query, modifyClass);
-            updateManyData(dataList, complexClassModel, modifyClassModel, complexAnalysis, conditionValMap, updateValMap, properties.getComplexBySaveAll(), describe, relyColumn);
+        if (pageSize == -1) {
+            //直接查询全部然后处理
+            callBack.run(mongoTemplate.find(query, entityClass));
         } else {
-            long total = mongoTemplate.count(query, modifyClass);
+            long total = mongoTemplate.count(query, entityClass);
             if (total > 0) {
                 long totalPage = (total % pageSize == 0) ? total / pageSize : total / pageSize + 1;
                 for (int i = 0; i < totalPage; i ++) {
                     Pageable pageable = getPageable(i, pageSize);
-                    if (pageable != null) query.with(pageable);
-                    List<Object> dataList = mongoTemplate.find(query, modifyClass);
-                    updateManyData(dataList, complexClassModel, modifyClassModel, complexAnalysis, conditionValMap, updateValMap, properties.getComplexBySaveAll(), describe, relyColumn);
-                    if (pageable == null) {
+                    boolean hasPageable = pageable != null;
+                    if (hasPageable) {
+                        query.with(pageable);
+                    }
+                    callBack.run(mongoTemplate.find(query, entityClass));
+                    //没有pageable说明并未分页
+                    if (!hasPageable) {
                         logger.warn("getPageable(long page, long size) return null, so have no by limit page update data");
                         break;
                     }
                 }
             }
         }
-        rdtLog.setCondition(conditionLogMap);
-        rdtLog.setUpdate(updateLogMap);
     }
-
 
     /**
      * 统一处理为many时的查询条件,及条件属性map赋值
@@ -450,22 +446,25 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
             }
         }
 
-        //处理log条件map
-        Map criteriaObjectMap = rdtResolver.deepClone(getCriteriaToMap(criteria));;
-        Map<String, Object> currentConditionLogMap = new LinkedHashMap<String, Object>(criteriaObjectMap);
-        if (!super.getLogDetail()) {
-            conditionLogMap.putAll(currentConditionLogMap);
-        } else {
-            if (!currentConditionLogMap.isEmpty()) {
-                for (String key : currentConditionLogMap.keySet()) {
-                    Object val = currentConditionLogMap.get(key);
-                    if (val instanceof Map) {
-                        handleComplexConditionLogMap((Map) val, key, conditionPropertyMap);
+        if (isLoggerSupport()) {
+            //处理log条件map
+            Map criteriaObjectMap = rdtResolver.deepClone(getCriteriaToMap(criteria));;
+            Map<String, Object> currentConditionLogMap = new LinkedHashMap<String, Object>(criteriaObjectMap);
+            if (!getIsLogDetail()) {
+                conditionLogMap.putAll(currentConditionLogMap);
+            } else {
+                if (!currentConditionLogMap.isEmpty()) {
+                    for (String key : currentConditionLogMap.keySet()) {
+                        Object val = currentConditionLogMap.get(key);
+                        if (val instanceof Map) {
+                            handleComplexConditionLogMap((Map) val, key, conditionPropertyMap);
+                        }
+                        conditionLogMap.put(key, val);
                     }
-                    conditionLogMap.put(key, val);
                 }
             }
         }
+
     }
 
 
@@ -510,7 +509,8 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
 
                 if (!saveAll) {
                     String primaryId = modifyClassModel.getPrimaryId();
-                    currentCriteria.and(primaryId).is(rdtResolver.getPropertyValue(data, primaryId)); //id条件
+                    //加入持久化类的id条件
+                    currentCriteria.and(primaryId).is(rdtResolver.getPropertyValue(data, primaryId));
                 }
 
                 String accessProperty = complexAnalysis.getPrefix();//访问的属性
@@ -526,7 +526,6 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
                             if (describe != null) {  //存在依赖时
                                 String relyProperty = relyColumn.getProperty();
                                 Object relyPropertyVal = rdtResolver.getPropertyValue(result, relyProperty);
-
                                 flag = configuration.isMatchedType(describe, relyPropertyVal);
                             }
 
@@ -534,10 +533,12 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
                                 for (String currentProperty : conditionValMap.keySet()) {
                                     Object conditionVal = conditionValMap.get(currentProperty);
                                     Object currentVal = rdtResolver.getPropertyValue(result, currentProperty);
-                                    if ((currentVal != null && !currentVal.equals(conditionVal)) || (currentVal != null && conditionVal == null)) {
+
+                                    if (!configuration.isMatchedValue(currentVal, conditionVal)) {
                                         flag = false;
                                         break;
                                     }
+
                                 }
                             }
 
@@ -554,7 +555,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
                                 }
 
                                 if (!saveAll) {
-                                    //加入id标识,避免更新出错
+                                    //加入result类的id标识,避免更新出错
                                     String primaryId = complexClassModel.getPrimaryId();
                                     if (StringUtils.isNotEmpty(primaryId)) {
                                         currentCriteria.and(usePropertyPrefix + primaryId).is(rdtResolver.getPropertyValue(result, primaryId));

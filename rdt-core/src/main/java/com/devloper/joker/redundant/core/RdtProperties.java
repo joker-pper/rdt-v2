@@ -2,8 +2,6 @@ package com.devloper.joker.redundant.core;
 
 import com.devloper.joker.redundant.model.ClassModel;
 import com.devloper.joker.redundant.model.ComplexModel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -25,7 +23,7 @@ public class RdtProperties {
     private Boolean enableEntityName = false;
 
     /**
-     * 是否深度克隆修改列和修改条件数据
+     *当属性值改变后(更新时)是否深度克隆修改列和修改条件数据
      */
     private Boolean deepCloneChangedModify = false;
 
@@ -47,12 +45,18 @@ public class RdtProperties {
     /**
      * 保存操作出错时是否抛出异常
      */
-    private Boolean throwException = false;
+    private Boolean isUpdateThrowException = false;
 
     /**
      * target column 是否不能为transient
      */
     private Boolean isTargetColumnNotTransient = true;
+
+    /**
+     *
+     */
+    private Boolean isLogDetail = true;
+
 
     /**
      * 当前类的数据
@@ -143,12 +147,12 @@ public class RdtProperties {
         this.defaultIdKey = defaultIdKey;
     }
 
-    public Boolean getThrowException() {
-        return throwException;
+    public Boolean getIsUpdateThrowException() {
+        return isUpdateThrowException;
     }
 
-    public void setThrowException(Boolean throwException) {
-        this.throwException = throwException;
+    public void setIsUpdateThrowException(Boolean isUpdateThrowException) {
+        this.isUpdateThrowException = isUpdateThrowException;
     }
 
     public Boolean getIsTargetColumnNotTransient() {
@@ -156,7 +160,15 @@ public class RdtProperties {
     }
 
     public void setIsTargetColumnNotTransient(Boolean isTargetColumnNotTransient) {
-        isTargetColumnNotTransient = isTargetColumnNotTransient;
+        this.isTargetColumnNotTransient = isTargetColumnNotTransient;
+    }
+
+    public Boolean getIsLogDetail() {
+        return isLogDetail;
+    }
+
+    public void setIsLogDetail(Boolean isLogDetail) {
+        this.isLogDetail = isLogDetail;
     }
 
     public Map<Class, ClassModel> getClassModelMap() {
