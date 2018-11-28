@@ -34,7 +34,8 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
                 List<ComplexAnalysis> complexAnalysisList = configuration.getComplexAnalysisList(complexClass);
                 ClassModel complexClassModel = getClassModel(complexClass);
                 for (final ComplexAnalysis complexAnalysis : complexAnalysisList) {
-                    if (complexAnalysis.getHasMany()) { //包含many时
+                    if (complexAnalysis.getHasMany()) {
+                        //包含many时,即存在数组/集合的子对象
 
                         configuration.doModifyDescribeHandle(classModel, complexClassModel, new RdtConfiguration.ModifyDescribeCallBack() {
                             @Override

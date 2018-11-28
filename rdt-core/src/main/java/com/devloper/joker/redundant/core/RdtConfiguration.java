@@ -117,6 +117,26 @@ public class RdtConfiguration {
     }
 
     /**
+     * 匹配数据是否通过验证
+     * @param describe
+     * @param data
+     * @param classModel
+     * @return
+     */
+    public boolean isMatchedType(ModifyDescribe describe, Object data, ClassModel classModel) {
+        boolean result = true;
+        if (describe != null) {
+            if (describe instanceof ModifyRelyDescribe) {
+                ModifyRelyDescribe relyDescribe = (ModifyRelyDescribe) describe;
+                String relyProperty = relyDescribe.getRelyColumn().getProperty();
+                Object relyPropertyVal = rdtResolver.getPropertyValue(data, relyProperty);
+                result = isMatchedType(relyDescribe, relyPropertyVal);
+            }
+        }
+        return result;
+    }
+
+    /**
      * 判断两个值是否匹配
      * @param current
      * @param target

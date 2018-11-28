@@ -377,6 +377,46 @@ public abstract class RdtResolver {
         }
     }
 
+
+    /**
+     * 转换字符串为指定类型值
+     * @param value
+     * @param valType
+     * @param whenEnumNotMatchError
+     * @return
+     */
+    public Object castValue(String value, Class valType, String whenEnumNotMatchError) {
+        Object result = null;
+        if (valType == String.class) {
+            result = value;
+        } else {
+            if (valType.isEnum()) {
+                //解析枚举对应的值
+                String currentName;
+                if (value.matches("\\d+")) {
+                    currentName = "ordinal";
+                } else {
+                    currentName = "name";
+                }
+                boolean hasMatch = false;
+                for (Object constant : valType.getEnumConstants()) {
+                    if (value.equals(getPropertyValue(constant, currentName).toString())) {
+                        result = constant;
+                        hasMatch = true;
+                        break;
+                    }
+                }
+                if (!hasMatch) {
+                    throw new IllegalArgumentException(whenEnumNotMatchError);
+                }
+            } else {
+                result = cast(value, valType);
+            }
+        }
+        return result;
+    }
+
+
     /**
      * 类型转换
      * @param obj

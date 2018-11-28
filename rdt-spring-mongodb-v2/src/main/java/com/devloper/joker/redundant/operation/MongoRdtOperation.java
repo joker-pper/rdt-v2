@@ -268,7 +268,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
         doWithPageableCallBack(query, modifyClass, new PageableCallBack() {
             @Override
             void run(List data) {
-                updateManyData(data, complexClassModel, modifyClassModel, complexAnalysis, conditionValMap, updateValMap, properties.getComplexBySaveAll(), null, null);
+                updateManyData(data, complexClassModel, classModel, modifyClassModel, complexAnalysis, conditionValMap, updateValMap, properties.getComplexBySaveAll(), describe);
             }
         });
 
@@ -309,7 +309,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
         doWithPageableCallBack(query, modifyClass, new PageableCallBack() {
             @Override
             void run(List data) {
-                updateManyData(data, complexClassModel, modifyClassModel, complexAnalysis, conditionValMap, updateValMap, properties.getComplexBySaveAll(), describe, relyColumn);
+                updateManyData(data, complexClassModel, classModel, modifyClassModel, complexAnalysis, conditionValMap, updateValMap, properties.getComplexBySaveAll(), describe);
             }
         });
 
@@ -504,7 +504,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
 
 
 
-    protected void updateManyData(List<Object> dataList, final ClassModel complexClassModel, final ClassModel modifyClassModel, final ComplexAnalysis complexAnalysis, final Map<String, Object> conditionValMap, final Map<String, Object> updateValMap, final boolean saveAll, final ModifyRelyDescribe describe, final Column relyColumn) {
+    protected void updateManyData(List<Object> dataList, final ClassModel complexClassModel, final ClassModel classModel, final ClassModel modifyClassModel, final ComplexAnalysis complexAnalysis, final Map<String, Object> conditionValMap, final Map<String, Object> updateValMap, final boolean saveAll, final ModifyDescribe describe) {
         Class modifyClass = modifyClassModel.getCurrentClass();
 
         if (dataList != null && !dataList.isEmpty()) {
@@ -530,13 +530,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
                     @Override
                     public void execute(String resultProperty, Object result) {
                         if (result != null) {
-                            boolean flag = true;  //当前数据是否满足要求
-
-                            if (describe != null) {  //存在依赖时
-                                String relyProperty = relyColumn.getProperty();
-                                Object relyPropertyVal = rdtResolver.getPropertyValue(result, relyProperty);
-                                flag = configuration.isMatchedType(describe, relyPropertyVal);
-                            }
+                            boolean flag = configuration.isMatchedType(describe, result, complexClassModel);
 
                             if (flag) {
                                 for (String currentProperty : conditionValMap.keySet()) {

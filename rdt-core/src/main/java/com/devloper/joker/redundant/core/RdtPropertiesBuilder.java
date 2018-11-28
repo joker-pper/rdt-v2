@@ -236,7 +236,7 @@ public class RdtPropertiesBuilder {
 
     private void builderRdtFieldConfigData(ClassModel classModel, Column column, RdtField rdtAnnotation) {
         Class targetClass = rdtAnnotation.target();  //当前属性要修改所对应的class
-        loadExtraClass(targetClass);
+        loadClassWithAnnotation(targetClass);
 
         String targetProperty = rdtAnnotation.property();  //要修改属性的对应的别名
         targetProperty = StringUtils.isEmpty(targetProperty) ? column.getProperty() : targetProperty;
@@ -255,7 +255,7 @@ public class RdtPropertiesBuilder {
 
     private void builderRdtFieldConditionConfigData(ClassModel classModel, Column column, RdtFieldCondition rdtAnnotation) {
         Class targetClass = rdtAnnotation.target();  //对应的class
-        loadExtraClass(targetClass);
+        loadClassWithAnnotation(targetClass);
 
         String targetProperty = rdtAnnotation.property();  //对应的别名
         targetProperty = StringUtils.isEmpty(targetProperty) ? column.getProperty() : targetProperty;
@@ -422,6 +422,17 @@ public class RdtPropertiesBuilder {
         }
     }
 
+    private Class getRdtValType(Class configType, Class propertyClass, String notAllowedEnumErrorPrefix) {
+        Class valType = configType == Void.class ? propertyClass : configType;
+        boolean propertyClassIsEnum = propertyClass.isEnum();
+        if (propertyClassIsEnum) {
+            if (valType != int.class && valType != String.class && valType != propertyClass) {
+                throw new IllegalArgumentException(notAllowedEnumErrorPrefix +
+                        " type belong to enum, should by default or designate use ordinal type - int.class or name type - String.class");
+            }
+        }
+        return valType;
+    }
     /**
      * 解析@RdtRely数据
      * @param classModel
@@ -445,15 +456,8 @@ public class RdtPropertiesBuilder {
         currentRelyDataMap.put(group, rdtRelyModel);
 
         Class propertyClass = column.getPropertyClass();
-        boolean propertyClassIsEnum = propertyClass.isEnum();
-        Class valType = rdtRely.valType() == Void.class ? propertyClass : rdtRely.valType();
-        if (propertyClassIsEnum) {
-            if (valType != int.class && valType != String.class && valType != propertyClass) {
-                throw new IllegalArgumentException(hintPrefix +
-                        " type belong to enum, should by default or designate use ordinal type - int.class or name type - String.class");
-            }
-        }
 
+        Class valType = getRdtValType(rdtRely.valType(), propertyClass, hintPrefix);
         if (ClassUtils.familyClass(valType, Collection.class)) throw  new IllegalArgumentException(hintPrefix +
                 " type not support collection type");
 
@@ -486,34 +490,8 @@ public class RdtPropertiesBuilder {
             String[] stringArrays = keyTarget.value();
             for (String current : stringArrays) {
                 if (StringUtils.isEmpty(current)) continue;
-                Object val = null;
-                if (valType == String.class) val = current;
-                else {
-                    if (valType.isEnum()) {
-                        //解析枚举对应的值
-                        String currentName;
-                        if (current.matches("\\d+")) {
-                            currentName = "ordinal";
-                        } else {
-                            currentName = "name";
-                        }
-                        boolean hasMatch = false;
-                        for (Object constant : valType.getEnumConstants()) {
-                            if (current.equals(rdtResolver.getPropertyValue(constant, currentName).toString())) {
-                                val = constant;
-                                hasMatch = true;
-                                break;
-                            }
-                        }
-                        if (!hasMatch) {
-                            throw new IllegalArgumentException(hintPrefix + " @KeyTarget target type " + target.getName() + " has no enum " + valType.getName() + " type val "+ current);
-                        }
 
-                    } else {
-                        val = rdtResolver.cast(current, valType);
-                    }
-                }
-
+                Object val = rdtResolver.castValue(current, valType, hintPrefix + " @KeyTarget target type " + target.getName() + " has no enum " + valType.getName() + " type val "+ current);
                 Class typeClass = typeValClassMap.get(val);
                 if (typeClass != null) {
                     throw new IllegalArgumentException(hintPrefix + " @KeyTarget target type " + target.getName() + " type val "+ val + " has already exist the before target type " + typeClass.getName());
@@ -536,7 +514,7 @@ public class RdtPropertiesBuilder {
         }
 
         if (unknowType != null) {
-            loadExtraClass(unknowType);
+            loadClassWithAnnotation(unknowType);
             List<Object> unknowNotExistValues = rdtRelyModel.getUnknowNotExistValues();
             //先存放已存在的全部类型值
             for (List<Object> values : targetClassValueMap.values()) {
@@ -555,7 +533,7 @@ public class RdtPropertiesBuilder {
         rdtRelyModel.setNullType(nullType);
 
         for (Class current : targetClassValueMap.keySet()) {
-            loadExtraClass(current);
+            loadClassWithAnnotation(current);
         }
     }
 
@@ -873,7 +851,7 @@ public class RdtPropertiesBuilder {
         }
         relationModelList.add(complexModel);
 
-        loadExtraClass(current);  //加载不在packge的class
+        loadClassWithAnnotation(current);  //加载不在packge的class
         return complexModel;
     }
 
@@ -895,7 +873,7 @@ public class RdtPropertiesBuilder {
      * 加载不在packge的class
      * @param currentClass
      */
-    private void loadExtraClass(Class currentClass) {
+    private void loadClassWithAnnotation(Class currentClass) {
         Set<Class> extraClassSet = properties.getExtraClassSet();
         builderClass(currentClass);
         if (!properties.hasPackageContainsClass(currentClass) && !extraClassSet.contains(currentClass)) {

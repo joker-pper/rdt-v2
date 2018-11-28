@@ -65,11 +65,207 @@ public class DataTests extends ApplicationTests {
 
     }
 
+    /**
+     * 保存一组关于userId为1的复杂数据,观察值修改结果
+     */
+    @Test
+    public void saveArticleForTest() {
 
-
+        Article article = JSONObject.parseObject("{\n" +
+                "    \"id\":\"test_1\",\n" +
+                "    \"age\":\"25\",\n" +
+                "    \"author\":\"李四\",\n" +
+                "    \"complex\":{\n" +
+                "        \"reply\":{\n" +
+                "            \"answerUserId\":\"1\",\n" +
+                "            \"answerUserName\":\"张三\",\n" +
+                "            \"id\":\"c3bdfd70-f325-4784-adbf-87802cdcc6bb\",\n" +
+                "            \"relyVo\":{\n" +
+                "                \"id\":\"cd143356-4618-4269-80d1-6c0f19b10c58\",\n" +
+                "                \"parentId\":\"1\",\n" +
+                "                \"type\":1,\n" +
+                "                \"userAge\":\"123\",\n" +
+                "                \"userId\":\"1\",\n" +
+                "                \"value\":\"王五\"\n" +
+                "            },\n" +
+                "            \"userId\":\"1\",\n" +
+                "            \"userName\":\"王五\"\n" +
+                "        },\n" +
+                "        \"replyList\":[\n" +
+                "            {\n" +
+                "                \"answerUserId\":\"1\",\n" +
+                "                \"answerUserName\":\"张三\",\n" +
+                "                \"id\":\"dfb27fa0-67af-475d-bfd6-0180462ccece\",\n" +
+                "                \"relyVo\":{\n" +
+                "                    \"id\":\"8b97c30b-0b2f-4889-a763-699df7e05058\",\n" +
+                "                    \"parentId\":\"1\",\n" +
+                "                    \"type\":1,\n" +
+                "                    \"userAge\":\"123\",\n" +
+                "                    \"userId\":\"1\",\n" +
+                "                    \"value\":\"李四\"\n" +
+                "                },\n" +
+                "                \"userId\":\"1\",\n" +
+                "                \"userName\":\"李四\"\n" +
+                "            },\n" +
+                "            {\n" +
+                "                \"answerUserId\":\"1\",\n" +
+                "                \"answerUserName\":\"张三\",\n" +
+                "                \"id\":\"dfb27fa0-67af-475d-bfd6-0180462ccece\",\n" +
+                "                \"relyVo\":{\n" +
+                "                    \"id\":\"8b97c30b-0b2f-4889-a763-699df7e05058\",\n" +
+                "                    \"parentId\":\"1\",\n" +
+                "                    \"type\":1,\n" +
+                "                    \"userAge\":\"123\",\n" +
+                "                    \"userId\":\"1\",\n" +
+                "                    \"value\":\"李四\"\n" +
+                "                },\n" +
+                "                \"userId\":\"1\",\n" +
+                "                \"userName\":\"李四\"\n" +
+                "            },\n" +
+                "            {\n" +
+                "                \"answerUserId\":\"1\",\n" +
+                "                \"answerUserName\":\"张三\",\n" +
+                "                \"id\":\"dfb27fa0-67af-475d-bfd6-0180413\",\n" +
+                "                \"relyVo\":{\n" +
+                "                    \"id\":\"8b97c30b-0b2f-4889-a763-699df7e05058\",\n" +
+                "                    \"parentId\":\"1\",\n" +
+                "                    \"type\":1,\n" +
+                "                    \"userAge\":\"123\",\n" +
+                "                    \"userId\":\"1\",\n" +
+                "                    \"value\":\"李四\"\n" +
+                "                },\n" +
+                "                \"userId\":\"1\",\n" +
+                "                \"userName\":\"李四\"\n" +
+                "            }\n" +
+                "        ],\n" +
+                "        \"userId\":\"1\",\n" +
+                "        \"userName\":\"张三\"\n" +
+                "    },\n" +
+                "    \"content\":\"25\",\n" +
+                "    \"firstParentId\":\"1\",\n" +
+                "    \"firstParentText\":\"张三\",\n" +
+                "    \"reply\":{\n" +
+                "        \"id\":\"e3618964-dec6-4ed2-8b1a-98caa02ad7f6\",\n" +
+                "        \"relyVo\":{\n" +
+                "            \"id\":\"3ef08f63-921d-4c83-9b0b-8f0cb4154952\",\n" +
+                "            \"parentId\":\"1\",\n" +
+                "            \"type\":1,\n" +
+                "            \"userAge\":\"123\",\n" +
+                "            \"userId\":\"1\",\n" +
+                "            \"value\":\"张三\"\n" +
+                "        },\n" +
+                "        \"userId\":\"1\",\n" +
+                "        \"userName\":\"张三\"\n" +
+                "    },\n" +
+                "    \"replyArray\":[\n" +
+                "        {\n" +
+                "            \"answerUserId\":\"1\",\n" +
+                "            \"answerUserName\":\"张三\",\n" +
+                "            \"id\":\"dfb27fa0-67af-475d-bfd6-0180462ccece\",\n" +
+                "            \"relyVo\":{\n" +
+                "                \"id\":\"8b97c30b-0b2f-4889-a763-699df7e05058\",\n" +
+                "                \"parentId\":\"1\",\n" +
+                "                \"type\":1,\n" +
+                "                \"userAge\":\"123\",\n" +
+                "                \"userId\":\"1\",\n" +
+                "                \"value\":\"李四\"\n" +
+                "            },\n" +
+                "            \"userId\":\"1\",\n" +
+                "            \"userName\":\"李四\"\n" +
+                "        },\n" +
+                "        {\n" +
+                "            \"answerUserId\":\"1\",\n" +
+                "            \"answerUserName\":\"张三\",\n" +
+                "            \"id\":\"dfb27fa0-67af-475d-bfd6-0180462ccece\",\n" +
+                "            \"relyVo\":{\n" +
+                "                \"id\":\"8b97c30b-0b2f-4889-a763-699df7e05058\",\n" +
+                "                \"parentId\":\"1\",\n" +
+                "                \"type\":1,\n" +
+                "                \"userAge\":\"123\",\n" +
+                "                \"userId\":\"1\",\n" +
+                "                \"value\":\"李四\"\n" +
+                "            },\n" +
+                "            \"userId\":\"1\",\n" +
+                "            \"userName\":\"李四\"\n" +
+                "        },\n" +
+                "        {\n" +
+                "            \"answerUserId\":\"1\",\n" +
+                "            \"answerUserName\":\"张三\",\n" +
+                "            \"id\":\"dfb27fa0-67af-475d-bfd6-0180413\",\n" +
+                "            \"relyVo\":{\n" +
+                "                \"id\":\"8b97c30b-0b2f-4889-a763-699df7e05058\",\n" +
+                "                \"parentId\":\"1\",\n" +
+                "                \"type\":1,\n" +
+                "                \"userAge\":\"123\",\n" +
+                "                \"userId\":\"1\",\n" +
+                "                \"value\":\"李四\"\n" +
+                "            },\n" +
+                "            \"userId\":\"1\",\n" +
+                "            \"userName\":\"李四\"\n" +
+                "        }\n" +
+                "    ],\n" +
+                "    \"replyList\":[\n" +
+                "        {\n" +
+                "            \"answerUserId\":\"1\",\n" +
+                "            \"answerUserName\":\"张三\",\n" +
+                "            \"id\":\"dfb27fa0-67af-475d-bfd6-0180462ccece\",\n" +
+                "            \"relyVo\":{\n" +
+                "                \"id\":\"8b97c30b-0b2f-4889-a763-699df7e05058\",\n" +
+                "                \"parentId\":\"1\",\n" +
+                "                \"type\":1,\n" +
+                "                \"userAge\":\"123\",\n" +
+                "                \"userId\":\"1\",\n" +
+                "                \"value\":\"李四\"\n" +
+                "            },\n" +
+                "            \"userId\":\"1\",\n" +
+                "            \"userName\":\"李四\"\n" +
+                "        },\n" +
+                "        {\n" +
+                "            \"answerUserId\":\"1\",\n" +
+                "            \"answerUserName\":\"张三\",\n" +
+                "            \"id\":\"dfb27fa0-67af-475d-bfd6-0180462ccece\",\n" +
+                "            \"relyVo\":{\n" +
+                "                \"id\":\"8b97c30b-0b2f-4889-a763-699df7e05058\",\n" +
+                "                \"parentId\":\"1\",\n" +
+                "                \"type\":1,\n" +
+                "                \"userAge\":\"123\",\n" +
+                "                \"userId\":\"1\",\n" +
+                "                \"value\":\"李四\"\n" +
+                "            },\n" +
+                "            \"userId\":\"1\",\n" +
+                "            \"userName\":\"李四\"\n" +
+                "        },\n" +
+                "        {\n" +
+                "            \"answerUserId\":\"1\",\n" +
+                "            \"answerUserName\":\"张三\",\n" +
+                "            \"id\":\"dfb27fa0-67af-475d-bfd6-0180413\",\n" +
+                "            \"relyVo\":{\n" +
+                "                \"id\":\"8b97c30b-0b2f-4889-a763-699df7e05058\",\n" +
+                "                \"parentId\":\"1\",\n" +
+                "                \"type\":1,\n" +
+                "                \"userAge\":\"123\",\n" +
+                "                \"userId\":\"1\",\n" +
+                "                \"value\":\"李四\"\n" +
+                "            },\n" +
+                "            \"userId\":\"1\",\n" +
+                "            \"userName\":\"李四\"\n" +
+                "        }\n" +
+                "    ],\n" +
+                "    \"secondParentId\":\"1\",\n" +
+                "    \"secondParentText\":\"王五\",\n" +
+                "    \"type\":2,\n" +
+                "    \"userId\":\"1\"\n" +
+                "}", Article.class);
+        articleRepository.save(article);
+    }
 
     /**
      * 直接更新该数据的全部属性
+     *
+     *
+     * o.s.data.mongodb.core.MongoTemplate      : Calling update using query: { "_id" : "1d318229-feba-4691-b950-41ae104334a7", "replyArray.0.relyVo._id" : "8b97c30b-0b2f-4889-a763-699df7e05058", "replyArray.1.relyVo._id" : "8b97c30b-0b2f-4889-a763-699df7e05058", "replyArray.2.relyVo._id" : "8b97c30b-0b2f-4889-a763-699df7e05058" }
+     *    and update: { "$set" : { "replyArray.0.relyVo.userAge" : "0", "replyArray.1.relyVo.userAge" : "0", "replyArray.2.relyVo.userAge" : "0" } } in collection: article
+     *
      */
     @Test
     public void updateUserPropertyAll() throws Exception {
@@ -80,7 +276,7 @@ public class DataTests extends ApplicationTests {
 
             //修改userName
             current.setUserName("joker");
-            current.setAge(233);
+            current.setAge(221);
 
             userRepository.save(current);
             //将会更新被使用的冗余字段
@@ -95,10 +291,6 @@ public class DataTests extends ApplicationTests {
                     }
                 }).start();
             }*/
-
-
-            Thread.sleep(20000);
-
         }
 
     }
@@ -187,7 +379,7 @@ public class DataTests extends ApplicationTests {
     @Test
     public void fill() throws Exception {
         Collection<Article> results = articleRepository.findAll();
-        rdtOperation.fillForShow(results);
+        //rdtOperation.fillForShow(results);
         log.info("results: {}", JSON.toJSONString(results));
     }
 
