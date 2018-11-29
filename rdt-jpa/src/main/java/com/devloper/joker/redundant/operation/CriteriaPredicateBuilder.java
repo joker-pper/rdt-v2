@@ -51,6 +51,13 @@ public class CriteriaPredicateBuilder {
         return path.in(vals);
     }
 
+    public Predicate criteriaIn(Path path, Object val) {
+        if (val instanceof Collection) {
+            return criteriaIn(path, (Collection) val);
+        }
+        return eq(path, val);
+    }
+
 
 
     public Predicate criteriaNotIn(Path path, Collection<?> vals) {
@@ -58,6 +65,13 @@ public class CriteriaPredicateBuilder {
             return ne(path, vals.iterator().next());
         }
         return criteriaBuilder.not(path.in(vals));
+    }
+
+    public Predicate criteriaNotIn(Path path, Object val) {
+        if (val instanceof Collection) {
+            return criteriaNotIn(path, (Collection) val);
+        }
+        return ne(path, val);
     }
 
     public Predicate eq(Path path, Object o) {
