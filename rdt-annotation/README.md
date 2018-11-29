@@ -40,6 +40,7 @@
    解析,反之根据对应的name解析
    
    unique(boolean) val值是否进行唯一限定,默认为值仅对应一个target class
+   allowValues(string[])  配置除value配置外允许的值列表
 
 
 @KeyTarget  ---- 用于配置处于该持久化类时的类型值

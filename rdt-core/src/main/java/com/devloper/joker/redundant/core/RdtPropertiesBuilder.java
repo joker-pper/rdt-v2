@@ -561,6 +561,14 @@ public class RdtPropertiesBuilder {
             }
         }
 
+        String[] stringArrays = rdtRely.allowValues();
+        for (String current : stringArrays) {
+            if (StringUtils.isEmpty(current)) {
+                continue;
+            }
+            Object val = rdtResolver.castValue(current, valType, hintPrefix + " has no enum " + valType.getName() + " type val " + current);
+            rdtRelyModel.getAllowValues().add(val);
+        }
         rdtRelyModel.setValType(valType);
         rdtRelyModel.setUnknownType(unknownType);
         rdtRelyModel.setNullType(nullType);

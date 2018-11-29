@@ -30,4 +30,9 @@ public @interface RdtRely {
     */
    boolean unique() default true;
 
+    /**
+     * 配置除value配置外允许的值列表
+     * @return
+     */
+   String[] allowValues() default {};
 }

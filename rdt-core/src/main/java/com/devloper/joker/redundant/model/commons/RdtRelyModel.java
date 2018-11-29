@@ -25,6 +25,11 @@ public class RdtRelyModel implements Serializable {
     private List<Object> unknownNotExistValues = new ArrayList<Object>();
 
     /**
+     * 除value配置外允许的值列表,用于通过填充验证
+     */
+    private List<Object> allowValues = new ArrayList<Object>();
+
+    /**
      * 当前字段所拥有的指定值列表
      */
     private List<Object> explicitValueList;
@@ -77,6 +82,14 @@ public class RdtRelyModel implements Serializable {
         this.unknownNotExistValues = unknownNotExistValues;
     }
 
+    public List<Object> getAllowValues() {
+        return allowValues;
+    }
+
+    public void setAllowValues(List<Object> allowValues) {
+        this.allowValues = allowValues;
+    }
+
     //获取当前类型所拥有的明确值列表
     public List<Object> getExplicitValueList() {
         if (explicitValueList == null) {
@@ -87,6 +100,7 @@ public class RdtRelyModel implements Serializable {
             if (nullType != null) {
                 values.add(null);
             }
+            values.addAll(allowValues);
             explicitValueList = new ArrayList<Object>(values);
         }
         return explicitValueList;
