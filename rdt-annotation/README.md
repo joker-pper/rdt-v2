@@ -32,12 +32,15 @@
                         e.g {@KeyTarget(value = {"用户"}, target = User.class), 
                             @KeyTarget(value = "文章", target = Article.class)}
    nullType(class) 为空值时所对应的持久化类
-   unknowType(class) 非已指定类型值时对应的持久化类(**不太建议使用**)
+   unknownType(class) 非已指定类型值时对应的持久化类(**不太建议使用**)
    group(int) 该属性(依赖字段)的第几组依赖配置描述,默认值为0(即默认该依赖字段可能存在
    多组配置)
    valType(class) 描述当前@RdtRely字段值类型,如果未指定则默认为当前属性字段的类型,最
    后进行类型转换解析为对应的值；其中如果字段值类型是枚举类,数字值时会根据对应的ordinal
    解析,反之根据对应的name解析
+   
+   unique(boolean) val值是否进行唯一限定,默认为值仅对应一个target class
+
 
 @KeyTarget  ---- 用于配置处于该持久化类时的类型值
 属性:
@@ -57,7 +60,7 @@
 	依次按照依赖字段配置的value中的持久类的顺序为所对应的字段名称
     nullTypeProperty(string) 为空值时所对应的持久化类使用的字段
     unknowTypeProperty(string) 非已指定类型值时对应的持久化类使用的字段
-    
+    target(class) 设置具体的class限定唯一,不再根据默认的@KeyTarget中存在的class动态指定多个
 
 @RdtFieldConditionRely   --- （依赖于依赖字段的类型值）当前类属性字段对应持久化类的属性条
 件字段注解(用于匹配对应值)

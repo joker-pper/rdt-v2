@@ -460,17 +460,17 @@ public abstract class AbstractOperation implements RdtOperation {
     }
 
     protected Map getModelTypeProcessingCriteriaMap(ModifyRelyDescribe describe, String relyProperty) {
-        List<Object> unknowNotExistValList = describe.getUnknowNotExistValList();
+        List<Object> unknownNotExistValList = describe.getUnknownNotExistValList();
         List<Object> valList = describe.getValList();
         Map allMap = new HashMap(16);
         if (!valList.isEmpty()) {
-            if (unknowNotExistValList.isEmpty()) {
+            if (unknownNotExistValList.isEmpty()) {
                 allMap.put(relyProperty, valList);
             } else {
-                //满足在valList 或 非unknowNotExistValList时
+                //满足在valList 或 非unknownNotExistValList时
 
                 Map notValMap = new HashMap(16);
-                notValMap.put(relyProperty, unknowNotExistValList);
+                notValMap.put(relyProperty, unknownNotExistValList);
 
                 Map notMap = new HashMap(16);
                 notMap.put("not", notValMap);
@@ -482,9 +482,9 @@ public abstract class AbstractOperation implements RdtOperation {
 
             }
         } else {
-            if (!unknowNotExistValList.isEmpty()) {
+            if (!unknownNotExistValList.isEmpty()) {
                 Map notMap = new HashMap(16);
-                notMap.put(relyProperty, unknowNotExistValList);
+                notMap.put(relyProperty, unknownNotExistValList);
                 allMap.put("not", notMap);
             }
         }

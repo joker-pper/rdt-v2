@@ -24,4 +24,10 @@ public @interface RdtRely {
     * @return
     */
    Class valType() default Void.class;
+
+   /**
+    * val值是否进行唯一限定,默认为值仅对应一个target class
+    */
+   boolean unique() default true;
+
 }

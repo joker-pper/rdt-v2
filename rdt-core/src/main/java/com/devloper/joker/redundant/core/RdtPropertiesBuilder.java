@@ -279,16 +279,17 @@ public class RdtPropertiesBuilder {
      * @param annotation
      */
     private void builderPropertyRelyGroupConfigData(ClassModel classModel, Column column, Annotation annotation) {
-        boolean conditionRely = false;
+        boolean isConditionRely = false;
         int group;
         int relyIndex;
         String[] targetPropertys;
         String nullTypeProperty;
-        String unknowTypeProperty;
+        String unknownTypeProperty;
+        Class actualClass = null;
 
         String relyProperty;  //依赖的字段别名
         if (annotation instanceof RdtFieldConditionRely) {
-            conditionRely = true;
+            isConditionRely = true;
             RdtFieldConditionRely rdt = (RdtFieldConditionRely) annotation;
             group = rdt.group();
             relyIndex = rdt.index();
@@ -296,8 +297,8 @@ public class RdtPropertiesBuilder {
 
             targetPropertys = rdt.targetPropertys();
             nullTypeProperty = StringUtils.isNotBlank(rdt.nullTypeProperty()) ? rdt.nullTypeProperty() : null;
-            unknowTypeProperty = StringUtils.isNotBlank(rdt.unknowTypeProperty()) ? rdt.unknowTypeProperty() : null;
-
+            unknownTypeProperty = StringUtils.isNotBlank(rdt.unknowTypeProperty()) ? rdt.unknowTypeProperty() : null;
+            actualClass = rdt.target() == Void.class ? null : rdt.target();
         } else if (annotation instanceof RdtFieldRely) {
             RdtFieldRely rdt = (RdtFieldRely) annotation;
             group = rdt.group();
@@ -305,23 +306,27 @@ public class RdtPropertiesBuilder {
             relyProperty = rdt.property();
             targetPropertys = rdt.targetPropertys();
             nullTypeProperty = StringUtils.isNotBlank(rdt.nullTypeProperty()) ? rdt.nullTypeProperty() : null;
-            unknowTypeProperty = StringUtils.isNotBlank(rdt.unknowTypeProperty()) ? rdt.unknowTypeProperty() : null;
-        } else throw new IllegalArgumentException("not support this type");
+            unknownTypeProperty = StringUtils.isNotBlank(rdt.unknowTypeProperty()) ? rdt.unknowTypeProperty() : null;
+            actualClass = rdt.target() == Void.class ? null : rdt.target();
+        } else throw new IllegalArgumentException("rdt builder rely config not support this type");
 
         String property = column.getProperty();
         Column relyColumn = getColumn(classModel, relyProperty);
 
         String hintPrefix = classModel.getClassName() + " property " + property + " field ";
-        if (conditionRely) hintPrefix += "condition ";
+        if (isConditionRely) hintPrefix += "condition ";
         hintPrefix += "rely config :" + " group index " + group + " has error, caused by :";
 
+        //获取rely column第group组所对应的rdtRelyModel
         Map<Integer, RdtRelyModel> relyDataMap = classModel.getPropertyRelyDataMap().get(relyColumn.getProperty());
         RdtRelyModel rdtRelyModel = null;
         if (relyDataMap != null) rdtRelyModel = relyDataMap.get(group);
         //需要有对应的rely model数据
         if (rdtRelyModel == null) throw new IllegalArgumentException(hintPrefix +  " corresponding rely data config named " +  relyColumn.getProperty() + " not exist");
+
+       //初始化当前column所对应rely column关于第index组的数据(只能指定一次,即仅存在一组配置)
         Map<String, Map<Column, Map<Integer, RdtRelyTargetColumnModel>>> propertyTargetConditionRelyMap;
-        if (conditionRely) {
+        if (isConditionRely) {
             propertyTargetConditionRelyMap = classModel.getPropertyTargetConditionRelyMap();
         } else {
             propertyTargetConditionRelyMap = classModel.getPropertyTargetRelyMap();
@@ -332,21 +337,23 @@ public class RdtPropertiesBuilder {
             propertyTargetConditionRelyMap.put(property, relyColumnGroupModelMap);
         }
 
-        Map<Integer, RdtRelyTargetColumnModel> currentDataMap = relyColumnGroupModelMap.get(relyColumn);
-        if (currentDataMap == null) {
-            currentDataMap = new HashMap<Integer, RdtRelyTargetColumnModel>();
-            relyColumnGroupModelMap.put(relyColumn, currentDataMap);
+        Map<Integer, RdtRelyTargetColumnModel> relyIndexDataMap = relyColumnGroupModelMap.get(relyColumn);
+        if (relyIndexDataMap == null) {
+            relyIndexDataMap = new HashMap<Integer, RdtRelyTargetColumnModel>();
+            relyColumnGroupModelMap.put(relyColumn, relyIndexDataMap);
         }
-        RdtRelyTargetColumnModel model = currentDataMap.get(relyIndex);
-        if (model != null) throw new IllegalArgumentException(hintPrefix + " already exist");
+
+        //初始化数据
+        RdtRelyTargetColumnModel rdtRelyTargetColumnModel = relyIndexDataMap.get(relyIndex);
+        if (rdtRelyTargetColumnModel != null) throw new IllegalArgumentException(hintPrefix + " already exist");
 
         List<Class> keyTargetClassList = rdtRelyModel.getKeyTargetClassList();
-        model = new RdtRelyTargetColumnModel();
-        currentDataMap.put(relyIndex, model);
-        model.setGroup(group);
+        rdtRelyTargetColumnModel = new RdtRelyTargetColumnModel();
+        relyIndexDataMap.put(relyIndex, rdtRelyTargetColumnModel);
+        rdtRelyTargetColumnModel.setGroup(group);
 
-        //获取各个class所使用的column对象
-        Map<Class, Column> classTargetColumnMap = model.getClassTargetColumnMap();
+        //初始化各个class所使用的column对象
+        Map<Class, Column> classTargetColumnMap = rdtRelyTargetColumnModel.getClassTargetColumnMap();
         int targetEqPropertysLength = targetPropertys.length;
         if (targetEqPropertysLength > 1 && keyTargetClassList.size() != targetEqPropertysLength) {
             throw new IllegalArgumentException(hintPrefix + " should setting propertys according the corresponding rely data config target class order and size is eq");
@@ -354,7 +361,8 @@ public class RdtPropertiesBuilder {
 
         List<String> usePropertyList = new ArrayList<String>();
         if (targetEqPropertysLength == 0 && nullTypeProperty == null
-                && unknowTypeProperty == null) {
+                && unknownTypeProperty == null) {
+            //默认使用当前属性名称
             usePropertyList.add(property);
         } else {
             for (String current : targetPropertys) {
@@ -364,31 +372,44 @@ public class RdtPropertiesBuilder {
                 usePropertyList.add(current);
             }
         }
-        int index = 0;
-        for (Class targetClass : keyTargetClassList) {
-            String alias;
-            if (usePropertyList.size() == 1) alias = usePropertyList.get(0);
-            else alias = usePropertyList.get(index);
-            builderPropertyRelyGroupTypeData(classModel, column, conditionRely, targetClass, alias, classTargetColumnMap, hintPrefix, null);
-            index ++;
+        String alias = null;
+        boolean oneProperty = usePropertyList.size() == 1;
+        if (oneProperty) alias = usePropertyList.get(0);
+
+        if (actualClass != null) {
+            //指定具体target class时
+            if (!oneProperty) {
+                throw new IllegalArgumentException(hintPrefix + " target property must be only one");
+            }
+            loadClassWithAnnotation(actualClass);
+            builderPropertyRelyGroupTypeData(classModel, column, isConditionRely, actualClass, alias, classTargetColumnMap, hintPrefix, " target type appointed ");
+        } else {
+            int index = 0;
+            for (Class targetClass : keyTargetClassList) {
+                if (!oneProperty) alias = usePropertyList.get(index);
+                builderPropertyRelyGroupTypeData(classModel, column, isConditionRely, targetClass, alias, classTargetColumnMap, hintPrefix, null);
+                index ++;
+            }
+
+            Class nullType = rdtRelyModel.getNullType();
+            if (nullType != null && StringUtils.isEmpty(nullTypeProperty) && usePropertyList.size() == 1) {
+                nullTypeProperty = usePropertyList.get(0);
+            }
+            Class unknownType = rdtRelyModel.getUnknownType();
+            if (unknownType != null && StringUtils.isEmpty(unknownTypeProperty) && usePropertyList.size() == 1) {
+                unknownTypeProperty = usePropertyList.get(0);
+            }
+
+            //处理nullType
+            builderPropertyRelyGroupTypeData(classModel, column, isConditionRely, nullType, nullTypeProperty, classTargetColumnMap, hintPrefix, " null type appointed ");
+            //处理unknowType
+            builderPropertyRelyGroupTypeData(classModel, column, isConditionRely, rdtRelyModel.getUnknownType(), unknownTypeProperty, classTargetColumnMap, hintPrefix, " unknown type appointed ");
         }
 
-        Class nullType = rdtRelyModel.getNullType();
-        if (nullType != null && StringUtils.isEmpty(nullTypeProperty) && usePropertyList.size() == 1) {
-            nullTypeProperty = usePropertyList.get(0);
-        }
-        Class unknowType = rdtRelyModel.getUnknowType();
-        if (unknowType != null && StringUtils.isEmpty(unknowTypeProperty) && usePropertyList.size() == 1) {
-            unknowTypeProperty = usePropertyList.get(0);
-        }
 
-        //处理nullType
-        builderPropertyRelyGroupTypeData(classModel, column, conditionRely, nullType, nullTypeProperty, classTargetColumnMap, hintPrefix, " null type appointed");
-        //处理unknowType
-        builderPropertyRelyGroupTypeData(classModel, column, conditionRely, rdtRelyModel.getUnknowType(), unknowTypeProperty, classTargetColumnMap, hintPrefix, " unknow type appointed");
     }
 
-    private void builderPropertyRelyGroupTypeData(ClassModel classModel, Column column, boolean conditionRely, Class type, String typePropertyAlias, Map<Class, Column> classTargetColumnMap, String hintPrefix, String describe) {
+    private void builderPropertyRelyGroupTypeData(ClassModel classModel, Column column, boolean isConditionRely, Class type, String typePropertyAlias, Map<Class, Column> classTargetColumnMap, String hintPrefix, String describe) {
         if (describe == null) describe = "";
         hintPrefix += describe;
         if (type == null) {
@@ -403,7 +424,7 @@ public class RdtPropertiesBuilder {
                     ClassModel typeClassModel = getClassModel(type);
                     try {
                         currentColumn = getColumn(typeClassModel, typePropertyAlias);
-                        columnCompareVerification(column, currentColumn, classModel, typeClassModel, conditionRely);
+                        columnCompareVerification(column, currentColumn, classModel, typeClassModel, isConditionRely);
                     } catch (IllegalArgumentException e) {
                         throw new IllegalArgumentException(hintPrefix + " " + e.getMessage());
                     }
@@ -441,9 +462,11 @@ public class RdtPropertiesBuilder {
      */
     private void builderRdtRelyConfigData(ClassModel classModel, Column column, RdtRely rdtRely) {
         int group = rdtRely.group();
+        boolean isUniqueValue = rdtRely.unique();
         String property = column.getProperty();
         String hintPrefix = classModel.getClassName() + " property " + property + " rely data config :" + " group index " + group + " has error, caused by :";
 
+        //初始化当前column property的第group组所对应的rdtRelyModel
         Map<String, Map<Integer, RdtRelyModel>> propertyRelyDataMap = classModel.getPropertyRelyDataMap();
         Map<Integer, RdtRelyModel> currentRelyDataMap = propertyRelyDataMap.get(property);
         if (currentRelyDataMap == null) {
@@ -451,29 +474,36 @@ public class RdtPropertiesBuilder {
             propertyRelyDataMap.put(property, currentRelyDataMap);
         }
         RdtRelyModel rdtRelyModel = currentRelyDataMap.get(group);
-        if (rdtRelyModel != null) throw new IllegalArgumentException(hintPrefix + " already exist");
+        if (rdtRelyModel != null) {
+            throw new IllegalArgumentException(hintPrefix + " already exist");
+        }
         rdtRelyModel = new RdtRelyModel();
         currentRelyDataMap.put(group, rdtRelyModel);
 
+
+        //获取@RdtRely的值类型
         Class propertyClass = column.getPropertyClass();
-
         Class valType = getRdtValType(rdtRely.valType(), propertyClass, hintPrefix);
-        if (ClassUtils.familyClass(valType, Collection.class)) throw  new IllegalArgumentException(hintPrefix +
-                " type not support collection type");
+        if (ClassUtils.familyClass(valType, Collection.class)) {
+            throw  new IllegalArgumentException(hintPrefix +
+                    " type not support collection type");
+        }
 
-        Class unknowType = rdtRely.unknowType() == Void.class ? null : rdtRely.unknowType();
+        Class unknownType = rdtRely.unknowType() == Void.class ? null : rdtRely.unknowType();
         Class nullType = rdtRely.nullType() == Void.class ? null : rdtRely.nullType();
 
-        if (nullType != null) { //值类型为基本数据类型时却使用null type时
-            if (valType.isPrimitive()) throw new IllegalArgumentException(hintPrefix +
+        if (nullType != null && valType.isPrimitive()) {
+            //值类型为基本数据类型时却使用null type时
+            throw new IllegalArgumentException(hintPrefix +
                     " type is primitive, not has null value type");
         }
 
+        //处理 target class所对应的值
         Map<Class, List<Object>> targetClassValueMap = rdtRelyModel.getTargetClassValueMap();
-
-
         Map<Object, Class> typeValClassMap = new HashMap<Object, Class>(16);
         for (KeyTarget keyTarget : rdtRely.value()) {
+
+            //验证并添加target class列表
             Class target = keyTarget.target();
             List<Object> valList = targetClassValueMap.get(target);
             if (valList != null) {
@@ -481,30 +511,32 @@ public class RdtPropertiesBuilder {
                 throw new IllegalArgumentException(hintPrefix +
                         " @KeyTarget target type " + target.getName() + " only allowed setting once");
             }
-
             valList = new ArrayList<Object>();
             targetClassValueMap.put(target, valList);
-
             rdtRelyModel.getKeyTargetClassList().add(target);
-            //解析val
+
+            //解析处理当前target class的val值
             String[] stringArrays = keyTarget.value();
             for (String current : stringArrays) {
                 if (StringUtils.isEmpty(current)) continue;
 
                 Object val = rdtResolver.castValue(current, valType, hintPrefix + " @KeyTarget target type " + target.getName() + " has no enum " + valType.getName() + " type val "+ current);
-                Class typeClass = typeValClassMap.get(val);
-                if (typeClass != null) {
-                    throw new IllegalArgumentException(hintPrefix + " @KeyTarget target type " + target.getName() + " type val "+ val + " has already exist the before target type " + typeClass.getName());
-                } else {
+
+                if (isUniqueValue) {
+                    //验证当处于unique时值是否已存在
+                    Class typeClass = typeValClassMap.get(val);
+                    if (typeClass != null) {
+                        throw new IllegalArgumentException(hintPrefix + " @KeyTarget target type " + target.getName() + " type val "+ val + " has already exist the before target type " + typeClass.getName());
+                    }
                     //将此类型值与class绑定
                     typeValClassMap.put(val, target);
-                    valList.add(val);
                 }
-
+                valList.add(val);
             }
         }
 
-        if (nullType != null) { //最后处理nullType
+        //处理nullType
+        if (nullType != null) {
             List<Object> valList = targetClassValueMap.get(nullType);
             if (valList == null) {
                 valList = new ArrayList<Object>();
@@ -513,25 +545,27 @@ public class RdtPropertiesBuilder {
             valList.add(null);
         }
 
-        if (unknowType != null) {
-            loadClassWithAnnotation(unknowType);
-            List<Object> unknowNotExistValues = rdtRelyModel.getUnknowNotExistValues();
+        //处理unknown type
+        if (unknownType != null) {
+            loadClassWithAnnotation(unknownType);
+            List<Object> unknownNotExistValues = rdtRelyModel.getUnknownNotExistValues();
             //先存放已存在的全部类型值
             for (List<Object> values : targetClassValueMap.values()) {
-                unknowNotExistValues.addAll(values);
+                unknownNotExistValues.addAll(values);
             }
-            //获取unknowType所对应的全部值
-            List<Object> unknowTypeValList = rdtRelyModel.getTargetClassValueMap().get(unknowType);
-            if (unknowTypeValList != null && !unknowTypeValList.isEmpty()) {
-                //只保留除unknowType外所存在的类型值
-                unknowNotExistValues.removeAll(unknowTypeValList);
+            //获取为unknownType时所对应的全部值
+            List<Object> unknownTypeValList = rdtRelyModel.getTargetClassValueMap().get(unknownType);
+            if (unknownTypeValList != null && !unknownTypeValList.isEmpty()) {
+                //只保留除unknownType外所存在的类型值
+                unknownNotExistValues.removeAll(unknownTypeValList);
             }
         }
 
         rdtRelyModel.setValType(valType);
-        rdtRelyModel.setUnknowType(unknowType);
+        rdtRelyModel.setUnknownType(unknownType);
         rdtRelyModel.setNullType(nullType);
 
+        //加载target class
         for (Class current : targetClassValueMap.keySet()) {
             loadClassWithAnnotation(current);
         }
@@ -773,8 +807,8 @@ public class RdtPropertiesBuilder {
         modifyDescribe.setValType(rdtRelyModel.getValType());
         modifyDescribe.setValList(targetClassValueMap.get(targetClass));
         modifyDescribe.setRdtRelyModel(rdtRelyModel);
-        if (targetClass.equals(rdtRelyModel.getUnknowType())) {
-            modifyDescribe.setUnknowNotExistValList(rdtRelyModel.getUnknowNotExistValues());
+        if (targetClass.equals(rdtRelyModel.getUnknownType())) {
+            modifyDescribe.setUnknownNotExistValList(rdtRelyModel.getUnknownNotExistValues());
         }
     }
 

@@ -120,20 +120,20 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
 
 
     protected Predicate modelTypeCriteriaProcessing(ModifyRelyDescribe describe, String relyProperty, CriteriaPredicateBuilder builder, Root root) {
-        List<Object> unknowNotExistValList = describe.getUnknowNotExistValList();
+        List<Object> unknownNotExistValList = describe.getUnknownNotExistValList();
         List<Object> valList = describe.getValList();
         Path relyPropertyPath = root.get(relyProperty);
         Predicate predicate = null;
         if (!valList.isEmpty()) {
-            if (unknowNotExistValList.isEmpty()) {
+            if (unknownNotExistValList.isEmpty()) {
                 predicate = builder.criteriaIn(relyPropertyPath, valList);
             } else {
-                //满足在valList 或 非unknowNotExistValList时
-                predicate = builder.or(builder.criteriaIn(relyPropertyPath, valList), builder.criteriaNotIn(relyPropertyPath, unknowNotExistValList));
+                //满足在valList 或 非unknownNotExistValList时
+                predicate = builder.or(builder.criteriaIn(relyPropertyPath, valList), builder.criteriaNotIn(relyPropertyPath, unknownNotExistValList));
             }
         } else {
-            if (!unknowNotExistValList.isEmpty()) {
-                predicate = builder.criteriaNotIn(relyPropertyPath, unknowNotExistValList);
+            if (!unknownNotExistValList.isEmpty()) {
+                predicate = builder.criteriaNotIn(relyPropertyPath, unknownNotExistValList);
             }
         }
         return predicate;

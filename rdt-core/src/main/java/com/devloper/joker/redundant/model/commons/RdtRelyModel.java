@@ -7,16 +7,22 @@ import java.util.*;
  * @RdtRely所解析的模型
  */
 public class RdtRelyModel implements Serializable {
-    private List<Class> keyTargetClassList = new ArrayList<Class>();//多个KeyTarget注解顺序的target class
-    private Map<Class, List<Object>> targetClassValueMap = new LinkedHashMap<Class, List<Object>>();//target class所需要对应的值
+    /**
+     * 多个@KeyTarget注解顺序的target class
+     */
+    private List<Class> keyTargetClassList = new ArrayList<Class>();
+    /**
+     * 为target class时所需要对应的值
+     */
+    private Map<Class, List<Object>> targetClassValueMap = new LinkedHashMap<Class, List<Object>>();
     private Class valType;
     private Class nullType;//存在时最后添加到targetClassValueMap中
-    private Class unknowType;
+    private Class unknownType;
 
     /**
-     * 除unknowType外所存在的类型值
+     * 除unknownType外所存在的类型值
      */
-    private List<Object> unknowNotExistValues = new ArrayList<Object>();
+    private List<Object> unknownNotExistValues = new ArrayList<Object>();
 
     /**
      * 当前字段所拥有的指定值列表
@@ -55,20 +61,20 @@ public class RdtRelyModel implements Serializable {
         this.nullType = nullType;
     }
 
-    public Class getUnknowType() {
-        return unknowType;
+    public Class getUnknownType() {
+        return unknownType;
     }
 
-    public void setUnknowType(Class unknowType) {
-        this.unknowType = unknowType;
+    public void setUnknownType(Class unknownType) {
+        this.unknownType = unknownType;
     }
 
-    public List<Object> getUnknowNotExistValues() {
-        return unknowNotExistValues;
+    public List<Object> getUnknownNotExistValues() {
+        return unknownNotExistValues;
     }
 
-    public void setUnknowNotExistValues(List<Object> unknowNotExistValues) {
-        this.unknowNotExistValues = unknowNotExistValues;
+    public void setUnknownNotExistValues(List<Object> unknownNotExistValues) {
+        this.unknownNotExistValues = unknownNotExistValues;
     }
 
     //获取当前类型所拥有的明确值列表
@@ -88,7 +94,7 @@ public class RdtRelyModel implements Serializable {
 
 
     public boolean isValueAllowed(Object value) {
-        if (unknowType != null) {
+        if (unknownType != null) {
             return true;
         }
         return getExplicitValueList().contains(value);

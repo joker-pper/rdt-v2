@@ -17,4 +17,10 @@ public @interface RdtFieldRely {
     String unknowTypeProperty() default "";  //未找到对应时的类所使用的字段
     int group() default 0;//依赖property的第几组
     int index() default 0;
+
+    /**
+     * 设置具体的class限定唯一,不再根据默认的@KeyTarget中存在的class动态指定多个
+     * @return
+     */
+    Class target() default Void.class;
 }

@@ -112,18 +112,18 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
      * @param relyProperty
      */
     protected void modelTypeCriteriaProcessing(ModifyRelyDescribe describe, Criteria criteria, String relyProperty) {
-        List<Object> unknowNotExistValList = describe.getUnknowNotExistValList();
+        List<Object> unknownNotExistValList = describe.getUnknownNotExistValList();
         List<Object> valList = describe.getValList();
 
         if (!valList.isEmpty()) {
-            if (unknowNotExistValList.isEmpty()) {
+            if (unknownNotExistValList.isEmpty()) {
                 criteriaIn(criteria.and(relyProperty), valList);
-            } else { //满足在valList 或 非unknowNotExistValList时
-                criteria.orOperator(criteriaIn(Criteria.where(relyProperty), valList), criteriaNotIn(Criteria.where(relyProperty), unknowNotExistValList));
+            } else { //满足在valList 或 非unknownNotExistValList时
+                criteria.orOperator(criteriaIn(Criteria.where(relyProperty), valList), criteriaNotIn(Criteria.where(relyProperty), unknownNotExistValList));
             }
         } else {
-            if (!unknowNotExistValList.isEmpty()) {
-                criteriaNotIn(criteria.and(relyProperty), unknowNotExistValList);
+            if (!unknownNotExistValList.isEmpty()) {
+                criteriaNotIn(criteria.and(relyProperty), unknownNotExistValList);
             }
         }
     }

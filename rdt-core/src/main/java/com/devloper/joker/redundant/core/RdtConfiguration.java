@@ -98,19 +98,19 @@ public class RdtConfiguration {
      */
     public boolean isMatchedType(ModifyRelyDescribe describe, Object relyColumnValue) {
         boolean result = false;
-        List<Object> unknowNotExistValList = describe.getUnknowNotExistValList();
+        List<Object> unknownNotExistValList = describe.getUnknownNotExistValList();
         List<Object> valList = describe.getValList();
         if (!valList.isEmpty()) {
             result = valList.contains(relyColumnValue);
-            if (!result && !unknowNotExistValList.isEmpty()) {
-                //未包含valList判断是否在非unknowNotExistValList中
-                result = !unknowNotExistValList.contains(relyColumnValue);
+            if (!result && !unknownNotExistValList.isEmpty()) {
+                //未包含valList判断是否在非unknownNotExistValList中
+                result = !unknownNotExistValList.contains(relyColumnValue);
             }
 
         } else {
-            if (!unknowNotExistValList.isEmpty()) {
-                //满足非unknowNotExistValList时
-                result = !unknowNotExistValList.contains(relyColumnValue);
+            if (!unknownNotExistValList.isEmpty()) {
+                //满足非unknownNotExistValList时
+                result = !unknownNotExistValList.contains(relyColumnValue);
             }
         }
         return result;
@@ -244,7 +244,7 @@ public class RdtConfiguration {
             temp.setRdtRelyModel(describe.getRdtRelyModel());
             temp.setRelyColumn(describe.getRelyColumn());
             temp.setValList(describe.getValList());
-            temp.setUnknowNotExistValList(describe.getUnknowNotExistValList());
+            temp.setUnknownNotExistValList(describe.getUnknownNotExistValList());
         }
         return getDeepCloneModifyRelyDescribe(temp);
     }
