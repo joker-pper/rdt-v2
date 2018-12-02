@@ -363,8 +363,12 @@ public abstract class AbstractOperation implements RdtOperation {
         return logger.isDebugEnabled();
     }
 
+    protected void loggerSupport(String s, Object ...values) {
+        logger.debug(s, values);
+    }
+
     protected String getPropertyMark(String property, String targetProperty) {
-        if (getIsLogDetail()) {
+        if (getIsLogDetail() && targetProperty != null) {
             return property + symbol + targetProperty;
         }
         return property;
@@ -398,36 +402,22 @@ public abstract class AbstractOperation implements RdtOperation {
      * @param vo
      */
     protected void updateModifyDescribeSimple(final ClassModel classModel, final ClassModel modifyClassModel, final ModifyDescribe describe, final ChangedVo vo) {
-        final Map<String, Object> conditionLogMap = new LinkedHashMap<String, Object>(16);
-        final Map<String, Object> updateLogMap = new LinkedHashMap<String, Object>(16);
 
-        if (isLoggerSupport()) {
-            configuration.doModifyConditionHandle(vo, describe, new RdtConfiguration.ModifyConditionCallBack() {
-                @Override
-                public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
-                    conditionLogMap.put(getPropertyMark(modifyCondition.getColumn().getProperty(), targetProperty), targetPropertyVal);
-                }
-            });
-
-            configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
-                @Override
-                public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
-                    updateLogMap.put(getPropertyMark(modifyColumn.getColumn().getProperty(), targetProperty), targetPropertyVal);
-                }
-            });
-        }
-
+        Exception exception = null;
         try {
             updateModifyDescribeSimpleImpl(classModel, modifyClassModel, describe, vo);
-            logger.debug("{} modify about {}【{}={}】data, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
-                    describe.getIndex(), rdtResolver.toJson(conditionLogMap), rdtResolver.toJson(updateLogMap));
         } catch (Exception e) {
-            logger.warn("{} modify about {}【{}={}】data error, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
-                    describe.getIndex(), rdtResolver.toJson(conditionLogMap), rdtResolver.toJson(updateLogMap));
-            logger.warn("rdt update field has error", e);
-            handlerUpdateThrowException(e);
+            exception = e;
         }
+        updateModifyDescribeSimpleLogOutput(classModel, modifyClassModel, describe, vo, exception);
+        if (exception != null) {
+            handlerUpdateThrowException(exception);
+        }
+
     }
+
+
+
 
     /**
      * 处理当前保存实体值变化时所要修改相关实体类的字段数据的业务逻辑的实现
@@ -448,10 +438,12 @@ public abstract class AbstractOperation implements RdtOperation {
 
             configuration.doModifyRelyDescribeHandle(classModel, modifyClassModel, new RdtConfiguration.ModifyRelyDescribeCallBack() {
                 @Override
-                public void execute(ClassModel classModel, ClassModel currentClassModel, Column relyColumn, int group, ModifyRelyDescribe describe) {
+                public void execute(ClassModel classModel, ClassModel modifyClassModel, Column relyColumn, int group, ModifyRelyDescribe describe) {
+
                     ModifyRelyDescribe currentDescribe = configuration.getModifyRelyDescribe(describe, changedPropertys);
+
                     if (currentDescribe != null) {
-                        updateModifyRelyDescribeSimple(classModel, currentClassModel, vo, relyColumn, group, currentDescribe);
+                        updateModifyRelyDescribeSimple(classModel, modifyClassModel, vo, relyColumn, group, currentDescribe);
                     }
                 }
             });
@@ -459,6 +451,51 @@ public abstract class AbstractOperation implements RdtOperation {
         }
     }
 
+
+
+    /**
+     * 处理当前保存实体值变化时所要修改相关实体类的字段数据的业务逻辑(存在依赖时)
+     * @param classModel
+     * @param modifyClassModel
+     * @param vo
+     * @param relyColumn        依赖列,modifyClassModel中的column
+     * @param group            所处group
+     * @param describe
+     */
+    protected void updateModifyRelyDescribeSimple(final ClassModel classModel, final ClassModel modifyClassModel, final ChangedVo vo, final Column relyColumn, final int group, final ModifyRelyDescribe describe) {
+
+        Exception exception = null;
+        try {
+            updateModifyRelyDescribeSimpleImpl(classModel, modifyClassModel, vo, relyColumn, group, describe);
+        } catch (Exception e) {
+            exception = e;
+        }
+        updateModifyRelyDescribeSimpleLogOutput(classModel, modifyClassModel, vo, relyColumn, group, describe, exception);
+        if (exception != null) {
+            handlerUpdateThrowException(exception);
+        }
+    }
+
+
+    /**
+     * 处理当前保存实体值变化时所要修改相关实体类的字段数据的业务逻辑的实现(存在依赖时)
+     * @param classModel
+     * @param modifyClassModel
+     * @param vo
+     * @param relyColumn 依赖列,modifyClassModel中的column
+     * @param group
+     * @param describe
+     * @return
+     */
+    protected abstract void updateModifyRelyDescribeSimpleImpl(final ClassModel classModel, final ClassModel modifyClassModel, final ChangedVo vo, final Column relyColumn, final int group, final ModifyRelyDescribe describe);
+
+
+    /**
+     * 返回当前依赖列的条件map
+     * @param describe
+     * @param relyProperty
+     * @return
+     */
     protected Map getModelTypeProcessingCriteriaMap(ModifyRelyDescribe describe, String relyProperty) {
         List<Object> unknownNotExistValList = describe.getUnknownNotExistValList();
         List<Object> valList = describe.getValList();
@@ -492,23 +529,13 @@ public abstract class AbstractOperation implements RdtOperation {
     }
 
 
-    /**
-     * 处理当前保存实体值变化时所要修改相关实体类的字段数据的业务逻辑(存在依赖时)
-     * @param classModel
-     * @param modifyClassModel
-     * @param vo
-     * @param relyColumn        依赖列,modifyClassModel中的column
-     * @param group            所处group
-     * @param describe
-     */
-    protected void updateModifyRelyDescribeSimple(final ClassModel classModel, final ClassModel modifyClassModel, final ChangedVo vo, final Column relyColumn, final int group, final ModifyRelyDescribe describe) {
+    protected void updateModifyDescribeSimpleLogOutput(final ClassModel classModel, final ClassModel modifyClassModel, final ModifyDescribe describe, final ChangedVo vo, final Exception exception) {
+        boolean hasException = exception != null;
+        if (isLoggerSupport() || hasException) {
+            RdtLog rdtLog = new RdtLog();
+            final Map<String, Object> conditionLogMap = rdtLog.getCondition();
+            final Map<String, Object> updateLogMap = rdtLog.getUpdate();
 
-        final Map<String, Object> conditionLogMap = new LinkedHashMap<String, Object>(16);
-        final Map<String, Object> updateLogMap = new LinkedHashMap<String, Object>(16);
-
-        RdtLog rdtLog = new RdtLog(conditionLogMap, updateLogMap);
-
-        if (isLoggerSupport()) {
             configuration.doModifyConditionHandle(vo, describe, new RdtConfiguration.ModifyConditionCallBack() {
                 @Override
                 public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
@@ -523,39 +550,50 @@ public abstract class AbstractOperation implements RdtOperation {
                 }
             });
 
+            if (hasException) {
+                logger.warn("{} modify about {}【{}={}】data error, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
+                        describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()), exception);
+            } else {
+                loggerSupport("{} modify about {}【{}={}】data, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
+                        describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
+            }
+
+        }
+    }
+
+    protected void updateModifyRelyDescribeSimpleLogOutput(final ClassModel classModel, final ClassModel modifyClassModel, final ChangedVo vo, final Column relyColumn, final int group, final ModifyRelyDescribe describe, Exception exception) {
+        boolean hasException = exception != null;
+        if (isLoggerSupport() || hasException) {
+            RdtLog rdtLog = new RdtLog();
+            final Map<String, Object> conditionLogMap = rdtLog.getCondition();
+            final Map<String, Object> updateLogMap = rdtLog.getUpdate();
+
+            configuration.doModifyConditionHandle(vo, describe, new RdtConfiguration.ModifyConditionCallBack() {
+                @Override
+                public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
+                    conditionLogMap.put(getPropertyMark(modifyCondition.getColumn().getProperty(), targetProperty), targetPropertyVal);
+                }
+            });
+            configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
+                @Override
+                public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
+                    updateLogMap.put(getPropertyMark(modifyColumn.getColumn().getProperty(), targetProperty), targetPropertyVal);
+                }
+            });
+
             String relyProperty = relyColumn.getProperty();
             rdtLog.putConditionTop(getModelTypeProcessingCriteriaMap(describe, relyProperty));
-        }
 
-
-        try {
-            updateModifyRelyDescribeSimpleImpl(classModel, modifyClassModel, vo, relyColumn, group, describe);
-
-            logger.debug("{} modify about {}【{}={}】data with rely column - 【name: {}, group: {} 】 , index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
-                    relyColumn.getProperty(), group, describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
-
-        } catch (Exception e) {
-            logger.warn("{} modify about {}【{}={}】data with rely column error - 【name: {}, group: {} 】 , index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
-                    relyColumn.getProperty(), group, describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
-            logger.warn("rdt update field with rely has error", e);
-            handlerUpdateThrowException(e);
+            if (hasException) {
+                logger.warn("{} modify about {}【{}={}】data with rely column error - 【name: {}, group: {} 】 , index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
+                        relyColumn.getProperty(), group, describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()), exception);
+            } else {
+                loggerSupport("{} modify about {}【{}={}】data with rely column - 【name: {}, group: {} 】 , index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
+                        relyColumn.getProperty(), group, describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
+            }
         }
 
     }
-
-
-    /**
-     * 处理当前保存实体值变化时所要修改相关实体类的字段数据的业务逻辑的实现(存在依赖时)
-     * @param classModel
-     * @param modifyClassModel
-     * @param vo
-     * @param relyColumn 依赖列,modifyClassModel中的column
-     * @param group
-     * @param describe
-     * @return
-     */
-    protected abstract void updateModifyRelyDescribeSimpleImpl(final ClassModel classModel, final ClassModel modifyClassModel, final ChangedVo vo, final Column relyColumn, final int group, final ModifyRelyDescribe describe);
-
 
 
     protected <T> List<T> findByFillKeyModel(FillOneKeyModel fillOneKeyModel) {

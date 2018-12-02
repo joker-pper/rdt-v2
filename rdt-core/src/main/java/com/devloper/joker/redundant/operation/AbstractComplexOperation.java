@@ -98,11 +98,52 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
 
         ClassModel modifyClassModel = getModifyDescribeOneModifyClassModel(complexClassModel, complexAnalysis); //获取当前要修改的base model
 
-        final Map<String, Object> conditionLogMap = new LinkedHashMap<String, Object>(16);
-        final Map<String, Object> updateLogMap = new LinkedHashMap<String, Object>(16);
+        Exception exception = null;
+        try {
+            updateModifyDescribeOneImpl(classModel, complexClassModel, complexAnalysis, modifyClassModel, describe, vo);
+        } catch (Exception e) {
+            exception = e;
+        }
+        updateModifyDescribeOneLogOutput(classModel, complexClassModel, modifyClassModel, complexAnalysis, describe, vo, exception);
+        if (exception != null) {
+            handlerUpdateThrowException(exception);
+        }
 
 
-        if (isLoggerSupport()) {
+    }
+
+    protected abstract ClassModel getModifyDescribeOneModifyClassModel(ClassModel complexClassModel, ComplexAnalysis complexAnalysis);
+
+    protected abstract String getModifyDescribeOneProperty(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ModifyCondition modifyCondition);
+
+    protected abstract String getModifyDescribeOneProperty(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ModifyColumn column);
+
+    protected abstract void updateModifyDescribeOneImpl(final ClassModel classModel, final ClassModel complexClassModel, final ComplexAnalysis complexAnalysis, final ClassModel modifyClassModel, final ModifyDescribe describe, final ChangedVo vo);
+
+    protected void updateModifyRelyDescribeOne(final ClassModel classModel, final ClassModel complexClassModel, final ComplexAnalysis complexAnalysis, final ModifyRelyDescribe describe, final ChangedVo vo, final Column relyColumn, final int group) {
+        ClassModel modifyClassModel = getModifyRelyDescribeOneModifyClassModel(complexClassModel, complexAnalysis);
+
+        Exception exception = null;
+        try {
+            updateModifyRelyDescribeOneImpl(classModel, complexClassModel, complexAnalysis, modifyClassModel, describe, vo, relyColumn, group);
+        } catch (Exception e) {
+            exception = e;
+        }
+        updateModifyRelyDescribeOneLogOutput(classModel, complexClassModel, modifyClassModel, complexAnalysis, describe, vo, relyColumn, group, exception);
+        if (exception != null) {
+            handlerUpdateThrowException(exception);
+        }
+    }
+
+
+
+    protected void updateModifyDescribeOneLogOutput(final ClassModel classModel, final ClassModel complexClassModel, final ClassModel modifyClassModel, final ComplexAnalysis complexAnalysis, final ModifyDescribe describe, final ChangedVo vo, Exception exception) {
+        boolean hasException = exception != null;
+        if (isLoggerSupport() || hasException) {
+            RdtLog rdtLog = new RdtLog();
+            final Map<String, Object> conditionLogMap = rdtLog.getCondition();
+            final Map<String, Object> updateLogMap = rdtLog.getUpdate();
+
             configuration.doModifyConditionHandle(vo, describe, new RdtConfiguration.ModifyConditionCallBack() {
                 @Override
                 public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
@@ -117,38 +158,26 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
                     updateLogMap.put(getPropertyMark(property, targetProperty), targetPropertyVal);
                 }
             });
+
+            if (hasException) {
+                logger.warn("{} modify about {}【{}={}】data with complex【{}】 has error, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
+                        complexAnalysis.getPrefix(), describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()), exception);
+            } else {
+                loggerSupport("{} modify about {}【{}={}】data with complex【{}】, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
+                        complexAnalysis.getPrefix(), describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
+            }
         }
 
-        try {
-            updateModifyDescribeOneImpl(classModel, complexClassModel, complexAnalysis, modifyClassModel, describe, vo);
-
-            logger.debug("{} modify about {}【{}={}】data with complex【{}】, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
-                    complexAnalysis.getPrefix(), describe.getIndex(), rdtResolver.toJson(conditionLogMap), rdtResolver.toJson(updateLogMap));
-        } catch (Exception e) {
-            logger.warn("{} modify about {}【{}={}】data with complex【{}】 has error, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
-                    complexAnalysis.getPrefix(), describe.getIndex(), rdtResolver.toJson(conditionLogMap), rdtResolver.toJson(updateLogMap));
-            logger.warn("rdt update field has error", e);
-            handlerUpdateThrowException(e);
-        }
     }
 
-    protected abstract ClassModel getModifyDescribeOneModifyClassModel(ClassModel complexClassModel, ComplexAnalysis complexAnalysis);
+    protected void updateModifyRelyDescribeOneLogOutput(final ClassModel classModel, final ClassModel complexClassModel, final ClassModel modifyClassModel, final ComplexAnalysis complexAnalysis, final ModifyRelyDescribe describe, final ChangedVo vo, final Column relyColumn, final int group, final Exception exception) {
 
-    protected abstract String getModifyDescribeOneProperty(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ModifyCondition modifyCondition);
+        boolean hasException = exception != null;
+        if (isLoggerSupport() || hasException) {
+            RdtLog rdtLog = new RdtLog();
+            final Map<String, Object> conditionLogMap = rdtLog.getCondition();
+            final Map<String, Object> updateLogMap = rdtLog.getUpdate();
 
-    protected abstract String getModifyDescribeOneProperty(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ModifyColumn column);
-
-    protected abstract void updateModifyDescribeOneImpl(final ClassModel classModel, final ClassModel complexClassModel, final ComplexAnalysis complexAnalysis, final ClassModel modifyClassModel, final ModifyDescribe describe, final ChangedVo vo);
-
-    protected void updateModifyRelyDescribeOne(final ClassModel classModel, final ClassModel complexClassModel, final ComplexAnalysis complexAnalysis, final ModifyRelyDescribe describe, final ChangedVo vo, final Column relyColumn, final int group) {
-        ClassModel modifyClassModel = getModifyRelyDescribeOneModifyClassModel(complexClassModel, complexAnalysis);
-
-        final Map<String, Object> conditionLogMap = new LinkedHashMap<String, Object>(16);
-        final Map<String, Object> updateLogMap = new LinkedHashMap<String, Object>(16);
-
-        RdtLog rdtLog = new RdtLog(conditionLogMap, updateLogMap);
-
-        if (isLoggerSupport()) {
             configuration.doModifyConditionHandle(vo, describe, new RdtConfiguration.ModifyConditionCallBack() {
                 @Override
                 public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
@@ -164,23 +193,20 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
                     updateLogMap.put(getPropertyMark(property, targetProperty), targetPropertyVal);
                 }
             });
+
             String relyProperty = getModifyRelyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, relyColumn);
             rdtLog.putConditionTop(getModelTypeProcessingCriteriaMap(describe, relyProperty));
+
+            if (hasException) {
+                logger.warn("{} modify about {}【{}={}】data with complex【{}】and rely column - 【name: {}, group: {} 】has error , index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
+                        complexAnalysis.getPrefix(), relyColumn.getProperty(), group, describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()), exception);
+
+            } else {
+                loggerSupport("{} modify about {}【{}={}】data with complex【{}】and rely column - 【name: {}, group: {} 】 , index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
+                        complexAnalysis.getPrefix(), relyColumn.getProperty(), group, describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
+            }
         }
 
-        try {
-            updateModifyRelyDescribeOneImpl(classModel, complexClassModel, complexAnalysis, modifyClassModel, describe, vo, relyColumn, group);
-
-            logger.debug("{} modify about {}【{}={}】data with complex【{}】and rely column - 【name: {}, group: {} 】 , index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
-                    complexAnalysis.getPrefix(), relyColumn.getProperty(), group, describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
-
-        } catch (Exception e) {
-            logger.warn("{} modify about {}【{}={}】data with complex【{}】and rely column - 【name: {}, group: {} 】has error , index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
-                    complexAnalysis.getPrefix(), relyColumn.getProperty(), group, describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
-
-            logger.warn("rdt update field has error", e);
-            handlerUpdateThrowException(e);
-        }
     }
 
     protected abstract ClassModel getModifyRelyDescribeOneModifyClassModel(ClassModel complexClassModel, ComplexAnalysis complexAnalysis);
@@ -195,18 +221,15 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
 
     protected void updateModifyDescribeMany(final ClassModel classModel, final ClassModel complexClassModel, final ComplexAnalysis complexAnalysis, final ModifyDescribe describe, final ChangedVo vo) {
         ClassModel modifyClassModel = getModifyDescribeManyModifyClassModel(complexClassModel, complexAnalysis);
-
-        Map<String, Object> conditionLogMap = new LinkedHashMap<String, Object>(16);
-        Map<String, Object> updateLogMap = new LinkedHashMap<String, Object>(16);
-
-        RdtLog rdtLog = new RdtLog(conditionLogMap, updateLogMap);
+        RdtLog rdtLog = new RdtLog();
 
         try {
             updateModifyDescribeManyImpl(classModel, complexClassModel, complexAnalysis, modifyClassModel, describe, vo, rdtLog);
 
-            logger.debug("{} modify about {}【{}={}】data with complex【{}】, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
+            loggerSupport("{} modify about {}【{}={}】data with complex【{}】, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
                     complexAnalysis.getPrefix(), describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
         } catch (Exception e) {
+            //条件及更新信息可能不存在
             logger.warn("{} modify about {}【{}={}】data with complex【{}】has error, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
                     complexAnalysis.getPrefix(), describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
 
@@ -222,20 +245,16 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
 
     protected void updateModifyRelyDescribeMany(final ClassModel classModel, final ClassModel complexClassModel, final ComplexAnalysis complexAnalysis, final ModifyRelyDescribe describe, final ChangedVo vo, final Column relyColumn, final int group) {
         ClassModel modifyClassModel = getModifyRelyDescribeManyModifyClassModel(complexClassModel, complexAnalysis);
-
-        Map<String, Object> conditionLogMap = new LinkedHashMap<String, Object>(16);
-        Map<String, Object> updateLogMap = new LinkedHashMap<String, Object>(16);
-
-        RdtLog rdtLog = new RdtLog(conditionLogMap, updateLogMap);
+        RdtLog rdtLog = new RdtLog();
 
         try {
             updateModifyRelyDescribeManyImpl(classModel, complexClassModel, complexAnalysis, modifyClassModel, describe, vo, relyColumn, group, rdtLog);
 
-            logger.debug("{} modify about {}【{}={}】data with complex【{}】and rely column - 【name: {}, group: {} 】 , index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
+            loggerSupport("{} modify about {}【{}={}】data with complex【{}】and rely column - 【name: {}, group: {} 】 , index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
                     complexAnalysis.getPrefix(), relyColumn.getProperty(), group, describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
 
         } catch (Exception e) {
-            logger.warn("{} modify about {}【{}={}】data with complex【{}】and rely column - 【name: {}, group: {} 】 , index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
+            logger.warn("{} modify about {}【{}={}】data with complex【{}】and rely column - 【name: {}, group: {} 】has error, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
                     complexAnalysis.getPrefix(), relyColumn.getProperty(), group, describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
 
             logger.warn("rdt update field has error", e);

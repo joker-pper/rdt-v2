@@ -276,7 +276,7 @@ public class DataTests extends ApplicationTests {
 
             //修改userName
             current.setUserName("joker");
-            current.setAge(221);
+            current.setAge(89);
 
             userRepository.save(current);
             //将会更新被使用的冗余字段
