@@ -13,5 +13,5 @@ public enum RdtFillType {
     /**
      * 禁用
      */
-    DISENABLE
+    DISABLE
 }

@@ -457,7 +457,7 @@ public class RdtPropertiesBuilder {
             }
         }
 
-        if (actualClass != null) {
+        if (hasActualClass) {
             //指定具体target class时
             if (!oneProperty) {
                 throw new IllegalArgumentException(hintPrefix + " target property must be only one");

@@ -519,7 +519,7 @@ public class RdtConfiguration {
             case ENABLE:
                 //跟随填充不移除
                 return false;
-            case DISENABLE:
+            case DISABLE:
                 //不跟随填充移除
                 return true;
         }
