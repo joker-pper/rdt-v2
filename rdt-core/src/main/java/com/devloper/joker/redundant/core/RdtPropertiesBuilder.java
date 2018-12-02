@@ -1,5 +1,6 @@
 package com.devloper.joker.redundant.core;
 
+import com.devloper.joker.redundant.annotation.RdtFillType;
 import com.devloper.joker.redundant.annotation.RdtMany;
 import com.devloper.joker.redundant.annotation.RdtOne;
 import com.devloper.joker.redundant.annotation.field.RdtField;
@@ -45,10 +46,10 @@ public class RdtPropertiesBuilder {
 
         List<Field> fieldList = classModel.getFieldList();
         List<Class<? extends Annotation>> sortAnnotationClassList = Arrays.asList(
-                RdtFieldConditions.class, RdtFields.class,
-                RdtFieldCondition.class, RdtField.class,
                 RdtRelys.class, RdtRely.class,
                 RdtFieldConditionRely.class, RdtFieldRely.class,
+                RdtFieldConditions.class, RdtFields.class,
+                RdtFieldCondition.class, RdtField.class,
                 RdtOne.class, RdtMany.class);
 
         Map<Class, Map<Field, Annotation>> sortAnnotationClassMap = new LinkedHashMap<Class, Map<Field, Annotation>>(16);
@@ -177,6 +178,8 @@ public class RdtPropertiesBuilder {
                             Map<Class, Column> classColumnMap = columnModel.getClassTargetColumnMap(); //class类型所对应的列
 
                             if (classColumnMap != null) {
+                                Map<Class, RdtFillType> fillShowTypeMap = columnModel.getFillShowTypeMap();
+                                Map<Class, RdtFillType> fillSaveTypeMap = columnModel.getFillSaveTypeMap();
                                 for (Class targetClass : classColumnMap.keySet()) {
                                     Column targetColumn = classColumnMap.get(targetClass);
                                     ModifyRelyDescribe modifyRelyDescribe = getModifyRelyDescribe(classModel, getClassModel(targetClass), relyColumn, index, group);
@@ -186,6 +189,8 @@ public class RdtPropertiesBuilder {
                                         modifyRelyDescribe.getConditionList().add(modifyCondition);
                                     } else {
                                         ModifyColumn modifyColumn = getModifyColumn(currentColumn, targetColumn);
+                                        modifyColumn.setFillShowType(fillShowTypeMap.get(targetClass));
+                                        modifyColumn.setFillSaveType(fillSaveTypeMap.get(targetClass));
                                         modifyRelyDescribe.getColumnList().add(modifyColumn);
                                     }
                                 }
@@ -250,7 +255,10 @@ public class RdtPropertiesBuilder {
 
         //添加修改属性内容
         ModifyDescribe modifyDescribe = getModifyDescribe(classModel, targetClassModel, index);
-        modifyDescribe.getColumnList().add(getModifyColumn(column, targetColumn));
+        ModifyColumn modifyColumn = getModifyColumn(column, targetColumn);
+        modifyColumn.setFillSaveType(rdtAnnotation.fillSave());
+        modifyColumn.setFillShowType(rdtAnnotation.fillShow());
+        modifyDescribe.getColumnList().add(modifyColumn);
     }
 
     private void builderRdtFieldConditionConfigData(ClassModel classModel, Column column, RdtFieldCondition rdtAnnotation) {
@@ -288,6 +296,10 @@ public class RdtPropertiesBuilder {
         Class actualClass = null;
 
         String relyProperty;  //依赖的字段别名
+
+        List<RdtFillType> fillShowTypeList = new ArrayList<RdtFillType>();
+        List<RdtFillType> fillSaveTypeList = new ArrayList<RdtFillType>();
+
         if (annotation instanceof RdtFieldConditionRely) {
             isConditionRely = true;
             RdtFieldConditionRely rdt = (RdtFieldConditionRely) annotation;
@@ -299,6 +311,7 @@ public class RdtPropertiesBuilder {
             nullTypeProperty = StringUtils.isNotBlank(rdt.nullTypeProperty()) ? rdt.nullTypeProperty() : null;
             unknownTypeProperty = StringUtils.isNotBlank(rdt.unknowTypeProperty()) ? rdt.unknowTypeProperty() : null;
             actualClass = rdt.target() == Void.class ? null : rdt.target();
+
         } else if (annotation instanceof RdtFieldRely) {
             RdtFieldRely rdt = (RdtFieldRely) annotation;
             group = rdt.group();
@@ -308,6 +321,14 @@ public class RdtPropertiesBuilder {
             nullTypeProperty = StringUtils.isNotBlank(rdt.nullTypeProperty()) ? rdt.nullTypeProperty() : null;
             unknownTypeProperty = StringUtils.isNotBlank(rdt.unknowTypeProperty()) ? rdt.unknowTypeProperty() : null;
             actualClass = rdt.target() == Void.class ? null : rdt.target();
+
+            for (RdtFillType type : rdt.fillShow()) {
+                fillShowTypeList.add(type);
+            }
+
+            for (RdtFillType type : rdt.fillSave()) {
+                fillSaveTypeList.add(type);
+            }
         } else throw new IllegalArgumentException("rdt builder rely config not support this type");
 
         String property = column.getProperty();
@@ -348,6 +369,14 @@ public class RdtPropertiesBuilder {
         if (rdtRelyTargetColumnModel != null) throw new IllegalArgumentException(hintPrefix + " already exist");
 
         List<Class> keyTargetClassList = rdtRelyModel.getKeyTargetClassList();
+        boolean hasActualClass = actualClass != null;
+        if (hasActualClass) {
+            //check actual class in key class list
+            if (!keyTargetClassList.contains(actualClass)) {
+                throw new IllegalArgumentException(hintPrefix + " target class " + actualClass.getName() + " not in rely column class list");
+            }
+        }
+
         rdtRelyTargetColumnModel = new RdtRelyTargetColumnModel();
         relyIndexDataMap.put(relyIndex, rdtRelyTargetColumnModel);
         rdtRelyTargetColumnModel.setGroup(group);
@@ -372,9 +401,61 @@ public class RdtPropertiesBuilder {
                 usePropertyList.add(current);
             }
         }
+
+
         String alias = null;
         boolean oneProperty = usePropertyList.size() == 1;
         if (oneProperty) alias = usePropertyList.get(0);
+
+        if (!isConditionRely) {
+            int expectShowSize = 1;
+            int expectSaveSize = 1;
+            int fillShowTypeSize = fillShowTypeList.size();
+            int fillSaveTypeSize = fillSaveTypeList.size();
+            int size = keyTargetClassList.size();
+            if (!hasActualClass) {
+                //若非1时必须全部配置
+                expectShowSize = fillShowTypeSize != 1 ? size : expectShowSize;
+                expectSaveSize = fillSaveTypeSize != 1 ? size : expectSaveSize;
+            }
+
+            if (fillShowTypeSize != expectShowSize) {
+                throw new IllegalArgumentException(hintPrefix + " expect fill show type length is " + expectShowSize);
+            }
+
+            if (fillSaveTypeSize != expectSaveSize) {
+                throw new IllegalArgumentException(hintPrefix + " expect fill save type length is " + expectSaveSize);
+            }
+
+            for (int i = 0; i < keyTargetClassList.size(); i ++) {
+                Class targetClass = keyTargetClassList.get(i);
+                if (hasActualClass) {
+                    targetClass = actualClass;
+                }
+
+                RdtFillType fillShowType;
+                RdtFillType fillSaveType;
+
+                if (expectShowSize == 1) {
+                    fillShowType = fillShowTypeList.get(0);
+                } else {
+                    fillShowType = fillShowTypeList.get(i);
+                }
+
+                if (expectSaveSize == 1) {
+                    fillSaveType = fillSaveTypeList.get(0);
+                } else {
+                    fillSaveType = fillSaveTypeList.get(i);
+                }
+
+                rdtRelyTargetColumnModel.getFillSaveTypeMap().put(targetClass, fillSaveType);
+                rdtRelyTargetColumnModel.getFillShowTypeMap().put(targetClass, fillShowType);
+
+                if (hasActualClass) {
+                    break;
+                }
+            }
+        }
 
         if (actualClass != null) {
             //指定具体target class时

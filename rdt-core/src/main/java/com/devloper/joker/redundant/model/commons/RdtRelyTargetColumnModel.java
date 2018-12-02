@@ -1,13 +1,26 @@
 package com.devloper.joker.redundant.model.commons;
 
+import com.devloper.joker.redundant.annotation.RdtFillType;
 import com.devloper.joker.redundant.model.Column;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class RdtRelyTargetColumnModel {
-    private Map<Class, Column> classTargetColumnMap = new LinkedHashMap<Class, Column>();  //每个class所对应的列信息
+    /**
+     * 每个class所对应的列信息
+     */
+    private Map<Class, Column> classTargetColumnMap = new LinkedHashMap<Class, Column>();
     private int group;
+
+    /**
+     * class所对应的填充类型
+     */
+    private Map<Class, RdtFillType> fillShowTypeMap = new HashMap<Class, RdtFillType>();
+    private Map<Class, RdtFillType> fillSaveTypeMap = new HashMap<Class, RdtFillType>();
+
+
     public Map<Class, Column> getClassTargetColumnMap() {
         return classTargetColumnMap;
     }
@@ -24,4 +37,19 @@ public class RdtRelyTargetColumnModel {
         this.group = group;
     }
 
+    public Map<Class, RdtFillType> getFillShowTypeMap() {
+        return fillShowTypeMap;
+    }
+
+    public void setFillShowTypeMap(Map<Class, RdtFillType> fillShowTypeMap) {
+        this.fillShowTypeMap = fillShowTypeMap;
+    }
+
+    public Map<Class, RdtFillType> getFillSaveTypeMap() {
+        return fillSaveTypeMap;
+    }
+
+    public void setFillSaveTypeMap(Map<Class, RdtFillType> fillSaveTypeMap) {
+        this.fillSaveTypeMap = fillSaveTypeMap;
+    }
 }

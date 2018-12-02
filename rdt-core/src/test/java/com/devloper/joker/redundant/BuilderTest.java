@@ -1,4 +1,4 @@
-package com.devloper.joker.redundant.utils;
+package com.devloper.joker.redundant;
 
 import com.devloper.joker.redundant.core.RdtConfiguration;
 import com.devloper.joker.redundant.core.RdtConfigurationBuilder;
@@ -60,5 +60,6 @@ public class BuilderTest {
         RdtConfiguration rdtConfiguration = RdtConfigurationBuilder.build(properties, rdtResolver);
 
         System.out.println(rdtConfiguration);
+
     }
 }

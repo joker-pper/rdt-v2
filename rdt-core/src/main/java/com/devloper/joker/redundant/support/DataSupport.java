@@ -63,7 +63,8 @@ public class DataSupport {
             else prefix = prefix.substring(0, prefix.length() - 1);
 
             //当前result即为要访问最终的属性值
-            if (callback != null) callback.execute(prefix, result);
+            if (callback != null && (prefix == null || property == null || property.equals("*") || prefix.contains(property))) callback.execute(prefix, result);
+            //if (callback != null) callback.execute(prefix, result);
         } else {
             //读取下一个属性值
             String nextProperty = property.substring(property.indexOf(".") + 1);
@@ -93,14 +94,16 @@ public class DataSupport {
                 result = resultTemp;
             }
 
-            if (nextProperty != null && nextProperty.matches("\\*.*")) {
+            //验证.*必须为集合
+            /*if (nextProperty != null && nextProperty.matches("\\*.*")) {
                 if (!(result instanceof Collection))
                     throw new IllegalArgumentException("only collection can use * "+ ", cause by " + prefix + nextProperty);
-            }
+            }*/
+
             if (result instanceof Collection) {
                 int size = ((Collection) result).size();
                 if (position != null && position + 1 > size) {
-                   throw new ArrayIndexOutOfBoundsException("max index is " + (size - 1) + ", cause by " + prefix + "[" + position ++ + "]");
+                    throw new ArrayIndexOutOfBoundsException("max index is " + (size - 1) + ", cause by " + prefix + "[" + position ++ + "]");
                 }
                 int index = 0;
                 boolean breakFlag = false;

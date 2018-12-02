@@ -1,6 +1,7 @@
 package com.devloper.joker.redundant.core;
 
 
+import com.devloper.joker.redundant.annotation.RdtFillType;
 import com.devloper.joker.redundant.fill.FillType;
 import com.devloper.joker.redundant.model.*;
 import org.slf4j.Logger;
@@ -496,8 +497,37 @@ public class RdtConfiguration {
 
     }
 
+
+    //是否移除当前列避免填充
+    public boolean isModifyColumnRemove(ModifyColumn modifyColumn, boolean isPersistentType) {
+        boolean isTransient = modifyColumn.getColumn().getIsTransient();
+        RdtFillType fillType;
+
+        if (isPersistentType) {
+            //填充持久化列时(save)
+            fillType = modifyColumn.getFillSaveType();
+        } else {
+            fillType = modifyColumn.getFillShowType();
+        }
+        switch (fillType) {
+            case DEFAULT:
+                if (isPersistentType) {
+                    //持久化列时,如果是非持久化时移除
+                    return isTransient;
+                }
+                return !isTransient;
+            case ENABLE:
+                //跟随填充不移除
+                return false;
+            case DISENABLE:
+                //不跟随填充移除
+                return true;
+        }
+        return true;
+    }
+
     /**
-     * 获取和onlyTransient配置处理后的ModifyDescribe,用于填充
+     * 获取根据填充模式所处理后的ModifyDescribe
      * @param describe
      * @param type 填充类型
      */
@@ -517,10 +547,7 @@ public class RdtConfiguration {
                     ModifyDescribe current = getDeepCloneModifyDescribe(describe, false);
                     List<ModifyColumn> columnList = current.getColumnList();
                     for (Iterator<ModifyColumn> columnIterator = columnList.iterator(); columnIterator.hasNext();) {
-                        boolean isTransient = columnIterator.next().getColumn().getIsTransient();
-                        //为只填充持久化列时,移除非持久化的列,反之移除持久化的列
-                        boolean remove = isPersistentType ? isTransient : !isTransient;
-                        if (remove) {
+                        if (isModifyColumnRemove(columnIterator.next(), isPersistentType)) {
                             columnIterator.remove();
                         }
                     }
@@ -547,10 +574,7 @@ public class RdtConfiguration {
                     ModifyRelyDescribe current = getDeepCloneModifyRelyDescribe(describe, false);
                     List<ModifyColumn> columnList = current.getColumnList();
                     for (Iterator<ModifyColumn> columnIterator = columnList.iterator(); columnIterator.hasNext();) {
-                        boolean isTransient = columnIterator.next().getColumn().getIsTransient();
-                        //为只填充持久化列时,移除非持久化的列,反之移除持久化的列
-                        boolean remove = isPersistentType ? isTransient : !isTransient;
-                        if (remove) {
+                        if (isModifyColumnRemove(columnIterator.next(), isPersistentType)) {
                             columnIterator.remove();
                         }
                     }

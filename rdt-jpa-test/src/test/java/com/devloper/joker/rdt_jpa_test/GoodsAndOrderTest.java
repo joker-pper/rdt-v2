@@ -96,7 +96,7 @@ public class GoodsAndOrderTest extends ApplicationTests {
     @Test
     public void findAllOrderWithFill() {
         List<Order> orderList = orderService.findAll();
-        //默认只会填充列为transient的字段值(即更新+填充的方式可以同时使用,且不会填充持久化的数据)
+        //默认只会填充列为transient的字段值(即更新+填充的方式可以同时使用,默认不会填充持久化的数据,可配置)
         rdtOperation.fillForShow(orderList);
         logger.info("result: {}", JsonUtils.toJson(orderList));
         logger.info("----------------------------------------------------");

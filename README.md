@@ -155,11 +155,14 @@ public class Order {
     @RdtField(target = Goods.class, property = "name")
     private String goodsName;
 
+
     /**
-     * 当订单类型为2时,当goods的金额值更改后进行更新
+     * 当订单类型为2时,当goods的金额值更改后进行更新(配置fillShow后,在fillShow时会依据条件填充该列值)
      */
     @RdtFieldRely(property = "type")
+    //@RdtFieldRely(property = "type", fillShow = RdtFillType.ENABLE)
     private Integer price;
+
 
     /**
      * type: 1 已完成 2: 未付款
@@ -254,7 +257,7 @@ public class Order {
     @Test
     public void findAllOrderWithFill() {
         List<Order> orderList = orderService.findAll();
-        //默认只会填充列为transient的字段值(即更新+填充的方式可以同时使用,且不会填充持久化的数据)
+        //默认只会填充列为transient的字段值(即更新+填充的方式可以同时使用,默认不会填充持久化的数据,可配置)
         rdtOperation.fillForShow(orderList);
         logger.info("result: {}", JsonUtils.toJson(orderList));
         logger.info("----------------------------------------------------");

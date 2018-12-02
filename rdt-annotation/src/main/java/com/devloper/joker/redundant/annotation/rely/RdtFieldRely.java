@@ -1,5 +1,7 @@
 package com.devloper.joker.redundant.annotation.rely;
 
+import com.devloper.joker.redundant.annotation.RdtFillType;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -23,4 +25,10 @@ public @interface RdtFieldRely {
      * @return
      */
     Class target() default Void.class;
+
+
+    RdtFillType[] fillSave() default RdtFillType.DEFAULT;
+
+
+    RdtFillType[] fillShow() default RdtFillType.DEFAULT;
 }

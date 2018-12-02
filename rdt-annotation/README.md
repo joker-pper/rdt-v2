@@ -16,6 +16,22 @@
     target(class) 对应持久化类
     index(int) 索引,默认值为0,当前类中可存在基于target class的多组情形
     
+    /**
+     * save时: (填充模式为处理持久化字段)
+     * 默认只填充持久化字段
+     * 启用时跟随填充
+     * 禁用时会被忽略
+     */
+    fillSave(RdtFillType) 默认值 RdtFillType.DEFAULT
+    
+    /**
+     * show时: (填充模式为处理非持久化字段)
+     *  默认只填充非持久化字段
+     *  启用时跟随填充, e.g: 填充已持久化的订单金额在未支付状态下的值
+     *  禁用时会被忽略
+     */
+    fillShow(RdtFillType)  默认值 RdtFillType.DEFAULT
+    
 @RdtFieldCondition ---- 当前类属性字段对应持久化类的属性条件字段注解(用于匹配对应值)
 属性:
     property(string) 对应持久化类的属性字段 (若属性字段配置别名,则需使用别名值)
@@ -62,6 +78,9 @@
     nullTypeProperty(string) 为空值时所对应的持久化类使用的字段
     unknowTypeProperty(string) 非已指定类型值时对应的持久化类使用的字段
     target(class) 设置具体的class限定唯一,不再根据默认的@KeyTarget中存在的class动态指定多个
+
+    fillShow(RdtFillType[])  默认值 RdtFillType.DEFAULT 效果等同@RdtField属性
+    fillSave(RdtFillType[])  默认值 RdtFillType.DEFAULT 效果等同@RdtField属性
 
 @RdtFieldConditionRely   --- （依赖于依赖字段的类型值）当前类属性字段对应持久化类的属性条
 件字段注解(用于匹配对应值)

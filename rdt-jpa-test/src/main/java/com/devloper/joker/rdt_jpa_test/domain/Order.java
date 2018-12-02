@@ -1,5 +1,6 @@
 package com.devloper.joker.rdt_jpa_test.domain;
 
+import com.devloper.joker.redundant.annotation.RdtFillType;
 import com.devloper.joker.redundant.annotation.field.RdtField;
 import com.devloper.joker.redundant.annotation.field.RdtFieldCondition;
 import com.devloper.joker.redundant.annotation.rely.KeyTarget;
@@ -34,9 +35,10 @@ public class Order {
     private String goodsName;
 
     /**
-     * 当订单类型为2时,当goods的金额值更改后进行更新
+     * 当订单类型为2时,当goods的金额值更改后进行更新(配置fillShow后,在fillShow时会依据条件填充该列值)
      */
     @RdtFieldRely(property = "type")
+    //@RdtFieldRely(property = "type", fillShow = RdtFillType.ENABLE)
     private Integer price;
 
     /**

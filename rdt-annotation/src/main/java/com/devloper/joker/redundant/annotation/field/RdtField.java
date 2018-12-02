@@ -1,5 +1,7 @@
 package com.devloper.joker.redundant.annotation.field;
 
+import com.devloper.joker.redundant.annotation.RdtFillType;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -29,4 +31,20 @@ public @interface RdtField {
      * @return
      */
     int index() default 0;
+
+    /**
+     * save时: (填充模式为持久化)
+     * 默认只填充持久化字段
+     * 启用时跟随填充
+     * 禁用时会被忽略
+     */
+    RdtFillType fillSave() default RdtFillType.DEFAULT;
+
+    /**
+     * show时: (填充模式为非持久化)
+     *  默认只填充非持久化字段
+     *  启用时跟随填充, e.g: 填充已持久化的订单金额在未支付状态下的值
+     *  禁用时会被忽略
+     */
+    RdtFillType fillShow() default RdtFillType.DEFAULT;
 }
