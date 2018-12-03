@@ -39,9 +39,4 @@ public class PackageClassUtilsTest {
     }
 
 
-    @Test
-    public void ss() {
-        List<String> classList = PackageClassUtils.getJarClassNames("D:\\IdeaProjects\\rdt-v2\\rdt-spring-mongodb-test\\target\\rdt-spring-mongodb-test-0.0.1-SNAPSHOT.jar", "com.devloper.joker.rdt_sbm");
-        System.out.println(classList);
-    }
 }
