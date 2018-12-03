@@ -39,20 +39,21 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
 
                         configuration.doModifyDescribeHandle(classModel, complexClassModel, new RdtConfiguration.ModifyDescribeCallBack() {
                             @Override
-                            public void execute(ClassModel classModel, ClassModel currentClassModel, ModifyDescribe describe) {
+                            public void execute(ClassModel classModel, ClassModel modifyClassModel, ModifyDescribe describe) {
                                 ModifyDescribe currentDescribe = configuration.getModifyDescribe(describe, changedPropertys); //获取当前的修改条件
                                 if (currentDescribe != null) {
-                                    updateModifyDescribeMany(classModel, currentClassModel, complexAnalysis, currentDescribe, vo);
+                                    updateModifyDescribeMany(classModel, modifyClassModel, complexAnalysis, currentDescribe, vo);
                                 }
                             }
                         });
 
                         configuration.doModifyRelyDescribeHandle(classModel, complexClassModel, new RdtConfiguration.ModifyRelyDescribeCallBack() {
                             @Override
-                            public void execute(ClassModel classModel, ClassModel currentClassModel, Column relyColumn, int group, ModifyRelyDescribe describe) {
+                            public void execute(ClassModel classModel, ClassModel modifyClassModel, Column relyColumn, int group, ModifyRelyDescribe describe) {
                                 ModifyRelyDescribe currentDescribe = configuration.getModifyRelyDescribe(describe, changedPropertys);
+
                                 if (currentDescribe != null) {
-                                    updateModifyRelyDescribeMany(classModel, currentClassModel, complexAnalysis, currentDescribe, vo, relyColumn, group);
+                                    updateModifyRelyDescribeMany(classModel, modifyClassModel, complexAnalysis, currentDescribe, vo, relyColumn, group);
                                 }
                             }
                         });
@@ -61,19 +62,19 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
 
                         configuration.doModifyDescribeHandle(classModel, complexClassModel, new RdtConfiguration.ModifyDescribeCallBack() {
                             @Override
-                            public void execute(ClassModel classModel, ClassModel currentClassModel, ModifyDescribe describe) {
+                            public void execute(ClassModel classModel, ClassModel modifyClassModel, ModifyDescribe describe) {
                                 ModifyDescribe currentDescribe = configuration.getModifyDescribe(describe, changedPropertys); //获取当前的修改条件
                                 if (currentDescribe != null) {
-                                    updateModifyDescribeOne(classModel, currentClassModel, complexAnalysis, currentDescribe, vo);
+                                    updateModifyDescribeOne(classModel, modifyClassModel, complexAnalysis, currentDescribe, vo);
                                 }
                             }
                         });
                         configuration.doModifyRelyDescribeHandle(classModel, complexClassModel, new RdtConfiguration.ModifyRelyDescribeCallBack() {
                             @Override
-                            public void execute(ClassModel classModel, ClassModel currentClassModel, Column relyColumn, int group, ModifyRelyDescribe describe) {
+                            public void execute(ClassModel classModel, ClassModel modifyClassModel, Column relyColumn, int group, ModifyRelyDescribe describe) {
                                 ModifyRelyDescribe currentDescribe = configuration.getModifyRelyDescribe(describe, changedPropertys);
                                 if (currentDescribe != null) {
-                                    updateModifyRelyDescribeOne(classModel, currentClassModel, complexAnalysis, currentDescribe, vo, relyColumn, group);
+                                    updateModifyRelyDescribeOne(classModel, modifyClassModel, complexAnalysis, currentDescribe, vo, relyColumn, group);
                                 }
                             }
                         });
@@ -229,11 +230,8 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
             loggerSupport("{} modify about {}【{}={}】data with complex【{}】, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
                     complexAnalysis.getPrefix(), describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
         } catch (Exception e) {
-            //条件及更新信息可能不存在
             logger.warn("{} modify about {}【{}={}】data with complex【{}】has error, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
-                    complexAnalysis.getPrefix(), describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
-
-            logger.warn("rdt update field has error", e);
+                    complexAnalysis.getPrefix(), describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()), e);
             handlerUpdateThrowException(e);
         }
     }
@@ -255,9 +253,7 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
 
         } catch (Exception e) {
             logger.warn("{} modify about {}【{}={}】data with complex【{}】and rely column - 【name: {}, group: {} 】has error, index: {}, conditions: {}, updates: {}", modifyClassModel.getClassName(), classModel.getClassName(), vo.getPrimaryId(), vo.getPrimaryIdVal(),
-                    complexAnalysis.getPrefix(), relyColumn.getProperty(), group, describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()));
-
-            logger.warn("rdt update field has error", e);
+                    complexAnalysis.getPrefix(), relyColumn.getProperty(), group, describe.getIndex(), rdtResolver.toJson(rdtLog.getCondition()), rdtResolver.toJson(rdtLog.getUpdate()), e);
             handlerUpdateThrowException(e);
         }
     }

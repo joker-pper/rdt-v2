@@ -13,7 +13,7 @@ import java.util.*;
 
 public abstract class AbstractOperation implements RdtOperation {
 
-    protected final Logger logger = LoggerFactory.getLogger(AbstractOperation.class);
+    protected final Logger logger = LoggerFactory.getLogger(RdtOperation.class);
 
     protected RdtProperties properties;
 

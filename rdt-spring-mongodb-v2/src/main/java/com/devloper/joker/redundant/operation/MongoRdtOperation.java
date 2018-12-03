@@ -13,7 +13,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import java.util.*;
 
-public abstract class MongoRdtOperation extends AbstractMongoOperation {
+public class MongoRdtOperation extends AbstractMongoOperation {
 
     protected MongoTemplate mongoTemplate;
 
@@ -43,7 +43,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
         return mongoTemplate.findById(id, entityClass);
     }
 
-
+    //单条件的数据
     @Override
     protected <T> List<T> findByFillKeyModelExecute(FillOneKeyModel fillKeyVO) {
         Class<T> entityClass = fillKeyVO.getEntityClass();
@@ -51,6 +51,7 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
         return mongoTemplate.find(query, entityClass);
     }
 
+    //多条件时的数据
     @Override
     protected <T> List<T> findByFillManyKeyExecute(Class<T> entityClass, List<Column> conditionColumnValues, Set<Column> columnValues, List<Object> conditionGroupValue) {
         Criteria criteria = new Criteria();
@@ -239,83 +240,49 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
 
     @Override
     protected void updateModifyDescribeManyImpl(final ClassModel classModel, final ClassModel complexClassModel, final ComplexAnalysis complexAnalysis, final ClassModel modifyClassModel, final ModifyDescribe describe, final ChangedVo vo, RdtLog rdtLog) {
-        Criteria criteria = new Criteria();
-
-        final Map<String, Object> conditionValMap = new HashMap<String, Object>(16);  //存放比较属性值的map
-        final Map<String, Object> updateValMap = new HashMap<String, Object>(16);  //存放要更新属性值的map
-        Map<String, Object> conditionLogMap = new LinkedHashMap<String, Object>(16); //查询条件log数据
-
-        final Map<String, Object> updateLogMap = new LinkedHashMap<String, Object>(16);
-
-        //统一处理
-        updateManyDataConditionRelationshipHandle(classModel, complexClassModel, complexAnalysis, modifyClassModel, describe, vo, criteria, conditionValMap, conditionLogMap,null);
-
-        final String analysisPrefix = complexAnalysis.getPrefix() + ".";
-
-        configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
-            @Override
-            public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
-                String property = modifyColumn.getColumn().getProperty();
-                updateValMap.put(property, targetPropertyVal);
-                if (isLoggerSupport()) {
-                    updateLogMap.put(getPropertyMark(analysisPrefix + property, targetProperty), targetPropertyVal);
-                }
-            }
-        });
-
-        Class modifyClass = modifyClassModel.getCurrentClass();
-        Query query = new Query(criteria);
-        doWithPageableCallBack(query, modifyClass, new PageableCallBack() {
-            @Override
-            void run(List data) {
-                updateManyData(data, complexClassModel, classModel, modifyClassModel, complexAnalysis, conditionValMap, updateValMap, properties.getComplexBySaveAll(), describe);
-            }
-        });
-
-
-        //设置log
-        rdtLog.setCondition(conditionLogMap);
-        rdtLog.setUpdate(updateLogMap);
+        updateManyDataCore(classModel, complexClassModel, complexAnalysis, modifyClassModel, describe, vo, rdtLog);
     }
 
     @Override
     protected void updateModifyRelyDescribeManyImpl(final ClassModel classModel, final ClassModel complexClassModel, final ComplexAnalysis complexAnalysis, final ClassModel modifyClassModel, final ModifyRelyDescribe describe, final ChangedVo vo, final Column relyColumn, int group, RdtLog rdtLog) {
-        Criteria criteria = new Criteria();
-
-        final Map<String, Object> conditionValMap = new HashMap<String, Object>(16);  //存放比较属性值的map
-        final Map<String, Object> updateValMap = new HashMap<String, Object>(16);  //存放要更新属性值的map
-        final Map<String, Object> updateLogMap = new LinkedHashMap<String, Object>(16);
-        Map<String, Object> conditionLogMap = new LinkedHashMap<String, Object>(16); //查询条件log数据
-
-        updateManyDataConditionRelationshipHandle(classModel, complexClassModel, complexAnalysis, modifyClassModel, describe, vo, criteria, conditionValMap, conditionLogMap, relyColumn);
-
-        final String analysisPrefix = complexAnalysis.getPrefix() + ".";
-
-        configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
-            @Override
-            public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
-                String property = modifyColumn.getColumn().getProperty();
-                updateValMap.put(property, targetPropertyVal);
-
-                if (isLoggerSupport()) {
-                    updateLogMap.put(getPropertyMark(analysisPrefix + property, targetProperty), targetPropertyVal);
-                }
-            }
-        });
-
-        Class modifyClass = modifyClassModel.getCurrentClass();
-
-        Query query = new Query(criteria);
-        doWithPageableCallBack(query, modifyClass, new PageableCallBack() {
-            @Override
-            void run(List data) {
-                updateManyData(data, complexClassModel, classModel, modifyClassModel, complexAnalysis, conditionValMap, updateValMap, properties.getComplexBySaveAll(), describe);
-            }
-        });
-
-        rdtLog.setCondition(conditionLogMap);
-        rdtLog.setUpdate(updateLogMap);
+        updateManyDataCore(classModel, complexClassModel, complexAnalysis, modifyClassModel, describe, vo, rdtLog);
     }
+
+
+    protected void updateManyDataCore(final ClassModel classModel, final ClassModel complexClassModel, final ComplexAnalysis complexAnalysis, final ClassModel modifyClassModel, final ModifyDescribe describe, final ChangedVo vo, RdtLog rdtLog) {
+        final Criteria criteria = new Criteria();
+        //conditionPropertyMap为条件key所对应当前数据key的map
+        final Map<String, String> conditionPropertyMap = new HashMap<String, String>(16);
+        //处理条件
+        updateManyDataConditionRelationshipHandle(classModel, complexClassModel, complexAnalysis, modifyClassModel, describe, vo, criteria, conditionPropertyMap);
+        Class modifyClass = modifyClassModel.getCurrentClass();
+        Exception exception = null;
+        try {
+            //根据条件所匹配的数据更新
+            Query query = new Query(criteria);
+            doWithPageableCallBack(query, modifyClass, new PageableCallBack() {
+                @Override
+                void run(List data) {
+                    updateManyData(criteria, data, complexClassModel, classModel, modifyClassModel, complexAnalysis, properties.getComplexBySaveAll(), describe, vo);
+                }
+            });
+        } catch (Exception e) {
+            exception = e;
+        }
+
+        //处理log数据
+        updateManyDataLogHandle(complexAnalysis, criteria, conditionPropertyMap, describe, vo, exception, rdtLog);
+
+        //异常处理
+        if (exception != null) {
+            if (exception instanceof RuntimeException) {
+                throw (RuntimeException) exception;
+            } else {
+                throw new IllegalStateException(exception);
+            }
+        }
+    }
+
 
     protected abstract class PageableCallBack<T> {
        abstract void run(List<T> data);
@@ -351,21 +318,9 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
     }
 
     /**
-     * 统一处理为many时的查询条件,及条件属性map赋值
-     * @param classModel
-     * @param complexClassModel
-     * @param complexAnalysis
-     * @param modifyClassModel
-     * @param describe
-     * @param vo
-     * @param criteria
-     * @param conditionValMap 存放complexClassModel的对应的属性的值的条件map
-     * @param conditionLogMap 条件log对象
-     * @param relyColumn
+     * 统一处理为many时的查询条件
      */
-    protected void updateManyDataConditionRelationshipHandle(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ClassModel modifyClassModel, ModifyDescribe describe, final ChangedVo vo, Criteria criteria, final Map<String, Object> conditionValMap, final Map<String, Object> conditionLogMap, final Column relyColumn) {
-        if (criteria == null) throw new IllegalArgumentException("criteria must not null");
-        if (describe == null) throw new IllegalArgumentException("describe must not null");
+    protected void updateManyDataConditionRelationshipHandle(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ClassModel modifyClassModel, ModifyDescribe describe, final ChangedVo vo, Criteria criteria, final Map<String, String> conditionPropertyMap) {
         List<Boolean> oneList = complexAnalysis.getOneList();
         List<String> propertyList = complexAnalysis.getPropertyList();
 
@@ -404,13 +359,10 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
 
         final Criteria lastCriteria = stack.pop();
 
-        final Map<String, String> conditionPropertyMap = new HashMap<String, String>(16);
-
         configuration.doModifyConditionHandle(vo, describe, new RdtConfiguration.ModifyConditionCallBack() {
             @Override
             public void execute(ModifyCondition condition, int position, String targetProperty, Object targetPropertyVal) {
                 String property = condition.getColumn().getProperty();
-                conditionValMap.put(property, targetPropertyVal);//存放此对象条件属性值的信息
 
                 String currentProperty;
                 if (lastIsOne) { //说明是以one结尾的对象
@@ -421,19 +373,13 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
                 lastCriteria.and(currentProperty).is(targetPropertyVal);
 
                 conditionPropertyMap.put(currentProperty, targetProperty);
-
             }
         });
 
-        if (relyColumn != null) {
-            //有依赖列时,此时为ModifyRelyDescribe
-            if (!(describe instanceof ModifyRelyDescribe)) {
-                throw new IllegalArgumentException("has rely column must be ModifyRelyDescribe instance");
-            }
-
+        if (describe instanceof ModifyRelyDescribe) {
+           final Column relyColumn = ((ModifyRelyDescribe) describe).getRelyColumn();
             String relyProperty = relyColumn.getProperty();
             if (lastIsOne) relyProperty = lastProperty + "." + relyProperty;
-
             modelTypeCriteriaProcessing((ModifyRelyDescribe)describe, lastCriteria, relyProperty);
         }
 
@@ -446,17 +392,121 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
             }
         }
 
-        updateManyDataConditionRelationshipLogHandle(criteria, conditionPropertyMap, conditionLogMap);
     }
 
-    protected void updateManyDataConditionRelationshipLogHandle(Criteria criteria, Map<String, String> conditionPropertyMap, Map<String, Object> conditionLogMap) {
-        if (isLoggerSupport()) {
-            //处理log条件map
-            conditionLogMap.putAll(getParsedCriteriaMark(criteria, conditionPropertyMap));
+    protected void updateManyData(final Criteria criteria, List<Object> dataList, final ClassModel complexClassModel, final ClassModel classModel, final ClassModel modifyClassModel, final ComplexAnalysis complexAnalysis,  final boolean saveAll, final ModifyDescribe describe, final ChangedVo vo) {
+        Class modifyClass = modifyClassModel.getCurrentClass();
+
+        if (dataList != null && !dataList.isEmpty()) {
+            List<Boolean> oneList = complexAnalysis.getOneList();
+            boolean lastIsOne = oneList.get(oneList.size() - 1);
+
+            for (Object data : dataList) {
+                final Update currentUpdate = new Update();  //使用update语句更新
+
+                final Criteria currentCriteria = new Criteria();
+
+                if (!saveAll) {
+                    String primaryId = modifyClassModel.getPrimaryId();
+                    //加入持久化类的id条件
+                    currentCriteria.and(primaryId).is(rdtResolver.getPropertyValue(data, primaryId));
+                }
+
+                String accessProperty = complexAnalysis.getPrefix();//访问的属性
+
+                if (!lastIsOne) accessProperty += ".*";  //用于访问many的子对象
+
+                DataSupport.dispose(data, accessProperty, new DataSupport.Callback() {
+                    @Override
+                    public void execute(String resultProperty, final Object result) {
+                        if (result != null) {
+                            boolean flag = configuration.isMatchedType(describe, result, complexClassModel);
+
+                            if (flag) {
+
+                                final List<Boolean> flagList = new ArrayList<Boolean>();
+                                flagList.add(true);
+                                //验证条件
+                                configuration.doModifyConditionHandle(vo, describe, new RdtConfiguration.ModifyConditionCallBack() {
+                                    @Override
+                                    public void execute(ModifyCondition condition, int position, String targetProperty, Object targetPropertyVal) {
+                                        String property = condition.getColumn().getProperty();
+                                        if (flagList.get(0)) {
+                                            //获取当前值
+                                            Object currentVal = rdtResolver.getPropertyValue(result, property);
+                                            if (!configuration.isMatchedValue(targetPropertyVal, currentVal)) {
+                                                flagList.set(0, false);
+                                            }
+                                        }
+                                    }
+                                });
+                                flag = flagList.get(0);
+                            }
+
+                            if (flag) {
+                                final String usePropertyPrefix = resultProperty.replace("[", "").replace("]", "") + "."; //去除[]
+
+                                //设置对应的属性值
+                                configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
+                                    @Override
+                                    public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
+                                        String property = modifyColumn.getColumn().getProperty();
+
+                                        if (saveAll) {
+                                            rdtResolver.setPropertyValue(result, property, targetPropertyVal);
+                                        } else {
+                                            currentUpdate.set(usePropertyPrefix + property, targetPropertyVal);
+                                        }
+                                    }
+                                });
+
+                                if (!saveAll) {
+                                    //加入result类的id标识,避免更新出错
+                                    String primaryId = complexClassModel.getPrimaryId();
+                                    if (StringUtils.isNotEmpty(primaryId)) {
+                                        currentCriteria.and(usePropertyPrefix + primaryId).is(rdtResolver.getPropertyValue(result, primaryId));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                if (!saveAll) {
+                    updateMulti(currentCriteria, currentUpdate, modifyClass);
+                }
+            }
+
+            if (saveAll) this.saveAll(dataList);
         }
     }
 
 
+    /**
+     * 处理log数据
+     */
+    protected void updateManyDataLogHandle(final ComplexAnalysis complexAnalysis, final Criteria criteria, final Map<String, String> conditionPropertyMap, final ModifyDescribe describe, final ChangedVo vo, final Exception exception, final RdtLog rdtLog) {
+        final String analysisPrefix = complexAnalysis.getPrefix() + ".";
+        if (isLoggerSupport() || exception != null) {
+            final Map<String, Object> updateLogMap = rdtLog.getUpdate();
+            rdtLog.setCondition(getParsedCriteriaMark(criteria, conditionPropertyMap));
+            configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
+                @Override
+                public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
+                    String property = modifyColumn.getColumn().getProperty();
+                    updateLogMap.put(getPropertyMark(analysisPrefix + property, targetProperty), targetPropertyVal);
+                }
+            });
+        }
+    }
+
+
+    /**
+     * 将criteria转换成所要显示的条件数据
+     * @param criteria
+     * @param conditionPropertyMap
+     * @return
+     */
     protected Map<String, Object> getParsedCriteriaMark(Criteria criteria, Map<String, String> conditionPropertyMap) {
         Map criteriaObjectMap = rdtResolver.deepClone(getCriteriaToMap(criteria));
 
@@ -473,7 +523,6 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
 
         return currentConditionLogMap;
     }
-
 
 
     protected void parseCriteriaMark(Map<String, Object> valMap, boolean isElemMatch, Map<String, String> conditionPropertyMap) {
@@ -501,83 +550,6 @@ public abstract class MongoRdtOperation extends AbstractMongoOperation {
         }
 
     }
-
-
-
-    protected void updateManyData(List<Object> dataList, final ClassModel complexClassModel, final ClassModel classModel, final ClassModel modifyClassModel, final ComplexAnalysis complexAnalysis, final Map<String, Object> conditionValMap, final Map<String, Object> updateValMap, final boolean saveAll, final ModifyDescribe describe) {
-        Class modifyClass = modifyClassModel.getCurrentClass();
-
-        if (dataList != null && !dataList.isEmpty()) {
-            List<Boolean> oneList = complexAnalysis.getOneList();
-            boolean lastIsOne = oneList.get(oneList.size() - 1);
-
-            for (Object data : dataList) {
-                final Update currentUpdate = new Update();  //使用update语句更新
-
-                final Criteria currentCriteria = new Criteria();
-
-                if (!saveAll) {
-                    String primaryId = modifyClassModel.getPrimaryId();
-                    //加入持久化类的id条件
-                    currentCriteria.and(primaryId).is(rdtResolver.getPropertyValue(data, primaryId));
-                }
-
-                String accessProperty = complexAnalysis.getPrefix();//访问的属性
-
-                if (!lastIsOne) accessProperty += ".*";  //用于访问many的子对象
-
-                DataSupport.dispose(data, accessProperty, new DataSupport.Callback() {
-                    @Override
-                    public void execute(String resultProperty, Object result) {
-                        if (result != null) {
-                            boolean flag = configuration.isMatchedType(describe, result, complexClassModel);
-
-                            if (flag) {
-                                for (String currentProperty : conditionValMap.keySet()) {
-                                    Object conditionVal = conditionValMap.get(currentProperty);
-                                    Object currentVal = rdtResolver.getPropertyValue(result, currentProperty);
-
-                                    if (!configuration.isMatchedValue(currentVal, conditionVal)) {
-                                        flag = false;
-                                        break;
-                                    }
-
-                                }
-                            }
-
-                            if (flag) {
-                                String usePropertyPrefix = resultProperty.replace("[", "").replace("]", "") + "."; //去除[]
-                                for (String currentProperty : updateValMap.keySet()) {
-                                    Object updateVal = updateValMap.get(currentProperty);
-                                    //设置对应的属性值
-                                    if (saveAll) {
-                                        rdtResolver.setPropertyValue(result, currentProperty, updateVal);
-                                    } else {
-                                        currentUpdate.set(usePropertyPrefix + currentProperty, updateVal);
-                                    }
-                                }
-
-                                if (!saveAll) {
-                                    //加入result类的id标识,避免更新出错
-                                    String primaryId = complexClassModel.getPrimaryId();
-                                    if (StringUtils.isNotEmpty(primaryId)) {
-                                        currentCriteria.and(usePropertyPrefix + primaryId).is(rdtResolver.getPropertyValue(result, primaryId));
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-
-                if (!saveAll) {
-                    updateMulti(currentCriteria, currentUpdate, modifyClass);
-                }
-            }
-
-            if (saveAll) this.saveAll(dataList);
-        }
-    }
-
 
 
     public static class ElemMatchWait {
