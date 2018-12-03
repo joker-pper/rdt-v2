@@ -165,11 +165,10 @@ public class Order {
 
 
     /**
-     * type: 1 已完成 2: 未付款
+     * type: 1 已完成 2: 未付款 (配置allowValues在save时会忽略对应值的验证,若未找到状态值,保存时将会报错)
      */
-    @RdtRely(@KeyTarget(target = Goods.class, value = "2"))
+    @RdtRely(value = @KeyTarget(target = Goods.class, value = "2"), allowValues = "1")
     private Integer type;
-
 
 }
 

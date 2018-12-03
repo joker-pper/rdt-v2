@@ -443,7 +443,7 @@ public class RdtFillBuilder {
                                             RdtRelyModel relyModel = describe.getRdtRelyModel();
                                             boolean isAllowed = relyModel.isValueAllowed(relyColumnValue);
                                             if (!isAllowed) {
-                                                logger.warn("rdt fill relationship handle check macth type error : " + dataClassModel.getClassName() + " has no rely property " + relyColumn.getProperty() + " value " + relyColumnValue + " to appoint type : [{}(group={}&index={})], and current type values is {}", entityClassModel.getClassName(), describe.getGroup(), describe.getIndex(), relyModel.getExplicitValueList());
+                                                logger.warn("rdt fill relationship handle check match type error : " + dataClassModel.getClassName() + " has no rely property " + relyColumn.getProperty() + " value " + relyColumnValue + " to appoint type : [{}(group={}&index={})], and current type values is {}", entityClassModel.getClassName(), describe.getGroup(), describe.getIndex(), relyModel.getExplicitValueList());
                                                 if (checkValue) {
                                                     //验证数据合法性
                                                     throw new FillNotAllowedValueException(null, dataClass, data, describe, relyColumn.getProperty(), dataClassModel.getClassName() + " has no rely property " + relyColumn.getProperty() + " value " + relyColumnValue + " to appoint type : " + entityClassModel.getClassName());

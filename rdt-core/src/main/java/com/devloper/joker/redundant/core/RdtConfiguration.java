@@ -250,7 +250,7 @@ public class RdtConfiguration {
         return getDeepCloneModifyRelyDescribe(temp);
     }
 
-    //将未被序列话的field进行处理
+    //将未被序列化的field进行处理
     private void handleModifyColumnAndConditionDeepClone(List<ModifyColumn> clonedColumnList, List<ModifyColumn> columnList, List<ModifyCondition> clonedConditionList, List<ModifyCondition> conditionList) {
         for (int i = 0; i < clonedColumnList.size(); i++) {
             ModifyColumn column = columnList.get(i);

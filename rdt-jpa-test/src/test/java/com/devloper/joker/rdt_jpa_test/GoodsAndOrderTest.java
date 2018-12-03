@@ -90,6 +90,7 @@ public class GoodsAndOrderTest extends ApplicationTests {
         //show填充当前数据中未持久化的goodsName字段
         rdtOperation.fillForShow(Arrays.asList(order));
         logger.info("result: {}", JsonUtils.toJson(order));
+
     }
 
 
