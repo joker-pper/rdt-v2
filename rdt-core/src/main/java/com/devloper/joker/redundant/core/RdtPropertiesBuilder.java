@@ -126,9 +126,7 @@ public class RdtPropertiesBuilder {
         for (Class targetClass : targetClassModifyDescribeMap.keySet()) {
             List<ModifyDescribe> describeList = targetClassModifyDescribeMap.get(targetClass);
             for (ModifyDescribe describe : describeList) {
-                if (describe.getConditionList().isEmpty() && !describe.getColumnList().isEmpty()) {
-                    logger.warn("{} target about [{} index ({})] has no condition, please make sure no problem.", classModel.getClassName(), targetClass.getName(), describe.getIndex());
-                }
+                rdtResolver.modifyDescribeLogOutput(describe, properties.getShowDescribe());
             }
         }
         Map<Class, Map<Column, Map<Integer, List<ModifyRelyDescribe>>>> targetClassModifyRelyDescribeMap = classModel.getTargetClassModifyRelyDescribeMap();
@@ -143,9 +141,7 @@ public class RdtPropertiesBuilder {
                 for (Integer group : groupDataMap.keySet()) {
                     List<ModifyRelyDescribe> describeList = groupDataMap.get(group);
                     for (ModifyRelyDescribe describe : describeList) {
-                        if (describe.getConditionList().isEmpty() && !describe.getColumnList().isEmpty()) {
-                            logger.warn("{} rely column {}({}) group ({}) target about [{} index ({})] has no condition, please make sure no problem.", classModel.getClassName(), relyColumn.getProperty(), relyColumn.getPropertyClass().getName(), group, targetClass.getName(), describe.getIndex());
-                        }
+                        rdtResolver.modifyRelyDescribeLogOutput(describe, properties.getShowDescribe());
                     }
                 }
             }
@@ -696,6 +692,7 @@ public class RdtPropertiesBuilder {
         Column column = propertyColumnMap.get(propertyName);
         if (column == null) {
             column = new Column();
+            column.setEntityClass(classModel.getCurrentClass());
             column.setProperty(propertyName);
             column.setField(field);
             classModel.getPropertyFieldMap().put(propertyName, field);
@@ -814,6 +811,8 @@ public class RdtPropertiesBuilder {
 
         if (modifyDescribe == null) {
             modifyDescribe = new ModifyDescribe();
+            modifyDescribe.setEntityClass(classModel.getCurrentClass());
+            modifyDescribe.setTargetClass(targetClass);
             modifyDescribe.setIndex(index);
             modifyDescribeList.add(position, modifyDescribe);
         }
@@ -875,6 +874,8 @@ public class RdtPropertiesBuilder {
 
         if (modifyDescribe == null) {
             modifyDescribe = new ModifyRelyDescribe();
+            modifyDescribe.setEntityClass(classModel.getCurrentClass());
+            modifyDescribe.setTargetClass(targetClass);
             modifyDescribe.setRelyColumn(relyColumn);
             modifyDescribe.setIndex(index);
             modifyDescribe.setGroup(group);
@@ -911,19 +912,23 @@ public class RdtPropertiesBuilder {
 
         if (!column.getIsTransient()) {
             //设置target class被使用的字段
-            ClassModel targetModel = getClassModel(PojoUtils.getFieldLocalityClass(targetColumn.getField()));
+            ClassModel targetModel = getClassModel(targetColumn.getEntityClass());
             targetModel.addUsedProperty(targetColumn.getProperty());
+
         }
         return modifyColumn;
     }
 
     private ModifyCondition getModifyCondition(Column column, Column targetColumn) {
         ModifyCondition modifyCondition = new ModifyCondition();
+        if (column.getIsTransient()) {
+            //warn
+            logger.warn(column.getEntityClass().getName() + " property " + column.getProperty() + " as condition column is transient, please make sure no problem.");
+        }
         modifyCondition.setColumn(column);
         modifyCondition.setTargetColumn(targetColumn);
         return modifyCondition;
     }
-
 
     /**
      * 处理关系,将当前class设置为target class的处理类的类型
@@ -989,11 +994,11 @@ public class RdtPropertiesBuilder {
      */
     private void columnCompareVerification(Column column, Column targetColumn, ClassModel classModel, ClassModel targetClassModel, boolean condition) {
 
-        rdtResolver.columnCompareVerification(column, targetColumn, classModel, targetClassModel, condition, properties.getIsTargetColumnNotTransient());
+        rdtResolver.columnCompareVerification(column, targetColumn, classModel, targetClassModel, condition, properties.getIsTargetColumnNotTransient(), properties.getIsModifyColumnMustSameType());
     }
 
     /**
-     * 加载不在packge的class
+     * 加载注解上的target class
      * @param currentClass
      */
     private void loadClassWithAnnotation(Class currentClass) {

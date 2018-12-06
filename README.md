@@ -41,8 +41,14 @@ rdt-jpa及rdt-spring-mongodb为已提供的数据层操作实现,可作为具体
         RdtProperties properties = new RdtProperties();
         //读取class所在的包, 支持,分割
         properties.setBasePackage(basePackage);
+        //设置允许modify column类型不一致
+        properties.setIsModifyColumnMustSameType(false);
         //是否通过saveAll保存
         properties.setComplexBySaveAll(false);
+        //update出错时抛出异常
+        properties.setIsUpdateThrowException(true); 
+        //是否显示describe信息(debug级别默认显示)
+        properties.setShowDescribe(true); 
         return properties;
     }
 	//框架依赖于该对象的功能解析,可覆盖相应实现方法
@@ -163,9 +169,8 @@ public class Order {
     //@RdtFieldRely(property = "type", fillShow = RdtFillType.ENABLE)
     private Integer price;
 
-
-    /**
-     * type: 1 已完成 2: 未付款 (配置allowValues在save时会忽略对应值的验证,若未找到状态值,保存时将会报错)
+   /**
+     * type: 1 已完成 2: 未付款 (配置allowValues在save时会忽略对应值的验证,若未找到状态值,在fillSave时将会报错)
      */
     @RdtRely(value = @KeyTarget(target = Goods.class, value = "2"), allowValues = "1")
     private Integer type;

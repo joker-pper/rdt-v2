@@ -43,20 +43,27 @@ public class RdtProperties {
     private String defaultIdKey = "id";
 
     /**
-     * 保存操作出错时是否抛出异常
+     * 更新操作出错时是否抛出异常
      */
-    private Boolean isUpdateThrowException = false;
+    private Boolean isUpdateThrowException = true;
 
     /**
-     * target column 是否不能为transient
+     * target column 是否不能为transient (亦如此)
      */
     private Boolean isTargetColumnNotTransient = true;
 
     /**
-     *
+     * modifyColumn的类型是否必须一致(不一致时需确保能够转换值)
      */
-    private Boolean isLogDetail = true;
+    private Boolean isModifyColumnMustSameType = true;
 
+
+    private Boolean isUpdateLogDetail = true;
+
+    /**
+     * 是否显示ModifyDescribe/ModifyRelyDescribe关系
+     */
+    private Boolean showDescribe = false;
 
     /**
      * 当前类的数据
@@ -163,12 +170,28 @@ public class RdtProperties {
         this.isTargetColumnNotTransient = isTargetColumnNotTransient;
     }
 
-    public Boolean getIsLogDetail() {
-        return isLogDetail;
+    public Boolean getIsModifyColumnMustSameType() {
+        return isModifyColumnMustSameType;
     }
 
-    public void setIsLogDetail(Boolean isLogDetail) {
-        this.isLogDetail = isLogDetail;
+    public void setIsModifyColumnMustSameType(Boolean isModifyColumnMustSameType) {
+        this.isModifyColumnMustSameType = isModifyColumnMustSameType;
+    }
+
+    public Boolean getIsUpdateLogDetail() {
+        return isUpdateLogDetail;
+    }
+
+    public void setIsUpdateLogDetail(Boolean isUpdateLogDetail) {
+        this.isUpdateLogDetail = isUpdateLogDetail;
+    }
+
+    public Boolean getShowDescribe() {
+        return showDescribe;
+    }
+
+    public void setShowDescribe(Boolean showDescribe) {
+        this.showDescribe = showDescribe;
     }
 
     public Map<Class, ClassModel> getClassModelMap() {

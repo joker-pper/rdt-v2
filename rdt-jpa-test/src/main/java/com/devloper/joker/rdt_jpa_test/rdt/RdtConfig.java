@@ -6,6 +6,8 @@ import com.devloper.joker.redundant.core.RdtConfigurationBuilder;
 import com.devloper.joker.redundant.core.RdtProperties;
 import com.devloper.joker.redundant.core.RdtResolver;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.annotation.Transient;
@@ -15,9 +17,6 @@ import java.lang.reflect.Field;
 
 @Configuration
 public class RdtConfig {
-
-    @Value("${rdt.domain.basePackage}")
-    private String basePackage;
 
     @Bean
     public RdtResolver rdtResolver() {
@@ -66,11 +65,9 @@ public class RdtConfig {
     }
 
     @Bean
+    @ConfigurationProperties(prefix = "rdt-config")
     public RdtProperties rdtProperties() {
         RdtProperties properties = new RdtProperties();
-        properties.setBasePackage(basePackage);
-        properties.setDeepCloneChangedModify(false);
-        properties.setIsUpdateThrowException(true);
         return properties;
     }
 

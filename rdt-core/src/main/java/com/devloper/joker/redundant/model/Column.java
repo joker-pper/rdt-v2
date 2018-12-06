@@ -5,7 +5,7 @@ import java.lang.reflect.Field;
 
 //列所相关属性
 public class Column implements Serializable {
-
+    private Class entityClass;
     private String alias; //对应的别名
     private Class propertyClass;  //实体属性类型
     private String property;//实体属性名称
@@ -13,6 +13,14 @@ public class Column implements Serializable {
     private transient Field field;
     private Boolean isTransient;
     private Boolean isPrimaryId;
+
+    public Class getEntityClass() {
+        return entityClass;
+    }
+
+    public void setEntityClass(Class entityClass) {
+        this.entityClass = entityClass;
+    }
 
     public String getAlias() {
         return alias;

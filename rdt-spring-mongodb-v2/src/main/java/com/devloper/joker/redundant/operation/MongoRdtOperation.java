@@ -517,7 +517,7 @@ public class MongoRdtOperation extends AbstractMongoOperation {
 
         Map<String, Object> currentConditionLogMap = new LinkedHashMap<String, Object>(criteriaObjectMap);
 
-        if (getIsLogDetail()) {
+        if (getIsUpdateLogDetail()) {
             parseCriteriaMark(currentConditionLogMap, false, conditionPropertyMap);
         }
 

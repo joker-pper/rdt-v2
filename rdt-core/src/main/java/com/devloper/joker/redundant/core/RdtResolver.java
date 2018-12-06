@@ -3,8 +3,7 @@ package com.devloper.joker.redundant.core;
 import com.devloper.joker.redundant.annotation.RdtId;
 import com.devloper.joker.redundant.annotation.base.RdtBaseEntity;
 import com.devloper.joker.redundant.annotation.base.RdtBaseField;
-import com.devloper.joker.redundant.model.ClassModel;
-import com.devloper.joker.redundant.model.Column;
+import com.devloper.joker.redundant.model.*;
 import com.devloper.joker.redundant.support.Prototype;
 import com.devloper.joker.redundant.utils.*;
 import com.devloper.joker.redundant.utils.StringUtils;
@@ -280,9 +279,9 @@ public abstract class RdtResolver {
      * @param condition 是否为条件field
      * @param isTargetColumnNotTransient
      */
-    public void columnCompareVerification(Column column, Column targetColumn, ClassModel classModel, ClassModel targetClassModel, boolean condition, boolean isTargetColumnNotTransient) {
-        Class currentEntityClass = PojoUtils.getFieldLocalityClass(classModel.getPropertyFieldMap().get(column.getProperty()));
-        Class targetEntityClass = PojoUtils.getFieldLocalityClass(targetClassModel.getPropertyFieldMap().get(targetColumn.getProperty()));
+    public void columnCompareVerification(Column column, Column targetColumn, ClassModel classModel, ClassModel targetClassModel, boolean condition, boolean isTargetColumnNotTransient, boolean modifyColumnMustSameType) {
+        Class currentEntityClass = column.getEntityClass();
+        Class targetEntityClass = targetColumn.getEntityClass();
             /*String hint = targetEntityClass.getName() + " property " + targetColumn.getProperty()
                     + " type is " + targetColumn.getPropertyClass().getName() + ", " + currentEntityClass.getName() + " property " + column.getProperty() + " type is " +
                     column.getPropertyClass().getName();*/
@@ -297,14 +296,16 @@ public abstract class RdtResolver {
 
         if (!column.getPropertyClass().equals(targetColumn.getPropertyClass())) {  //类型应一致
             if (condition) {
-                throw new IllegalArgumentException(hint + " has error, cause by :  the condition property type must consistent.");  //条件的类型必须一致
+                throw new IllegalArgumentException(hint + " has error, cause by : the condition property type must consistent.");  //条件的类型必须一致
             } else {
+                if (modifyColumnMustSameType) {
+                    throw new IllegalArgumentException(hint + " has error, cause by : the property type must consistent.(RdtProperties property isModifyColumnMustSameType can setting allowed not eq type, but you should make sure can cast)");
+                }
                 logger.warn(hint + ", please make sure can cast.");
             }
-        } else {
-            logger.debug(hint);
         }
     }
+
 
 
     /**
@@ -438,4 +439,169 @@ public abstract class RdtResolver {
      * @return
      */
     public abstract String toJson(Object o);
+
+
+
+
+    public final String getRedText(String text) {
+        if (text == null) {
+            text = "";
+        }
+        String result = "\033[1;31m" + text +  "\033[0m";
+        return result;
+    }
+
+    private final void appendLogOutput(StringBuilder sb, String connector, List<Object> dataList, Collection<String> keys, List<Object> values) {
+        if (!keys.isEmpty()) {
+            int index = 0;
+            for (String key : keys) {
+                sb.append(connector);
+                if (key != null) {
+                    sb.append(key);
+                    sb.append(": ");
+                }
+                sb.append("{}");
+
+                dataList.add(values.get(index ++) );
+            }
+
+        }
+    }
+
+    private final boolean appendModifyConditionsAndModifyColumnsLogOutput(StringBuilder sb, List<Object> dataList, ModifyDescribe describe) {
+        boolean warn = false;
+        if (describe != null) {
+            List<ModifyCondition> conditionList = describe.getConditionList();
+            if (conditionList.isEmpty()) {
+                warn = true;
+                sb.append("\n\t\t" + getRedText("【has no condition, please make sure no problem.】"));
+            } else {
+                for (ModifyCondition modifyCondition : conditionList) {
+                    sb.append("\n\t\tModifyCondition:");
+
+                    Column column = modifyCondition.getColumn();
+                    Column targetColumn = modifyCondition.getTargetColumn();
+                    String mark = column.getProperty() + (column.getIsTransient() ? "[isTransient=" + column.getIsTransient() + "]" : "") +"(" + column.getPropertyClass().getName() +
+                            ") ==> "+ targetColumn.getProperty()
+                            + "(" + targetColumn.getPropertyClass().getName()   + ")";
+
+                    appendLogOutput(sb, "\n\t\t\t",
+                            dataList,
+                            Arrays.asList((String) null),
+                            Arrays.asList(new Object[]{mark})
+                    );
+
+                }
+            }
+
+            sb.append("\n\tModifyColumns:");
+            List<ModifyColumn> columnList = describe.getColumnList();
+
+            if (!columnList.isEmpty()) {
+                for (ModifyColumn modifyColumn : columnList) {
+                    sb.append("\n\t\tModifyColumn:");
+
+                    Column column = modifyColumn.getColumn();
+                    Column targetColumn = modifyColumn.getTargetColumn();
+                    String mark = column.getProperty() + (column.getIsTransient() ? "[isTransient=" + column.getIsTransient() + "]" : "") +"(" + column.getPropertyClass().getName() +
+                            ") ==> "+ targetColumn.getProperty()
+                            + "(" + targetColumn.getPropertyClass().getName()   + ")";
+
+                    if (!column.getPropertyClass().equals(targetColumn.getPropertyClass())) {
+                        warn = true;
+                        mark = mark + getRedText("【please make sure can cast.】");
+                    }
+
+                    appendLogOutput(sb, "\n\t\t\t",
+                            dataList,
+                            Arrays.asList(null, "fillShowType", "fillSaveType"),
+                            Arrays.asList(new Object[]{mark, modifyColumn.getFillShowType(), modifyColumn.getFillSaveType()})
+                    );
+                }
+            }
+        }
+        return warn;
+    }
+
+    public final void modifyDescribeLogOutput(ModifyDescribe relyDescribe, boolean show) {
+        if (relyDescribe != null) {
+            List<Object> dataList = new ArrayList<Object>();
+            StringBuilder sb = new StringBuilder();
+            sb.append("{}");
+            sb.append("\nModifyDescribe:");
+            sb.append("\n\ttarget class: {}");
+            sb.append("\n\tindex: {}");
+            sb.append("\n\tModifyConditions:");
+
+            dataList.add(relyDescribe.getEntityClass().getName());
+            dataList.add(relyDescribe.getTargetClass().getName());
+            dataList.add(relyDescribe.getIndex());
+
+            boolean hasWarn = appendModifyConditionsAndModifyColumnsLogOutput(sb, dataList, relyDescribe);
+            showLogOutput(sb.toString(), hasWarn, show, dataList.toArray());
+
+        }
+
+    }
+
+    public final void modifyRelyDescribeLogOutput(ModifyRelyDescribe relyDescribe, boolean show) {
+        if (relyDescribe != null) {
+            List<Object> dataList = new ArrayList<Object>();
+            StringBuilder sb = new StringBuilder();
+            sb.append("{}");
+            sb.append("\nModifyRelyDescribe:");
+            sb.append("\n\ttarget class: {}");
+            sb.append("\n\trely column: {}");
+            sb.append("\n\tgroup: {}");
+            sb.append("\n\tindex: {}");
+            sb.append("\n\tvalType: {}");
+            sb.append("\n\tvalList: {}");
+            sb.append("\n\tunknownNotExistValList: {}");
+            sb.append("\n\tModifyConditions:");
+
+            dataList.add(relyDescribe.getEntityClass().getName());
+            dataList.add(relyDescribe.getTargetClass().getName());
+            dataList.add(relyDescribe.getRelyColumn().getProperty());
+            dataList.add(relyDescribe.getGroup());
+            dataList.add(relyDescribe.getIndex());
+            dataList.add(relyDescribe.getValType().getName());
+            dataList.add(relyDescribe.getValList());
+            dataList.add(relyDescribe.getUnknownNotExistValList());
+
+            boolean hasWarn = appendModifyConditionsAndModifyColumnsLogOutput(sb, dataList, relyDescribe);
+
+            showLogOutput(sb.toString(), hasWarn, show, dataList.toArray());
+        }
+
+    }
+
+    /**
+     * 当处于debug及warn级别时均显示,show控制info级别是否显示
+     * @param text
+     * @param hasWarn
+     * @param show
+     * @param data
+     */
+    public void showLogOutput(String text, boolean hasWarn, boolean show, Object... data) {
+        if (hasWarn) {
+            if (logger.isWarnEnabled()) {
+                logger.warn(text, data);
+            } else {
+                System.err.println(String.format(text.replace("{}", "%s"), data));
+            }
+        } else {
+            if (logger.isDebugEnabled()) {
+                logger.debug(text, data);
+            } else {
+                if (show) {
+                    if (logger.isInfoEnabled()) {
+                        logger.info(text, data);
+                    } else {
+                        System.out.println(String.format(text.replace("{}", "%s"), data));
+                    }
+                }
+            }
+
+        }
+    }
 }

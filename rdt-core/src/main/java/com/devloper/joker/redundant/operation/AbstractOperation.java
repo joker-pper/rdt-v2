@@ -368,7 +368,7 @@ public abstract class AbstractOperation implements RdtOperation {
     }
 
     protected String getPropertyMark(String property, String targetProperty) {
-        if (getIsLogDetail() && targetProperty != null) {
+        if (getIsUpdateLogDetail() && targetProperty != null) {
             return property + symbol + targetProperty;
         }
         return property;
@@ -848,8 +848,8 @@ public abstract class AbstractOperation implements RdtOperation {
         this.symbol = symbol;
     }
 
-    public Boolean getIsLogDetail() {
-        return properties.getIsLogDetail();
+    public Boolean getIsUpdateLogDetail() {
+        return properties.getIsUpdateLogDetail();
     }
 
 }

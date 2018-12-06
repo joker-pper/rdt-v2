@@ -13,14 +13,16 @@ spring:
         dialect: org.hibernate.dialect.MySQL5InnoDBDialect
 
   datasource:
-    url: jdbc:mysql://localhost:3306/rdt_v2_jpa?serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8&useSSL=false
+    url: jdbc:mysql://192.168.1.102:3306/rdt_v2_jpa?serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8&useSSL=false
     username: root
     password: 123456
     driverClassName: com.mysql.jdbc.Driver
 
-rdt:
-  domain:
-    basePackage: com.devloper.joker.*.domain,com.devloper.joker.*.vo
+rdt-config:
+  base-package: com.devloper.joker.*.domain,com.devloper.joker.*.vo
+  is-modify-column-must-same-type: false #设置允许modify column类型不一致
+  is-update-throw-exception: true
+  show-describe: false #是否显示describe信息(debug级别默认显示)
 
 logging:
   level:
@@ -32,3 +34,4 @@ server:
   tomcat.uri-encoding: UTF-8
   port: 8281
   connectionTimeout: 8000
+
