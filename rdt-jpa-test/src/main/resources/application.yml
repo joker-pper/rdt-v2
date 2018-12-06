@@ -13,7 +13,7 @@ spring:
         dialect: org.hibernate.dialect.MySQL5InnoDBDialect
 
   datasource:
-    url: jdbc:mysql://192.168.1.102:3306/rdt_v2_jpa?serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8&useSSL=false
+    url: jdbc:mysql://localhost:3306/rdt_v2_jpa?serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8&useSSL=false
     username: root
     password: 123456
     driverClassName: com.mysql.jdbc.Driver
