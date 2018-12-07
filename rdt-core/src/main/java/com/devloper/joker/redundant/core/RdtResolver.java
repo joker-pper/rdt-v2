@@ -474,6 +474,20 @@ public abstract class RdtResolver {
      */
     public abstract String toJson(Object o);
 
+    public String getConditionMark(Collection<String> keys, List<Object> values) {
+        StringBuilder sb = new StringBuilder("[");
+        if (keys != null && values != null) {
+            int index = 0;
+            for (String key : keys) {
+                sb.append(key + "=" + values.get(index ++) + "&");
+            }
+            int length = sb.length();
+            sb.delete(length - 1, length);
+        }
+
+        sb.append("]");
+        return sb.toString();
+    }
 
     /**
      * 返回new list

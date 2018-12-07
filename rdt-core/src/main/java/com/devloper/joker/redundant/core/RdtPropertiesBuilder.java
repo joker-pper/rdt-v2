@@ -332,7 +332,7 @@ public class RdtPropertiesBuilder {
 
         String hintPrefix = classModel.getClassName() + " property " + property + " field ";
         if (isConditionRely) hintPrefix += "condition ";
-        hintPrefix += "rely config :" + " group index " + group + " has error, caused by :";
+        hintPrefix += "rely config " + rdtResolver.getConditionMark(Arrays.asList("column", "group", "index"), Arrays.asList(new Object[] {relyProperty, group, relyIndex})) + " has error, caused by :";
 
         //获取rely column第group组所对应的rdtRelyModel
         Map<Integer, RdtRelyModel> relyDataMap = classModel.getPropertyRelyDataMap().get(relyColumn.getProperty());
@@ -380,9 +380,7 @@ public class RdtPropertiesBuilder {
         //初始化各个class所使用的column对象
         Map<Class, Column> classTargetColumnMap = rdtRelyTargetColumnModel.getClassTargetColumnMap();
         int targetEqPropertysLength = targetPropertys.length;
-        if (targetEqPropertysLength > 1 && keyTargetClassList.size() != targetEqPropertysLength) {
-            throw new IllegalArgumentException(hintPrefix + " should setting propertys according the corresponding rely data config target class order and size is eq");
-        }
+        int classSize = keyTargetClassList.size();
 
         List<String> usePropertyList = new ArrayList<String>();
         if (targetEqPropertysLength == 0) {
@@ -392,6 +390,9 @@ public class RdtPropertiesBuilder {
             usePropertyList.addAll(rdtResolver.parseAnnotationValues(targetPropertys, String.class));
         }
 
+        if (usePropertyList.size() > 1 && classSize != usePropertyList.size()) {
+            throw new IllegalArgumentException(hintPrefix + " should setting propertys according the corresponding rely data config target class order and expect size is " + classSize);
+        }
 
         String alias = null;
         boolean oneProperty = usePropertyList.size() == 1;
@@ -403,7 +404,6 @@ public class RdtPropertiesBuilder {
 
         int expectShowSize = -1;
         int expectSaveSize = -1;
-        int classSize = keyTargetClassList.size();
         if (!isConditionRely) {
             expectShowSize = 1;
             expectSaveSize = 1;
