@@ -64,7 +64,7 @@ public class User {
     @RdtFieldRely(property = "type", targetPropertys = {"username", "name"})
     private String createByName;
 
-    @RdtRely(value = {@KeyTarget(target = User.class, value = "0"), @KeyTarget(target = Role.class, value = "ROLE")}, nullType = User.class)
+    @RdtRely(value = {@KeyTarget(target = User.class, value = {"0", "null"}), @KeyTarget(target = Role.class, value = "ROLE")})
     @Enumerated(EnumType.STRING)
     private AccountType accountType;
 

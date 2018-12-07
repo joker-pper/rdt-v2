@@ -29,7 +29,7 @@ public class BuilderTest {
         properties = new RdtProperties();
 
         properties.setBasePackage("com.devloper.joker.redundant.domain");
-
+        properties.setShowDescribe(true);
         rdtResolver = new RdtResolver() {
             @Override
             protected Class<?>[] customBaseEntityAnnotations() {

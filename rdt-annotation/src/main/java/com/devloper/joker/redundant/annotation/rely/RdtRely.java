@@ -14,8 +14,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD})
 public @interface RdtRely {
    KeyTarget[] value();//必须指定,其他注解依赖于class顺序作为相对应持久化类的字段值 e.g {@KeyTarget(value = {"用户"}, target = User.class), @KeyTarget(value = "文章", target = Article.class)}
-   Class nullType() default Void.class;//为空时使用的class
-   Class unknowType() default Void.class;//未找到对应值时使用的class
+   Class unknownType() default Void.class;//未找到对应值时使用的class
    int group() default 0;//该属性的第几组依赖配置描述,该属性可能被不同的字段所依赖,其值可能代表不同的含义,即可能存在多组
 
    /**
@@ -26,12 +25,12 @@ public @interface RdtRely {
    Class valType() default Void.class;
 
    /**
-    * val值是否进行唯一限定,默认为值仅对应一个target class
+    * val值是否进行唯一限定,默认为每个类型值仅对应一个target class
     */
    boolean unique() default true;
 
     /**
-     * 配置除value配置外允许的值列表
+     * 除value配置外允许的值列表,仅用于通过填充时的验证(既不影响fill,又不影响update,等同于略过状态值)
      * @return
      */
    String[] allowValues() default {};

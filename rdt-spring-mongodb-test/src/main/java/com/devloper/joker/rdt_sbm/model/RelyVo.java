@@ -21,9 +21,9 @@ public class RelyVo {
     private String value;
 
     @RdtRelys({
-            @RdtRely(value = {@KeyTarget(value = {"0", "1"}, target = User.class)
-            }, valType = Integer.class, nullType = User.class),
-            @RdtRely(value = @KeyTarget(value = {"66", "67"}, target = User.class), valType = String.class, nullType = User.class, group = 66)
+            @RdtRely(value = {@KeyTarget(value = {"0", "1", "null"}, target = User.class)
+            }, valType = Integer.class),
+            @RdtRely(value = @KeyTarget(value = {"66", "67", "null"}, target = User.class), valType = String.class, group = 66)
     }
     )
     private Object type;

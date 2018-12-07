@@ -61,7 +61,7 @@ public class GoodsAndOrderTest extends ApplicationTests {
         Goods goods = goodsService.getOne("1");
         Goods before = JSON.parseObject(JsonUtils.toJson(goods), Goods.class);
         goods.setName("新商品1");
-        goods.setPrice(666666);
+        goods.setPrice(6666);
         goodsService.save(goods);
         //更新相关数据,将会只更新order表中price相关的数据
         rdtOperation.updateMulti(goods, before);

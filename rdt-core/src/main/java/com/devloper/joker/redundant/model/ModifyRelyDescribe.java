@@ -27,7 +27,7 @@ public class ModifyRelyDescribe extends ModifyDescribe {
     /**
      * 依赖字段未处于这些值时为target class(size > 1)
      */
-    private List<Object> unknownNotExistValList = new ArrayList<Object>();
+    private List<Object> notInValList = new ArrayList<Object>();
 
     public int getGroup() {
         return group;
@@ -69,12 +69,12 @@ public class ModifyRelyDescribe extends ModifyDescribe {
         this.valList = valList;
     }
 
-    public List<Object> getUnknownNotExistValList() {
-        return unknownNotExistValList;
+    public List<Object> getNotInValList() {
+        return notInValList;
     }
 
-    public void setUnknownNotExistValList(List<Object> unknownNotExistValList) {
-        this.unknownNotExistValList = unknownNotExistValList;
+    public void setNotInValList(List<Object> notInValList) {
+        this.notInValList = notInValList;
     }
 
 }

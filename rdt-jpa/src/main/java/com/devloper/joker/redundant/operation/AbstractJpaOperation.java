@@ -119,24 +119,28 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
 
 
 
-    protected Predicate modelTypeCriteriaProcessing(ModifyRelyDescribe describe, String relyProperty, CriteriaPredicateBuilder builder, Root root) {
-        List<Object> unknownNotExistValList = describe.getUnknownNotExistValList();
-        List<Object> valList = describe.getValList();
-        Path relyPropertyPath = root.get(relyProperty);
-        Predicate predicate = null;
-        if (!valList.isEmpty()) {
-            if (unknownNotExistValList.isEmpty()) {
-                predicate = builder.criteriaIn(relyPropertyPath, valList);
-            } else {
-                //满足在valList 或 非unknownNotExistValList时
-                predicate = builder.or(builder.criteriaIn(relyPropertyPath, valList), builder.criteriaNotIn(relyPropertyPath, unknownNotExistValList));
+    protected Predicate modelTypeCriteriaProcessing(ModifyRelyDescribe describe, final String relyProperty, final CriteriaPredicateBuilder builder, Root root) {
+        final Path relyPropertyPath = root.get(relyProperty);
+        final Predicate[] predicates = new Predicate[]{null};
+
+        configuration.matchedTypeHandle(describe, new RdtConfiguration.MatchedTypeCallback() {
+            @Override
+            public void in(List<Object> inValList) {
+                predicates[0] = builder.criteriaIn(relyPropertyPath, inValList);
             }
-        } else {
-            if (!unknownNotExistValList.isEmpty()) {
-                predicate = builder.criteriaNotIn(relyPropertyPath, unknownNotExistValList);
+
+            @Override
+            public void or(List<Object> inValList, List<Object> notInValList) {
+                predicates[0] = builder.or(builder.criteriaIn(relyPropertyPath, inValList), builder.criteriaNotIn(relyPropertyPath, notInValList));
             }
-        }
-        return predicate;
+
+            @Override
+            public void notIn(List<Object> notInValList) {
+                predicates[0] = builder.criteriaNotIn(relyPropertyPath, notInValList);
+
+            }
+        }, true);
+        return predicates[0];
     }
 
     @Override

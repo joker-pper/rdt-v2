@@ -112,21 +112,23 @@ public class MongoRdtOperation extends AbstractMongoOperation {
      * @param criteria
      * @param relyProperty
      */
-    protected void modelTypeCriteriaProcessing(ModifyRelyDescribe describe, Criteria criteria, String relyProperty) {
-        List<Object> unknownNotExistValList = describe.getUnknownNotExistValList();
-        List<Object> valList = describe.getValList();
+    protected void modelTypeCriteriaProcessing(ModifyRelyDescribe describe, final Criteria criteria, final String relyProperty) {
+        configuration.matchedTypeHandle(describe, new RdtConfiguration.MatchedTypeCallback() {
+            @Override
+            public void in(List<Object> inValList) {
+                criteriaIn(criteria.and(relyProperty), inValList);
+            }
 
-        if (!valList.isEmpty()) {
-            if (unknownNotExistValList.isEmpty()) {
-                criteriaIn(criteria.and(relyProperty), valList);
-            } else { //满足在valList 或 非unknownNotExistValList时
-                criteria.orOperator(criteriaIn(Criteria.where(relyProperty), valList), criteriaNotIn(Criteria.where(relyProperty), unknownNotExistValList));
+            @Override
+            public void or(List<Object> inValList, List<Object> notInValList) {
+                criteria.orOperator(criteriaIn(Criteria.where(relyProperty), inValList), criteriaNotIn(Criteria.where(relyProperty), notInValList));
             }
-        } else {
-            if (!unknownNotExistValList.isEmpty()) {
-                criteriaNotIn(criteria.and(relyProperty), unknownNotExistValList);
+
+            @Override
+            public void notIn(List<Object> notInValList) {
+                criteriaNotIn(criteria.and(relyProperty), notInValList);
             }
-        }
+        }, true);
     }
 
     @Override

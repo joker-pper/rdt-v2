@@ -31,7 +31,7 @@ class所在的包支持多组并以,分割,所要维持关系的类必须可被�
 rdt-jpa及rdt-spring-mongodb为已提供的数据层操作实现,可作为具体使用框架实现的参考
 ````
 
-> 注解介绍: [详情](https://github.com/joker-pper/rdt-v2/wiki/Rdt%E6%B3%A8%E8%A7%A3%E4%BB%8B%E7%BB%8D)
+> 注解介绍: [详情](https://github.com/joker-pper/rdt-v2/tree/master/rdt-annotation)
 
 
 >使用配置:

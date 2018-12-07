@@ -25,7 +25,7 @@ public class RdtRelyModel implements Serializable {
     private List<Object> unknownNotExistValues = new ArrayList<Object>();
 
     /**
-     * 除value配置外允许的值列表,用于通过填充验证
+     * 除value配置外允许的值列表,仅用于通过填充时的验证(既不影响fill,又不影响update,等同于略过状态值)
      */
     private List<Object> allowValues = new ArrayList<Object>();
 

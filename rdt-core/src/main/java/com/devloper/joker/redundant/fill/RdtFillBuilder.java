@@ -433,7 +433,7 @@ public class RdtFillBuilder {
                                     } else {
                                         //获取当前依赖字段的值
                                         Object relyColumnValue = rdtResolver.getPropertyValue(data, relyColumn.getProperty());
-                                        if (configuration.isMatchedType(describe, relyColumnValue)) {
+                                        if (configuration.isMatchedType(describe, relyColumnValue, false)) {
                                             if (conditionSize == 1) {
                                                 initOneKeyModelData(fillRSModel, entityClassModel, dataClassModel, describe, data, allowedNullValue);
                                             } else {

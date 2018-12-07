@@ -35,7 +35,7 @@ public class Article {
     private String content;  //内容
 
     @RdtRelys({
-            @RdtRely(nullType = User.class, unknowType = User.class, value = {@KeyTarget(target = User.class, value = {"1", "2", "3"}),
+            @RdtRely(unknownType = User.class, value = {@KeyTarget(target = User.class, value = {"1", "2", "3", "null"}),
                     @KeyTarget(target = Article.class, value = "4")})
     })
     private Integer type;

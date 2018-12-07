@@ -78,6 +78,7 @@ public class RdtConfig {
         properties.setBasePackage(basePackage);
         //是否通过saveAll保存
         properties.setComplexBySaveAll(false);
+        properties.setIsModifyColumnMustSameType(false);
         properties.setDeepCloneChangedModify(Boolean.TRUE);
         return properties;
     }

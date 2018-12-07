@@ -333,7 +333,7 @@ public abstract class AbstractOperation implements RdtOperation {
                                 logger.info("{} 【{}={}】changed propertys {} will to modify", entityClassName, idKey, idKeyVal, changedPropertyValMap);
                                 updateMultiCore(classModel, changedVo);
                             } else {
-                                logger.debug("{} 【{}={}】has no changed propertys, continue modify", entityClassName, idKey, idKeyVal);
+                                logger.debug("{} 【{}={}】has no changed propertys {}, continue modify", entityClassName, idKey, idKeyVal, usedPropertys);
                             }
                         }
                     }
@@ -496,38 +496,37 @@ public abstract class AbstractOperation implements RdtOperation {
      * @param relyProperty
      * @return
      */
-    protected Map getModelTypeProcessingCriteriaMap(ModifyRelyDescribe describe, String relyProperty) {
-        List<Object> unknownNotExistValList = describe.getUnknownNotExistValList();
-        List<Object> valList = describe.getValList();
-        Map allMap = new HashMap(16);
-        if (!valList.isEmpty()) {
-            if (unknownNotExistValList.isEmpty()) {
-                allMap.put(relyProperty, valList);
-            } else {
-                //满足在valList 或 非unknownNotExistValList时
+    protected Map getModelTypeProcessingCriteriaMap(ModifyRelyDescribe describe, final String relyProperty) {
+        final Map allMap = new HashMap(16);
+        configuration.matchedTypeHandle(describe, new RdtConfiguration.MatchedTypeCallback() {
+            @Override
+            public void in(List<Object> inValList) {
+                allMap.put(relyProperty, inValList);
+            }
 
+            @Override
+            public void or(List<Object> inValList, List<Object> notInValList) {
                 Map notValMap = new HashMap(16);
-                notValMap.put(relyProperty, unknownNotExistValList);
+                notValMap.put(relyProperty, notInValList);
 
                 Map notMap = new HashMap(16);
                 notMap.put("not", notValMap);
 
                 Map inMap = new HashMap(16);
-                inMap.put(relyProperty, valList);
+                inMap.put(relyProperty, inValList);
 
                 allMap.put("or", Arrays.asList(inMap, notMap));
-
             }
-        } else {
-            if (!unknownNotExistValList.isEmpty()) {
+
+            @Override
+            public void notIn(List<Object> notInValList) {
                 Map notMap = new HashMap(16);
-                notMap.put(relyProperty, unknownNotExistValList);
+                notMap.put(relyProperty, notInValList);
                 allMap.put("not", notMap);
             }
-        }
+        }, true);
         return allMap;
     }
-
 
     protected void updateModifyDescribeSimpleLogOutput(final ClassModel classModel, final ClassModel modifyClassModel, final ModifyDescribe describe, final ChangedVo vo, final Exception exception) {
         boolean hasException = exception != null;

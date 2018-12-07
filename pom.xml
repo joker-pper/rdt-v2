@@ -22,6 +22,7 @@
         <slf4j.version>1.7.25</slf4j.version>
         <rdt.core.version>1.0</rdt.core.version>
         <rdt.annotation.version>1.0</rdt.annotation.version>
+        <log4j.version>2.11.0</log4j.version>
     </properties>
 
 
@@ -48,6 +49,12 @@
             <optional>true</optional>
         </dependency>
 
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+            <scope>provided</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -113,6 +120,16 @@
                 <filtering>false</filtering>
             </resource>
         </resources>
+        <testResources>
+            <testResource>
+                <directory>src/test/java</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                    <include>**/*.properties</include>
+                </includes>
+                <filtering>false</filtering>
+            </testResource>
+        </testResources>
 <!--
         <finalName>${project.artifactId}</finalName>
 -->

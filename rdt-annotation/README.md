@@ -27,7 +27,7 @@
     /**
      * show时: (填充模式为处理非持久化字段)
      *  默认只填充非持久化字段
-     *  启用时跟随填充, e.g: 填充已持久化的订单金额在未支付状态下的值
+     *  启用时跟随填充, 
      *  禁用时会被忽略
      */
     fillShow(RdtFillType)  默认值 RdtFillType.DEFAULT
@@ -47,7 +47,6 @@
    value(KeyTarget[]);  必须指定,其他注解依赖于class顺序作为相对应持久化类的字段值 
                         e.g {@KeyTarget(value = {"用户"}, target = User.class), 
                             @KeyTarget(value = "文章", target = Article.class)}
-   nullType(class) 为空值时所对应的持久化类
    unknownType(class) 非已指定类型值时对应的持久化类(**不太建议使用**)
    group(int) 该属性(依赖字段)的第几组依赖配置描述,默认值为0(即默认该依赖字段可能存在
    多组配置)
@@ -55,14 +54,16 @@
    后进行类型转换解析为对应的值；其中如果字段值类型是枚举类,数字值时会根据对应的ordinal
    解析,反之根据对应的name解析
    
-   unique(boolean) val值是否进行唯一限定,默认为值仅对应一个target class
-   allowValues(string[])  配置除value配置外允许的值列表
+   unique(boolean) val值是否进行唯一限定,默认为每个类型值仅对应一个target class
+   allowValues(string[])  除value配置外允许的值列表,仅用于通过填充时的验证(既不影响fill,
+   又不影响update,等同于略过状态值)
 
 
 @KeyTarget  ---- 用于配置处于该持久化类时的类型值
 属性:
      target(class) 对应的持久化类
-     value(string[]) 处于该持久化类的类型值列表
+     value(string[]) 处于该持久化类的类型值列表(值为字符串null时默认解析为null值,需要注意
+     String时不要使用null字符串作为状态值)
      
 @RdtRelys(value(RdtRely[])) ---- 用于指定多个@RdtRely,用于配置当前依赖字段的多组配置
 
@@ -75,11 +76,9 @@
 
     targetPropertys(string[]) 如果只有一个值则说明对应的所有持久类所使用的为同一字段,反之
 	依次按照依赖字段配置的value中的持久类的顺序为所对应的字段名称
-    nullTypeProperty(string) 为空值时所对应的持久化类使用的字段
-    unknowTypeProperty(string) 非已指定类型值时对应的持久化类使用的字段
     target(class) 设置具体的class限定唯一,不再根据默认的@KeyTarget中存在的class动态指定多个
 
-    fillShow(RdtFillType[])  默认值 RdtFillType.DEFAULT 效果等同@RdtField属性
+    fillShow(RdtFillType[])  默认值 RdtFillType.DEFAULT 效果等同@RdtField属性 e.g: 启用进行填充已持久化的订单金额在未支付状态下的值
     fillSave(RdtFillType[])  默认值 RdtFillType.DEFAULT 效果等同@RdtField属性
 
 @RdtFieldConditionRely   --- （依赖于依赖字段的类型值）当前类属性字段对应持久化类的属性条

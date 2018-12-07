@@ -90,31 +90,72 @@ public class RdtConfiguration {
 
 
 
+    public interface MatchedTypeCallback {
+        /**
+         * 满足在list中
+         */
+        void in(List<Object> inValList);
+
+        /**
+         * or
+         */
+        void or(List<Object> inValList, List<Object> notInValList);
+
+        /**
+         * 不处于该list中
+         */
+        void notIn(List<Object> notInValList);
+    }
+
+    public void matchedTypeHandle(ModifyRelyDescribe describe, MatchedTypeCallback callback, boolean isUpdate) {
+
+        if (callback != null) {
+            List<Object> notInValList = rdtResolver.getNewList(describe.getNotInValList());
+            List<Object> valList = rdtResolver.getNewList(describe.getValList());
+
+            if (!valList.isEmpty()) {
+                if (notInValList.isEmpty()) {
+                    callback.in(valList);
+                } else {
+                    //满足在valList 或 非notInValList时
+                    callback.or(valList, notInValList);
+                }
+            } else {
+                if (!notInValList.isEmpty()) {
+                    callback.notIn(notInValList);
+                }
+            }
+        }
+
+    }
+
     /**
      * 依赖值是否满足匹配条件
      *
      * @param describe
      * @param relyColumnValue
+     * @param isUpdate
      * @return
      */
-    public boolean isMatchedType(ModifyRelyDescribe describe, Object relyColumnValue) {
-        boolean result = false;
-        List<Object> unknownNotExistValList = describe.getUnknownNotExistValList();
-        List<Object> valList = describe.getValList();
-        if (!valList.isEmpty()) {
-            result = valList.contains(relyColumnValue);
-            if (!result && !unknownNotExistValList.isEmpty()) {
-                //未包含valList判断是否在非unknownNotExistValList中
-                result = !unknownNotExistValList.contains(relyColumnValue);
+    public boolean isMatchedType(ModifyRelyDescribe describe, final Object relyColumnValue, boolean isUpdate) {
+        final boolean[] results = new boolean[]{false};
+        matchedTypeHandle(describe, new MatchedTypeCallback() {
+            @Override
+            public void in(List<Object> inValList) {
+                results[0] = inValList.contains(relyColumnValue);
             }
 
-        } else {
-            if (!unknownNotExistValList.isEmpty()) {
-                //满足非unknownNotExistValList时
-                result = !unknownNotExistValList.contains(relyColumnValue);
+            @Override
+            public void or(List<Object> inValList, List<Object> notInValList) {
+                results[0] = inValList.contains(relyColumnValue) || !notInValList.contains(relyColumnValue);
             }
-        }
-        return result;
+
+            @Override
+            public void notIn(List<Object> notInValList) {
+                results[0] = !notInValList.contains(relyColumnValue);
+            }
+        }, isUpdate);
+        return results[0];
     }
 
     /**
@@ -125,17 +166,29 @@ public class RdtConfiguration {
      * @return
      */
     public boolean isMatchedType(ModifyDescribe describe, Object data, ClassModel classModel) {
+        return isMatchedType(describe, data, classModel, true);
+    }
+
+    /**
+     * 匹配数据是否通过验证
+     * @param describe
+     * @param data
+     * @param classModel
+     * @return
+     */
+    public boolean isMatchedType(ModifyDescribe describe, Object data, ClassModel classModel, boolean isUpdate) {
         boolean result = true;
         if (describe != null) {
             if (describe instanceof ModifyRelyDescribe) {
                 ModifyRelyDescribe relyDescribe = (ModifyRelyDescribe) describe;
                 String relyProperty = relyDescribe.getRelyColumn().getProperty();
                 Object relyPropertyVal = rdtResolver.getPropertyValue(data, relyProperty);
-                result = isMatchedType(relyDescribe, relyPropertyVal);
+                result = isMatchedType(relyDescribe, relyPropertyVal, isUpdate);
             }
         }
         return result;
     }
+
 
     /**
      * 判断两个值是否匹配
@@ -245,7 +298,7 @@ public class RdtConfiguration {
             temp.setRdtRelyModel(describe.getRdtRelyModel());
             temp.setRelyColumn(describe.getRelyColumn());
             temp.setValList(describe.getValList());
-            temp.setUnknownNotExistValList(describe.getUnknownNotExistValList());
+            temp.setNotInValList(describe.getNotInValList());
         }
         return getDeepCloneModifyRelyDescribe(temp);
     }

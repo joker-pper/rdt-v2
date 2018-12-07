@@ -381,17 +381,23 @@ public abstract class RdtResolver {
 
     /**
      * 转换字符串为指定类型值
+     * 非基本类型时为null字符串时直接返回null
      * @param value
      * @param valType
      * @param whenEnumNotMatchError
      * @return
      */
-    public Object castValue(String value, Class valType, String whenEnumNotMatchError) {
+    public <T> T castValue(String value, Class<T> valType, String whenEnumNotMatchError) {
+        if ("null".equals(value)) {
+            if (!valType.isPrimitive()) {
+                return null;
+            } else {
+                value = null;
+            }
+        }
         Object result = null;
-        if (valType == String.class) {
-            result = value;
-        } else {
-            if (valType.isEnum()) {
+        if (valType.isEnum()) {
+            if (value != null) {
                 //解析枚举对应的值
                 String currentName;
                 if (value.matches("\\d+")) {
@@ -408,15 +414,43 @@ public abstract class RdtResolver {
                     }
                 }
                 if (!hasMatch) {
+                    if (whenEnumNotMatchError != null) {
+                        whenEnumNotMatchError += value;
+                    } else {
+                        whenEnumNotMatchError = "value " + value + " cast to " + valType.getName() + " error";
+                    }
+
                     throw new IllegalArgumentException(whenEnumNotMatchError);
                 }
-            } else {
-                result = cast(value, valType);
             }
+        } else {
+            result = cast(value, valType);
         }
-        return result;
+        return (T) result;
     }
 
+
+    /**
+     * 解析注解string数组的值(String类型时字符串null将会被转换成null)
+     * @param values
+     * @param valType
+     * @param whenEnumNotMatchError
+     * @param <T>
+     * @return
+     */
+    public <T> List<T> parseAnnotationValues(String[] values, Class<T> valType, String whenEnumNotMatchError) {
+        List<T> results = new ArrayList<T>();
+        if (values != null) {
+            for (String value : values) {
+                results.add(castValue(value, valType, whenEnumNotMatchError));
+            }
+        }
+        return results;
+    }
+
+    public <T> List<T> parseAnnotationValues(String[] values, Class<T> valType) {
+        return parseAnnotationValues(values, valType, null);
+    }
 
     /**
      * 类型转换
@@ -441,6 +475,25 @@ public abstract class RdtResolver {
     public abstract String toJson(Object o);
 
 
+    /**
+     * 返回new list
+     * @param sourceList
+     * @param otherList
+     * @param isRemove
+     * @param <T>
+     * @return
+     */
+    public final <T> List<T> getNewList(List<T> sourceList, List<T> otherList, boolean isRemove) {
+        List<T> result = getNewList(sourceList);
+        if (isRemove && otherList != null && !otherList.isEmpty()) {
+            result.removeAll(otherList);
+        }
+        return result;
+    }
+
+    public final <T> List<T> getNewList(List<T> sourceList) {
+        return new ArrayList<T>(sourceList);
+    }
 
 
     public final String getRedText(String text) {
@@ -556,7 +609,7 @@ public abstract class RdtResolver {
             sb.append("\n\tindex: {}");
             sb.append("\n\tvalType: {}");
             sb.append("\n\tvalList: {}");
-            sb.append("\n\tunknownNotExistValList: {}");
+            sb.append("\n\tnotInValList: {}");
             sb.append("\n\tModifyConditions:");
 
             dataList.add(relyDescribe.getEntityClass().getName());
@@ -566,7 +619,7 @@ public abstract class RdtResolver {
             dataList.add(relyDescribe.getIndex());
             dataList.add(relyDescribe.getValType().getName());
             dataList.add(relyDescribe.getValList());
-            dataList.add(relyDescribe.getUnknownNotExistValList());
+            dataList.add(relyDescribe.getNotInValList());
 
             boolean hasWarn = appendModifyConditionsAndModifyColumnsLogOutput(sb, dataList, relyDescribe);
 
