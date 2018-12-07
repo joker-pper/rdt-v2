@@ -12,20 +12,16 @@
 	<description>Demo project for Spring Boot</description>
 
 	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.0.5.RELEASE</version>
-		<relativePath/> <!-- lookup parent from baseRepository -->
+		<artifactId>rdt-common-test</artifactId>
+		<groupId>com.github.joker-pper</groupId>
+		<version>1.0</version>
+		<relativePath/>
 	</parent>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
-
-		<fastjson.version>1.2.48</fastjson.version>
-		<!-- 忽略测试代码 -->
-		<maven.test.skip>true</maven.test.skip>
 	</properties>
 
 	<dependencies>
@@ -57,26 +53,10 @@
 			<scope>test</scope>
 		</dependency>
 
-		<dependency>
-			<groupId>com.github.joker-pper</groupId>
-			<artifactId>rdt-core</artifactId>
-			<!-- 打包jar时需要添加jar到lib下 -->
-			<!--<scope>system</scope>
-			<systemPath>${project.basedir}/lib/rdt-core-1.0.jar</systemPath>-->
-			<version>1.0</version>
-		</dependency>
 
 		<dependency>
 			<groupId>com.github.joker-pper</groupId>
 			<artifactId>rdt-jpa</artifactId>
-			<version>1.0</version>
-		</dependency>
-
-
-		<dependency>
-			<groupId>commons-lang</groupId>
-			<artifactId>commons-lang</artifactId>
-			<version>2.6</version>
 		</dependency>
 
 		<dependency>
@@ -85,38 +65,6 @@
 			<version>${fastjson.version}</version>
 		</dependency>
 	</dependencies>
-
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-			</plugin>
-		</plugins>
-		<resources>
-			<resource>
-				<directory>src/main/java</directory>
-				<includes>
-					<include>**/*.xml</include>
-					<include>**/*.properties</include>
-				</includes>
-				<filtering>false</filtering>
-			</resource>
-			<resource>
-				<directory>${project.basedir}/lib</directory>
-				<targetPath>BOOT-INF/lib/</targetPath>
-				<includes>
-					<include>**/*.jar</include>
-				</includes>
-			</resource>
-			<resource>
-				<directory>src/main/resources</directory>
-				<includes>
-					<include>**/*</include>
-				</includes>
-			</resource>
-		</resources>
-	</build>
 
 
 </project>

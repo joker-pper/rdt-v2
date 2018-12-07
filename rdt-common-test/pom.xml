@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.github.joker-pper</groupId>
+
+    <artifactId>rdt-common-test</artifactId>
+    <version>1.0</version>
+    <packaging>pom</packaging>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <java.version>1.8</java.version>
+        <maven.test.skip>true</maven.test.skip>
+
+        <rdt.core.version>1.0</rdt.core.version>
+        <rdt.annotation.version>1.0</rdt.annotation.version>
+        <rdt-spring-mongodb-v1.version>1.0</rdt-spring-mongodb-v1.version>
+        <rdt-spring-mongodb-v2.version>1.0</rdt-spring-mongodb-v2.version>
+        <rdt-jpa.version>1.0</rdt-jpa.version>
+
+        <fastjson.version>1.2.48</fastjson.version>
+    </properties>
+
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.0.5.RELEASE</version>
+        <relativePath/>
+    </parent>
+
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.github.joker-pper</groupId>
+                <artifactId>rdt-spring-mongodb-v1</artifactId>
+                <version>${rdt-spring-mongodb-v1.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.joker-pper</groupId>
+                <artifactId>rdt-spring-mongodb-v2</artifactId>
+                <version>${rdt-spring-mongodb-v2.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.joker-pper</groupId>
+                <artifactId>rdt-jpa</artifactId>
+                <version>${rdt-jpa.version}</version>
+            </dependency>
+
+
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>fastjson</artifactId>
+                <version>${fastjson.version}</version>
+            </dependency>
+        </dependencies>
+
+    </dependencyManagement>
+
+
+
+    <dependencies>
+        <dependency>
+            <groupId>com.github.joker-pper</groupId>
+            <artifactId>rdt-core</artifactId>
+            <!-- 打包jar时需要添加jar到lib下 -->
+            <!--<scope>system</scope>
+            <systemPath>${project.basedir}/lib/rdt-core-1.0.jar</systemPath>-->
+            <version>${rdt.core.version}</version>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/java</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                    <include>**/*.properties</include>
+                </includes>
+                <filtering>false</filtering>
+            </resource>
+            <resource>
+                <directory>${project.basedir}/lib</directory>
+                <targetPath>BOOT-INF/lib/</targetPath>
+                <includes>
+                    <include>**/*.jar</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>**/*</include>
+                </includes>
+            </resource>
+        </resources>
+    </build>
+
+</project>
