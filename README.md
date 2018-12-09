@@ -335,7 +335,7 @@ public class Order {
 
 
 
-> api使用  [查看接口方法详情](https://github.com/joker-pper/rdt-v2/blob/master/rdt-core/src/main/java/com/devloper/joker/redundant/operation/RdtOperation.java)
+> api使用  [查看接口方法详情](https://github.com/joker-pper/rdt-v2/blob/master/rdt-core/src/main/java/com/joker17/redundant/operation/RdtOperation.java)
 
 ```
     //更新方法
