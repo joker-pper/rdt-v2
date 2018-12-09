@@ -2,13 +2,13 @@ logging:
   level:
     root: INFO
     org.springframework.data: debug
-    com.devloper.joker.redundant: debug
-    com.devloper.joker.rdt_sbm.rdt: trace
+    com.joker17.redundant: debug
+    com.joker17.rdt_sbm.rdt: trace
 
 
 rdt:
   domain:
-    basePackage: com.devloper.joker.*.domain
+    basePackage: com.joker17.*.domain
 
 spring:
   data:

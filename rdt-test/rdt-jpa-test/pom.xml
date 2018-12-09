@@ -14,7 +14,7 @@
 	<parent>
 		<artifactId>rdt-common-test</artifactId>
 		<groupId>com.github.joker-pper</groupId>
-		<version>1.0</version>
+		<version>1.0.0</version>
 		<relativePath/>
 	</parent>
 

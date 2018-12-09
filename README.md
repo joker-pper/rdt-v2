@@ -19,16 +19,75 @@
 ````
 关于字段的注解仅支持在字段上配置
 合理利用字段transient特性,以提升性能(可避免框架中不必要的逻辑处理)
-RdtResolver可配置提供外的注解,包含全局持久化类注解,id注解,transient注解,建议提供toJson方法的支持
+RdtResolver可配置提供外的注解,包含全局持久化类注解,id注解,transient注解,提供toJson方法的支持
 建议唯一性数据标识不存在重复
 class所在的包支持多组并以,分割,所要维持关系的类必须可被读取
-````
-
-> 如何引用
-
-````
-请自行根据需要打包所依赖jar,rdt-core及rdt-annotation作为核心jar
+注解中属性值为String[]的null字符串将会被解析为null,并未做去重处理
+rdt-core及rdt-annotation作为核心jar
 rdt-jpa及rdt-spring-mongodb为已提供的数据层操作实现,可作为具体使用框架实现的参考
+````
+
+> 如何引用 (当前版本1.0.0)
+
+````
+    <repositories>
+        <repository>
+            <id>nexus</id>
+            <url>http://106.12.198.45:8083/repository/maven-releases/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+                <checksumPolicy>fail</checksumPolicy>
+            </snapshots>
+        </repository>
+    </repositories>
+
+
+    <dependencies>
+    
+        <dependency>
+            <groupId>com.github.joker-pper</groupId>
+            <artifactId>rdt-annotation</artifactId>
+            <version>${version}</version>
+        </dependency>
+        
+        <!-- 包含 rdt-annotation -->
+        <dependency>
+            <groupId>com.github.joker-pper</groupId>
+            <artifactId>rdt-core</artifactId>
+            <version>${version}</version>
+        </dependency>
+        
+        
+        <!-- 以下均包含 rdt-annotation及rdt-core -->
+        
+        <dependency>
+            <groupId>com.github.joker-pper</groupId>
+            <artifactId>rdt-jpa</artifactId>
+            <version>${version}</version>
+        </dependency>
+        
+    
+        <dependency>
+            <groupId>com.github.joker-pper</groupId>
+            <artifactId>rdt-spring-mongodb-v1</artifactId>
+            <version>${version}</version>
+        </dependency>
+        
+    
+        <dependency>
+            <groupId>com.github.joker-pper</groupId>
+            <artifactId>rdt-spring-mongodb-v2</artifactId>
+            <version>${version}</version>
+        </dependency>
+        
+        
+    </dependencies>
+
+
 ````
 
 > 注解介绍: [详情](https://github.com/joker-pper/rdt-v2/tree/master/rdt-annotation)
@@ -118,7 +177,7 @@ rdt-jpa及rdt-spring-mongodb为已提供的数据层操作实现,可作为具体
      }   
     
     
-> example  (jpa-test示例, [test文件](https://github.com/joker-pper/rdt-v2/blob/master/rdt-jpa-test/src/test/java/com/devloper/joker/rdt_jpa_test/GoodsAndOrderTest.java))
+> example  (jpa-test示例, [test文件](https://github.com/joker-pper/rdt-v2/blob/master/rdt-test/rdt-jpa-test/src/test/java/com/joker17/rdt_jpa_test/GoodsAndOrderTest.java))
 
 ```
 
@@ -286,8 +345,9 @@ public class Order {
     //根据当前对象与之前对象数据对比后,更新被引用字段值所发生改变后的相关冗余字段数据
     updateMulti(Object current, Object before);
     
+    //填充字段值方法(填充非持久化及启用填充的字段)
     void fillForShow(Collection<?> collection);
-    
+    //填充字段值方法(填充持久化及启用填充的字段)
     void fillForSave(Collection<?> collection);
 ```
 

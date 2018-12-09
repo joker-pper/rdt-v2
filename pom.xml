@@ -7,7 +7,7 @@
     <groupId>com.github.joker-pper</groupId>
     <artifactId>rdt-v2</artifactId>
     <packaging>pom</packaging>
-    <version>1.0</version>
+    <version>1.0.0</version>
     <modules>
         <module>rdt-annotation</module>
         <module>rdt-core</module>
@@ -21,8 +21,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <slf4j.version>1.7.25</slf4j.version>
-        <rdt.core.version>1.0</rdt.core.version>
-        <rdt.annotation.version>1.0</rdt.annotation.version>
+        <rdt.core.version>1.0.0</rdt.core.version>
+        <rdt.annotation.version>1.0.0</rdt.annotation.version>
         <log4j.version>2.11.0</log4j.version>
     </properties>
 
@@ -31,41 +31,6 @@
         <dependencies>
         </dependencies>
     </dependencyManagement>
-
-
-    <dependencies>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
-            <scope>test</scope>
-            <optional>true</optional>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>${slf4j.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
-    </dependencies>
-
 
     <build>
         <plugins>

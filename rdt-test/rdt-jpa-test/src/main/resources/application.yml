@@ -19,7 +19,7 @@ spring:
     driverClassName: com.mysql.jdbc.Driver
 
 rdt-config:
-  base-package: com.devloper.joker.*.domain,com.devloper.joker.*.vo
+  base-package: com.joker17.*.domain,com.joker17.*.vo
   is-modify-column-must-same-type: false #设置允许modify column类型不一致
   is-update-throw-exception: true
   show-describe: false #是否显示describe信息(debug级别默认显示)
@@ -28,7 +28,7 @@ logging:
   level:
     root: INFO
     #org.springframework: debug
-    com.devloper.joker.redundant: debug
+    com.joker17.redundant: debug
 
 server:
   tomcat.uri-encoding: UTF-8
