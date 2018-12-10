@@ -8,26 +8,65 @@
     <artifactId>rdt-v2</artifactId>
     <packaging>pom</packaging>
     <version>1.0.0</version>
+
     <modules>
         <module>rdt-annotation</module>
         <module>rdt-core</module>
         <module>rdt-spring-mongodb-v1</module>
         <module>rdt-spring-mongodb-v2</module>
         <module>rdt-jpa</module>
+        <module>rdt-test</module>
     </modules>
 
     <properties>
+        <maven.test.skip>true</maven.test.skip>
+        <java.version>1.6</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <slf4j.version>1.7.25</slf4j.version>
         <rdt.core.version>1.0.0</rdt.core.version>
         <rdt.annotation.version>1.0.0</rdt.annotation.version>
+        <rdt-spring-mongodb-v1.version>1.0.0</rdt-spring-mongodb-v1.version>
+        <rdt-spring-mongodb-v2.version>1.0.0</rdt-spring-mongodb-v2.version>
+        <rdt-jpa.version>1.0.0</rdt-jpa.version>
+        <slf4j.version>1.7.25</slf4j.version>
         <log4j.version>2.11.0</log4j.version>
+        <spring-boot.version>2.0.5.RELEASE</spring-boot.version>
+        <spring-data-mongodb.version>2.0.5.RELEASE</spring-data-mongodb.version>
+        <spring-data-jpa.version>2.0.5.RELEASE</spring-data-jpa.version>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>nexus</id>
+            <url>http://106.12.198.45:8083/repository/thirdparty/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+                <checksumPolicy>fail</checksumPolicy>
+            </snapshots>
+        </repository>
+    </repositories>
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.springframework.data</groupId>
+                <artifactId>spring-data-mongodb</artifactId>
+                <version>${spring-data-mongodb.version}</version>
+                <scope>provided</scope>
+                <optional>true</optional>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-data-jpa</artifactId>
+                <version>${spring-data-jpa.version}</version>
+                <scope>provided</scope>
+                <optional>true</optional>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -39,8 +78,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.1</version>
                 <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
                 </configuration>
             </plugin>
             <plugin>

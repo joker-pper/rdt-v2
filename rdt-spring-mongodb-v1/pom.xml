@@ -11,13 +11,14 @@
 
     <artifactId>rdt-spring-mongodb-v1</artifactId>
 
+    <properties>
+        <spring-data-mongodb.version>1.10.1.RELEASE</spring-data-mongodb.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.data</groupId>
             <artifactId>spring-data-mongodb</artifactId>
-            <version>1.10.10.RELEASE</version>
-            <scope>provided</scope>
-            <optional>true</optional>
         </dependency>
 
         <dependency>
