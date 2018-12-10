@@ -33,7 +33,7 @@ rdt-jpa及rdt-spring-mongodb为已提供的数据层操作实现,可作为具体
     <repositories>
         <repository>
             <id>nexus</id>
-            <url>http://106.12.198.45:8083/repository/maven-releases/</url>
+            <url>http://106.12.198.45:8083/repository/thirdparty/</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
