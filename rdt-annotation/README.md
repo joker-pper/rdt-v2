@@ -78,7 +78,8 @@
 	依次按照依赖字段配置的value中的持久类的顺序为所对应的字段名称
     target(class) 设置具体的class限定唯一,不再根据默认的@KeyTarget中存在的class动态指定多个
 
-    fillShow(RdtFillType[])  默认值 RdtFillType.DEFAULT 效果等同@RdtField属性 e.g: 启用进行填充已持久化的订单金额在未支付状态下的值
+    fillShow(RdtFillType[])  默认值 RdtFillType.DEFAULT 效果等同@RdtField属性 e.g: 启用进行
+    填充已持久化的订单金额在未支付状态下的值
     fillSave(RdtFillType[])  默认值 RdtFillType.DEFAULT 效果等同@RdtField属性
 
 @RdtFieldConditionRely   --- （依赖于依赖字段的类型值）当前类属性字段对应持久化类的属性条
