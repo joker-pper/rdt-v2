@@ -27,7 +27,7 @@ rdt-core及rdt-annotation作为核心jar
 rdt-jpa及rdt-spring-mongodb为已提供的数据层操作实现,可作为具体使用框架实现的参考
 ````
 
-> 如何引用 (当前版本1.0.0)
+> 如何引用 (当前版本1.0.1)
 
 ````
     <repositories>

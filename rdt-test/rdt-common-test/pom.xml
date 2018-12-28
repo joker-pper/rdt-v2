@@ -6,7 +6,7 @@
     <parent>
         <artifactId>rdt-test</artifactId>
         <groupId>com.github.joker-pper</groupId>
-        <version>1.0.0</version>
+        <version>1.0.1</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -64,7 +64,7 @@
             <artifactId>rdt-core</artifactId>
             <!-- 打包jar时需要添加jar到lib下 -->
             <!--<scope>system</scope>
-            <systemPath>${project.basedir}/lib/rdt-core-1.0.0.jar</systemPath>-->
+            <systemPath>${project.basedir}/lib/rdt-core-1.0.1.jar</systemPath>-->
             <version>${rdt.core.version}</version>
         </dependency>
 

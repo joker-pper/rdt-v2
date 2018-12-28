@@ -7,7 +7,7 @@ import java.util.List;
 public class PackageClassUtilsTest {
 
     private String userDir = System.getProperty("user.dir");
-    private String jarFilePath = userDir + "/target/" + "rdt-core-1.0.0.jar";
+    private String jarFilePath = userDir + "/target/" + "rdt-core-1.0.1.jar";
 
     @Test
     public void getClassList() throws Exception {

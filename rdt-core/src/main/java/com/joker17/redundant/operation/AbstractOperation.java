@@ -132,7 +132,9 @@ public abstract class AbstractOperation implements RdtOperation {
                 //获取idKey
                 idKey = idKey == null ? classModel.getPrimaryId() : idKey;
                 Object idKeyVal = rdtResolver.getPropertyValue(current, idKey);
-                result.put(idKeyVal, null);
+                if (idKeyVal != null) {
+                    result.put(idKeyVal, null);
+                }
             }
 
             if (flag) {

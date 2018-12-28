@@ -34,12 +34,13 @@ public class RdtPropertiesBuilder {
 
 
     public void builderClass(Class currentClass) {
-        if (currentClass == null || currentClass.isInterface() || currentClass.isAnnotation()) {
+        if (rdtResolver.isIgnoreClass(currentClass)) {
             if (currentClass != null) {
-                logger.debug(currentClass.getName() + " is {} quit the builder.", (currentClass.isInterface() ? "interface" : "annotation") );
+                logger.warn("ignore builder class : {}", currentClass.getName());
             }
             return;
         }
+
         ClassModel classModel = getClassModel(currentClass);
 
         if (classModel.getBuilderMark() != 0) {

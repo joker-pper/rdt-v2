@@ -308,6 +308,18 @@ public abstract class RdtResolver {
     }
 
 
+    public boolean isIgnoreClass(Class modelClass) {
+        if (modelClass == null || modelClass.isInterface() || modelClass.isEnum() || modelClass.isAnnotation() || modelClass.isPrimitive()) {
+            return true;
+        }
+        for (Class type : Arrays.asList(Map.class, Collection.class, Date.class, Number.class)) {
+            if (ClassUtils.familyClass(modelClass, type)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /**
      * 获取当前类的fields
