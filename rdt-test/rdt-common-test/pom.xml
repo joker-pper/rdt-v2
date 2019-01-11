@@ -13,6 +13,13 @@
     <artifactId>rdt-common-test</artifactId>
     <packaging>pom</packaging>
 
+
+
+    <modules>
+        <module>../rdt-jpa-test</module>
+        <module>../rdt-spring-mongodb-test</module>
+    </modules>
+
     <properties>
         <java.version>1.8</java.version>
         <fastjson.version>1.2.48</fastjson.version>

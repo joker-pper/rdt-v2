@@ -5,6 +5,9 @@ import com.joker17.redundant.core.RdtConfiguration;
 import com.joker17.redundant.core.RdtConfigurationBuilder;
 import com.joker17.redundant.core.RdtProperties;
 import com.joker17.redundant.core.RdtResolver;
+import com.joker17.redundant.spring.RdtSpringResolver;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,8 +21,7 @@ public class RdtConfig {
 
     @Bean
     public RdtResolver rdtResolver() {
-        return new RdtResolver() {
-
+        return new RdtSpringResolver() {
             @Override
             protected Class<?>[] customBaseEntityAnnotations() {
                 return new Class[] {Entity.class};

@@ -315,6 +315,9 @@ public class PackageClassUtils {
         if (classNames != null) {
             for (String className : classNames) {
                 try {
+                    if (StringUtils.isEmpty(className)) {
+                        continue;
+                    }
                     classList.add(Class.forName(className));
                 } catch (Exception e) {
                     log.debug(className + " not found");

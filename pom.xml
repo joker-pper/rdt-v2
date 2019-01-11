@@ -16,6 +16,7 @@
         <module>rdt-spring-mongodb-v2</module>
         <module>rdt-jpa</module>
         <module>rdt-test</module>
+        <module>rdt-spring</module>
     </modules>
 
     <properties>
@@ -30,6 +31,7 @@
         <rdt-jpa.version>1.0.1</rdt-jpa.version>
         <slf4j.version>1.7.25</slf4j.version>
         <log4j.version>2.11.0</log4j.version>
+        <spring.version>5.0.9.RELEASE</spring.version>
         <spring-boot.version>2.0.5.RELEASE</spring-boot.version>
         <spring-data-mongodb.version>2.0.5.RELEASE</spring-data-mongodb.version>
         <spring-data-jpa.version>2.0.5.RELEASE</spring-data-jpa.version>
@@ -69,6 +71,16 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+    </dependencies>
 
     <build>
         <plugins>

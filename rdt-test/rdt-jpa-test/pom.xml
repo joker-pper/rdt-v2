@@ -66,7 +66,13 @@
 			<artifactId>fastjson</artifactId>
 			<version>${fastjson.version}</version>
 		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>com.github.joker-pper</groupId>
+            <artifactId>rdt-spring</artifactId>
+            <version>1.0.1</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
 
 
 </project>
