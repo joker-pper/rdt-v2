@@ -7,7 +7,7 @@
     <groupId>com.github.joker-pper</groupId>
     <artifactId>rdt-v2</artifactId>
     <packaging>pom</packaging>
-    <version>1.0.1</version>
+    <version>1.0.1-SNAPSHOT</version>
 
     <modules>
         <module>rdt-annotation</module>
@@ -24,11 +24,12 @@
         <java.version>1.6</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <rdt.core.version>1.0.1</rdt.core.version>
-        <rdt.annotation.version>1.0.1</rdt.annotation.version>
-        <rdt-spring-mongodb-v1.version>1.0.1</rdt-spring-mongodb-v1.version>
-        <rdt-spring-mongodb-v2.version>1.0.1</rdt-spring-mongodb-v2.version>
-        <rdt-jpa.version>1.0.1</rdt-jpa.version>
+        <rdt.core.version>1.0.1-SNAPSHOT</rdt.core.version>
+        <rdt.annotation.version>1.0.1-SNAPSHOT</rdt.annotation.version>
+        <rdt.spring.version>1.0.1-SNAPSHOT</rdt.spring.version>
+        <rdt-spring-mongodb-v1.version>1.0.1-SNAPSHOT</rdt-spring-mongodb-v1.version>
+        <rdt-spring-mongodb-v2.version>1.0.1-SNAPSHOT</rdt-spring-mongodb-v2.version>
+        <rdt-jpa.version>1.0.1-SNAPSHOT</rdt-jpa.version>
         <slf4j.version>1.7.25</slf4j.version>
         <log4j.version>2.11.0</log4j.version>
         <spring.version>5.0.9.RELEASE</spring.version>
@@ -39,8 +40,20 @@
 
     <repositories>
         <repository>
-            <id>nexus</id>
+            <id>joker17-maven-repository-thirdparty</id>
             <url>http://106.12.198.45:8083/repository/thirdparty/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+                <checksumPolicy>fail</checksumPolicy>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>joker17-maven-repository-snapshots</id>
+            <url>http://106.12.198.45:8083/repository/maven-snapshots/</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
@@ -157,8 +170,19 @@
 
     <distributionManagement>
         <repository>
-            <id>maven-repository-thirdparty</id>
+<!--
+-->
+<!--
+            <id>joker17-maven-repository</id>
+-->
+            <id>joker17-maven-repository-thirdparty</id>
             <url>http://106.12.198.45:8083/repository/thirdparty/</url>
         </repository>
+        <snapshotRepository>
+
+            <id>joker17-maven-repository-snapshots</id>
+
+            <url>http://106.12.198.45:8083/repository/maven-snapshots/</url>
+        </snapshotRepository>
     </distributionManagement>
 </project>

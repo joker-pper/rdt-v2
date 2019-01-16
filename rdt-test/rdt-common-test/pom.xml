@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -6,19 +5,20 @@
     <parent>
         <artifactId>rdt-test</artifactId>
         <groupId>com.github.joker-pper</groupId>
-        <version>1.0.1</version>
+        <version>1.0.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>rdt-common-test</artifactId>
     <packaging>pom</packaging>
+    <version>1.0.1-SNAPSHOT</version>
 
 
-
-    <modules>
+<!--    <modules>
         <module>../rdt-jpa-test</module>
         <module>../rdt-spring-mongodb-test</module>
-    </modules>
+    </modules>-->
 
     <properties>
         <java.version>1.8</java.version>
@@ -34,6 +34,14 @@
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
+
+
+            <dependency>
+                <groupId>com.github.joker-pper</groupId>
+                <artifactId>rdt-spring</artifactId>
+                <version>${rdt.spring.version}</version>
+            </dependency>
+
 
             <dependency>
                 <groupId>com.github.joker-pper</groupId>
@@ -64,7 +72,6 @@
     </dependencyManagement>
 
 
-
     <dependencies>
         <dependency>
             <groupId>com.github.joker-pper</groupId>
@@ -84,6 +91,18 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring-boot.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <mainClass>${start-class}</mainClass>
+                    <finalName>${project.artifactId}-final</finalName>
+                </configuration>
             </plugin>
         </plugins>
         <resources>

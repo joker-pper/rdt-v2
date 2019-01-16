@@ -5,11 +5,13 @@
     <parent>
         <artifactId>rdt-v2</artifactId>
         <groupId>com.github.joker-pper</groupId>
-        <version>1.0.1</version>
+        <version>1.0.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>rdt-spring</artifactId>
+    <version>1.0.1-SNAPSHOT</version>
 
     <dependencies>
         <dependency>
@@ -36,8 +38,6 @@
             <version>${spring.version}</version>
             <scope>provided</scope>
         </dependency>
-
-
 
     </dependencies>
 

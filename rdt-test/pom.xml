@@ -5,9 +5,11 @@
     <parent>
         <artifactId>rdt-v2</artifactId>
         <groupId>com.github.joker-pper</groupId>
-        <version>1.0.1</version>
+        <version>1.0.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
+    <version>1.0.1-SNAPSHOT</version>
 
     <artifactId>rdt-test</artifactId>
     <packaging>pom</packaging>
@@ -15,5 +17,8 @@
     <modules>
         <module>rdt-common-test</module>
     </modules>
+
+
+
 
 </project>

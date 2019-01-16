@@ -14,8 +14,8 @@
 	<parent>
 		<artifactId>rdt-common-test</artifactId>
 		<groupId>com.github.joker-pper</groupId>
-		<version>1.0.1</version>
-		<relativePath/>
+		<version>1.0.1-SNAPSHOT</version>
+		<relativePath />
 	</parent>
 
 	<properties>
@@ -69,10 +69,54 @@
         <dependency>
             <groupId>com.github.joker-pper</groupId>
             <artifactId>rdt-spring</artifactId>
-            <version>1.0.1</version>
-            <scope>compile</scope>
+
         </dependency>
     </dependencies>
 
 
+	<!--<build>
+
+		<plugins>
+
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<version>${spring-boot.version}</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>repackage</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<mainClass>${start-class}</mainClass>
+					<finalName>${project.artifactId}-final</finalName>
+				</configuration>
+			</plugin>
+		</plugins>
+		<resources>
+			<resource>
+				<directory>src/main/java</directory>
+				<includes>
+					<include>**/*.xml</include>
+					<include>**/*.properties</include>
+				</includes>
+				<filtering>false</filtering>
+			</resource>
+			<resource>
+				<directory>${project.basedir}/lib</directory>
+				<targetPath>BOOT-INF/lib/</targetPath>
+				<includes>
+					<include>**/*.jar</include>
+				</includes>
+			</resource>
+			<resource>
+				<directory>src/main/resources</directory>
+				<includes>
+					<include>**/*</include>
+				</includes>
+			</resource>
+		</resources>
+	</build>-->
 </project>
