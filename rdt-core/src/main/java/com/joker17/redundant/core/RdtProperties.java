@@ -66,6 +66,11 @@ public class RdtProperties {
     private Boolean showDescribe = false;
 
     /**
+     * 设为关闭后将不执行更新操作
+     */
+    private Boolean closeUpdateMulti = false;
+
+    /**
      * 当前类的数据
      */
     private Map<Class, ClassModel> classModelMap = new LinkedHashMap<Class, ClassModel>(16);
@@ -192,6 +197,14 @@ public class RdtProperties {
 
     public void setShowDescribe(Boolean showDescribe) {
         this.showDescribe = showDescribe;
+    }
+
+    public Boolean getCloseUpdateMulti() {
+        return closeUpdateMulti;
+    }
+
+    public void setCloseUpdateMulti(Boolean closeUpdateMulti) {
+        this.closeUpdateMulti = closeUpdateMulti;
     }
 
     public Map<Class, ClassModel> getClassModelMap() {

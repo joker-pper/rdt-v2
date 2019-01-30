@@ -82,8 +82,13 @@ public abstract class AbstractOperation implements RdtOperation {
 
 
     @Override
-    public <T> Map<Object, T> getKeyMap(Collection<T> data, String key) {
-        return configuration.getKeyMap(data, key);
+    public <R, T> Map<R, T> transferMap(Collection<T> data, String key) {
+        return configuration.transferMap(data, key);
+    }
+
+    @Override
+    public <R, T> Map<R, T> transferMap(Collection<T> data, String key, Map<R, T> sourceMap) {
+        return configuration.transferMap(data, key, sourceMap);
     }
 
     @Override
@@ -155,12 +160,7 @@ public abstract class AbstractOperation implements RdtOperation {
                             }
                         }
                     }
-                    if (resultDataList != null) {
-                        for (Object resultData : resultDataList) {
-                            Object idKeyVal = rdtResolver.getPropertyValue(resultData, idKey);
-                            result.put(idKeyVal, resultData);
-                        }
-                    }
+                    result = transferMap(resultDataList, idKey, result);
                 }
             }
         }
@@ -173,7 +173,7 @@ public abstract class AbstractOperation implements RdtOperation {
      * @param entity data | collection | array[data...]  array[collection]
      * @return
      */
-    protected Collection<Object> parseEntityData(Object entity) {
+    public Collection<Object> parseEntityData(Object entity) {
         if (entity != null) {
             if (entity instanceof Collection) {
                 Iterator<Object> iterator = ((Collection) entity).iterator();
@@ -333,7 +333,11 @@ public abstract class AbstractOperation implements RdtOperation {
                                     changedVo.setVal(property, currentVal, beforeVal);
                                 }
                                 logger.info("{} 【{}={}】changed propertys {} will to modify", entityClassName, idKey, idKeyVal, changedPropertyValMap);
-                                updateMultiCore(classModel, changedVo);
+
+                                if (!Boolean.TRUE.equals(properties.getCloseUpdateMulti())) {
+                                    updateMultiCore(classModel, changedVo);
+                                }
+                                updateMultiAfter(classModel, changedVo);
                             } else {
                                 logger.debug("{} 【{}={}】has no changed propertys {}, continue modify", entityClassName, idKey, idKeyVal, usedPropertys);
                             }
@@ -350,6 +354,16 @@ public abstract class AbstractOperation implements RdtOperation {
         updateModifyDescribeSimple(classModel, changedVo);
         updateModifyRelyDescribeSimple(classModel, changedVo);
     }
+
+
+    /**
+     * 可用于当前实体数据变更后的操作
+     * @param classModel
+     * @param changedVo
+     */
+    protected void updateMultiAfter(ClassModel classModel, ChangedVo changedVo) {
+    }
+
 
     protected void handlerUpdateThrowException(Exception e) {
         if (Boolean.TRUE.equals(properties.getIsUpdateThrowException())) {

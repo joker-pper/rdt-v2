@@ -61,7 +61,9 @@ public interface RdtOperation {
      * @param <T>
      * @return
      */
-    <T> Map<Object, T> getKeyMap(Collection<T> data, String key);
+    <R, T> Map<R, T> transferMap(Collection<T> data, String key);
+
+    <R, T> Map<R, T> transferMap(Collection<T> data, String key, Map<R, T> sourceMap);
 
 
     ClassModel getClassModel(Class entityClass);

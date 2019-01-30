@@ -72,23 +72,32 @@ public class RdtConfiguration {
     }
 
 
+    public <R, T> Map<R, T> transferMap(Collection<T> data, String key) {
+        return transferMap(data, key, new HashMap<R, T>());
+    }
+
     /**
-     * 获取以key值为key的map数据
+     * 将data集合转换成以实体属性的值为key的map
      * @param data
      * @param key
+     * @param sourceMap
      * @param <T>
      * @return
      */
-    public <T> Map<Object, T> getKeyMap(Collection<T> data, String key) {
-        Map<Object, T> result = new LinkedHashMap<Object, T>(16);
-        if (data != null && !data.isEmpty()) {
+    public <R, T> Map<R, T> transferMap(Collection<T> data, String key, Map<R, T> sourceMap) {
+        if (sourceMap == null) {
+            sourceMap = new HashMap<R, T>();
+        }
+        if (data != null) {
             for (T t : data) {
-                result.put(rdtResolver.getPropertyValue(t, key), t);
+                if (t != null) {
+                    R keyValue = (R) rdtResolver.getPropertyValue(t, key);
+                    sourceMap.put(keyValue, t);
+                }
             }
         }
-        return result;
+        return sourceMap;
     }
-
 
 
     public interface MatchedTypeCallback {

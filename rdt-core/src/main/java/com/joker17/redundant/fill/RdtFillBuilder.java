@@ -30,7 +30,7 @@ public class RdtFillBuilder {
     public void setFillKeyData(FillOneKeyModel fillOneKeyModel, Class entityClass, List<Object> entityList, boolean checkValue, boolean clear) {
         int keyValuesSize = fillOneKeyModel.getKeyValues().size();
         String key = fillOneKeyModel.getKey();
-        Map<Object, Object> entityDataMap = configuration.getKeyMap(entityList, key);
+        Map<Object, Object> entityDataMap = configuration.transferMap(entityList, key);
 
         if (checkValue) {
             //查找的结果值必须与key value的个数相同
