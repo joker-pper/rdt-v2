@@ -32,7 +32,7 @@ rdt-jpa及rdt-spring-mongodb为已提供的数据层操作实现,可作为具体
 ````
     <repositories>
         <repository>
-            <id>nexus</id>
+            <id>joker17-maven-repository-thirdparty</id>
             <url>http://106.12.198.45:8083/repository/thirdparty/</url>
             <releases>
                 <enabled>true</enabled>
@@ -43,7 +43,20 @@ rdt-jpa及rdt-spring-mongodb为已提供的数据层操作实现,可作为具体
                 <checksumPolicy>fail</checksumPolicy>
             </snapshots>
         </repository>
+        <repository>
+            <id>joker17-maven-repository-snapshots</id>
+            <url>http://106.12.198.45:8083/repository/maven-snapshots/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+                <checksumPolicy>fail</checksumPolicy>
+            </snapshots>
+        </repository>
     </repositories>
+
 
 
     <dependencies>

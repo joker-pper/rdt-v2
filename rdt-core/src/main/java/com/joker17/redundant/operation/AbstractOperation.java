@@ -8,6 +8,7 @@ import com.joker17.redundant.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.util.*;
 
@@ -96,13 +97,12 @@ public abstract class AbstractOperation implements RdtOperation {
     }
 
     @Override
-    public Map<Object, Object> getCurrentMapData(Object data) {
-        return getCurrentMapData(data, true);
+    public <K extends Serializable, T> Map<K, T> getPrimaryKeyEntityMap(Object data) {
+        return getPrimaryKeyEntityMap(data, true);
     }
 
-
     @Override
-    public Map<Object, Object> getCurrentMapData(Object data, boolean check) {
+    public <K extends Serializable, T> Map<K, T> getPrimaryKeyEntityMap(Object data, boolean check) {
         Map<Object, Object> result = new HashMap<Object, Object>(16);
         if (data != null) {
             data = parseEntityData(data);
@@ -164,7 +164,7 @@ public abstract class AbstractOperation implements RdtOperation {
                 }
             }
         }
-        return result;
+        return (Map)result;
     }
 
     /**
@@ -223,11 +223,11 @@ public abstract class AbstractOperation implements RdtOperation {
     }
 
     @Override
-    public void updateRelevant(Object multiData, Map<Object, Object> beforeKeyDataMap) {
+    public void updateRelevant(Object multiData, Map<? extends Serializable, ? extends Object> beforePrimaryKeyEntityMap) {
         Collection<Object> dataList = parseEntityData(multiData);
         String idKey = null;
 
-        boolean isLoad = beforeKeyDataMap != null && !beforeKeyDataMap.isEmpty();
+        boolean isLoad = beforePrimaryKeyEntityMap != null && !beforePrimaryKeyEntityMap.isEmpty();
         for (Object data : dataList) {
             if (data == null) {
                 continue;
@@ -239,7 +239,7 @@ public abstract class AbstractOperation implements RdtOperation {
                     idKey = getPrimaryId(dataClass);
                 }
                 Object idVal = rdtResolver.getPropertyValue(data, idKey);
-                before = beforeKeyDataMap.get(idVal);
+                before = beforePrimaryKeyEntityMap.get(idVal);
             }
             updateMulti(data, before);
         }

@@ -5,6 +5,7 @@ import com.joker17.redundant.fill.FillNotAllowedValueException;
 import com.joker17.redundant.fill.FillType;
 import com.joker17.redundant.model.ClassModel;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -71,13 +72,13 @@ public interface RdtOperation {
      * @param check 如果为true时仅在有use property时查询
      * @return key: id, val: domain data
      */
-    Map<Object, Object> getCurrentMapData(Object data, boolean check);
+    <K extends Serializable, T> Map<K, T> getPrimaryKeyEntityMap(Object data, boolean check);
 
 
     /**
-     *  getCurrentMapData(data, true)
+     *  getPrimaryKeyEntityMap(data, true)
      */
-    Map<Object, Object> getCurrentMapData(Object data);
+    <K extends Serializable, T> Map<K, T> getPrimaryKeyEntityMap(Object data);
 
 
     /**
@@ -104,9 +105,9 @@ public interface RdtOperation {
      * 通过当前数据以及更新数据前的数据,对比后去更新被引用字段值所发生改变后的相关冗余
      * 字段数据
      * @param data 当前单实体/array/list数据
-     * @param beforeKeyDataMap 之前实体id值所对应实体的map数据
+     * @param beforePrimaryKeyEntityMap 之前实体id值所对应实体的map数据
      */
-    void updateRelevant(Object data, Map<Object, Object> beforeKeyDataMap);
+    void updateRelevant(Object data, Map<? extends Serializable, ? extends Object> beforePrimaryKeyEntityMap);
 
     /**
      * fill(collection, allowedNullValue, checkValue, clear, FillType.ALL);

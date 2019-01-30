@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -323,7 +324,7 @@ public class DataTests extends ApplicationTests {
         if (userOptional.isPresent()) {
             User user = userOptional.get();
             user.setUserName("joker" + "_" + "yyc(power by " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + ")");
-            Map<Object, Object> beforeMap = rdtOperation.getCurrentMapData(user);
+            Map<Serializable, Object> beforeMap = rdtOperation.getPrimaryKeyEntityMap(user);
             userRepository.save(user);
             rdtOperation.updateRelevant(user, beforeMap);
         }
@@ -336,18 +337,18 @@ public class DataTests extends ApplicationTests {
     public void updateByBeforeDataAndNotUsedProperty() throws Exception {
         ArticleProgress articleProgress = articleProgressRepository.findTopBy();
         if (articleProgress != null) {
-            Map<Object, Object> beforeMap = rdtOperation.getCurrentMapData(articleProgress);
+            Map<Serializable, Object> beforeMap = rdtOperation.getPrimaryKeyEntityMap(articleProgress);
             articleProgressRepository.save(articleProgress);
             rdtOperation.updateRelevant(articleProgress, beforeMap);
         }
     }
 
     @Test
-    public void getCurrentMapDataTest() throws Exception {
-        rdtOperation.getCurrentMapData(new User("1"));
-        rdtOperation.getCurrentMapData(new User("12333"));
-        rdtOperation.getCurrentMapData(new Article("123123"));
-        rdtOperation.getCurrentMapData(new ArticleProgress("123123123"));
+    public void getPrimaryKeyEntityMapTest() throws Exception {
+        rdtOperation.getPrimaryKeyEntityMap(new User("1"));
+        rdtOperation.getPrimaryKeyEntityMap(new User("12333"));
+        rdtOperation.getPrimaryKeyEntityMap(new Article("123123"));
+        rdtOperation.getPrimaryKeyEntityMap(new ArticleProgress("123123123"));
 
     }
 
