@@ -36,7 +36,7 @@ public class RdtPropertiesBuilder {
     public void builderClass(Class currentClass) {
         if (rdtResolver.isIgnoreClass(currentClass)) {
             if (currentClass != null) {
-                logger.warn("ignore builder class : {}", currentClass.getName());
+                logger.debug("ignore builder class : {}", currentClass.getName());
             }
             return;
         }
