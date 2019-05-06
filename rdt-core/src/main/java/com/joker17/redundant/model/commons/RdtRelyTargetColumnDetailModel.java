@@ -1,27 +1,26 @@
-package com.joker17.redundant.model;
+package com.joker17.redundant.model.commons;
 
 import com.joker17.redundant.annotation.RdtFillType;
+import com.joker17.redundant.model.Column;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-//修改列所相关属性
-public class ModifyColumn implements Serializable {
 
-    /**
-     * 当前列数据
-     */
-    private Column column;
+public class RdtRelyTargetColumnDetailModel {
 
-    /**
-     * 对应列数据
-     */
     private Column targetColumn;
 
     private RdtFillType fillShowType;
 
     private RdtFillType fillSaveType;
+
+    private String notAllowedNullTips;
+
+    /**
+     * 该列是否禁用更新
+     */
+    private boolean disableUpdate;
 
     /**
      * fillShow忽略的依赖列类型值列表
@@ -33,18 +32,6 @@ public class ModifyColumn implements Serializable {
      */
     private List<Object> fillSaveIgnoresType = new ArrayList<Object>();
 
-    /**
-     * 当前数据是否禁用更新 (非持久化字段时默认为禁用)
-     */
-    private boolean disableUpdate;
-
-    public Column getColumn() {
-        return column;
-    }
-
-    public void setColumn(Column column) {
-        this.column = column;
-    }
 
     public Column getTargetColumn() {
         return targetColumn;
@@ -70,6 +57,22 @@ public class ModifyColumn implements Serializable {
         this.fillSaveType = fillSaveType;
     }
 
+    public String getNotAllowedNullTips() {
+        return notAllowedNullTips;
+    }
+
+    public void setNotAllowedNullTips(String notAllowedNullTips) {
+        this.notAllowedNullTips = notAllowedNullTips;
+    }
+
+    public boolean getDisableUpdate() {
+        return disableUpdate;
+    }
+
+    public void setDisableUpdate(boolean disableUpdate) {
+        this.disableUpdate = disableUpdate;
+    }
+
     public List<Object> getFillShowIgnoresType() {
         return fillShowIgnoresType;
     }
@@ -86,11 +89,5 @@ public class ModifyColumn implements Serializable {
         this.fillSaveIgnoresType = fillSaveIgnoresType;
     }
 
-    public boolean getDisableUpdate() {
-        return disableUpdate;
-    }
 
-    public void setDisableUpdate(boolean disableUpdate) {
-        this.disableUpdate = disableUpdate;
-    }
 }

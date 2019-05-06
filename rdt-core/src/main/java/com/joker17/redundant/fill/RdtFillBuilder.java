@@ -17,27 +17,20 @@ public class RdtFillBuilder {
 
     private RdtConfiguration configuration;
     private RdtResolver rdtResolver;
+    private RdtFillThrowExceptionHandler throwExceptionHandler;
 
-    private RdtFillBuilder(RdtConfiguration support) {
+    private RdtFillBuilder(RdtConfiguration support, RdtFillThrowExceptionHandler throwExceptionHandler) {
         this.configuration = support;
         this.rdtResolver = support.getRdtResolver();
+        this.throwExceptionHandler = throwExceptionHandler;
     }
 
-    public static RdtFillBuilder of(RdtConfiguration support) {
-        return new RdtFillBuilder(support);
+    public static RdtFillBuilder of(RdtConfiguration support, RdtFillThrowExceptionHandler throwExceptionHandler) {
+        return new RdtFillBuilder(support, throwExceptionHandler) ;
     }
 
-    public void setFillKeyData(FillOneKeyModel fillOneKeyModel, Class entityClass, List<Object> entityList, boolean checkValue, boolean clear) {
-        int keyValuesSize = fillOneKeyModel.getKeyValues().size();
+    public void setFillKeyData(FillOneKeyModel fillOneKeyModel, Class entityClass, Map<Object, Object> entityDataMap, boolean checkValue, boolean clear) {
         String key = fillOneKeyModel.getKey();
-        Map<Object, Object> entityDataMap = configuration.transferMap(entityList, key);
-
-        if (checkValue) {
-            //查找的结果值必须与key value的个数相同
-            if (keyValuesSize != entityDataMap.size()) {
-                throw new FillNotAllowedDataException(fillOneKeyModel, entityClass, fillOneKeyModel.getEntityClass().getName() + " can't find all data with property " + fillOneKeyModel.getKey() + " value in " + rdtResolver.toJson(fillOneKeyModel.getKeyValues()));
-            }
-        }
 
         if (!entityDataMap.isEmpty() || clear) {
             //存在数据或clear时进行处理
@@ -172,8 +165,10 @@ public class RdtFillBuilder {
                     //处理填充列字段所对应的值
                     Object value = null;
                     if (!clearMark) {
+                        //匹配到对应数据值时
                         value = rdtResolver.getPropertyValue(entityData, targetProperty);
                     }
+
                     try {
                         //转换值
                         value = rdtResolver.cast(value, propertyClass);
@@ -238,18 +233,19 @@ public class RdtFillBuilder {
         if (fillManyKeyModel == null) {
             fillManyKeyModel = new FillManyKeyModel();
             fillManyKeyModel.setEntityClass(entityClass);
+            fillManyKeyModel.setClassModel(entityClassModel);
             fillManyKeyModelMap.put(entityClass, fillManyKeyModel);
         }
 
         //处理当前entity class的条件列
-        Map<Column, Column> targetColumnKeyMap = new HashMap<Column, Column>(16);
+        Map<Column, ModifyCondition> targetColumnKeyMap = new HashMap<Column, ModifyCondition>(16);
 
         List<Column> currentConditionColumnValues = new ArrayList<Column>(16);
 
         for (ModifyCondition modifyCondition : modifyConditionList) {
             Column targetColumn = modifyCondition.getTargetColumn();
             currentConditionColumnValues.add(targetColumn);
-            targetColumnKeyMap.put(targetColumn, modifyCondition.getColumn());
+            targetColumnKeyMap.put(targetColumn, modifyCondition);
         }
 
         //获取当前detail
@@ -276,8 +272,6 @@ public class RdtFillBuilder {
         for (ModifyColumn modifyColumn : modifyColumnList) {
             currentKeyDetail.getColumnValues().add(modifyColumn.getTargetColumn());
         }
-        Class dataClass = dataClassModel.getCurrentClass();
-
 
         boolean isGroupValueNull = true;
 
@@ -288,11 +282,12 @@ public class RdtFillBuilder {
         List<Object> currentConditionGroupValue = new ArrayList<Object>(16);
         for (Column targetColumn : currentConditionColumnValues) {
             //获取当前data对应的列
-            Column column = targetColumnKeyMap.get(targetColumn);
+            ModifyCondition modifyCondition = targetColumnKeyMap.get(targetColumn);
+            Column column = modifyCondition.getColumn();
             String property = column.getProperty();
             Object value = rdtResolver.getPropertyValue(data, property);
-            if (!allowedNullValue && value == null) {
-                throw new FillNotAllowedValueException(fillManyKeyModel, dataClass, data, describe, property, dataClassModel.getClassName() + " property " + property + " value not allowed null.");
+            if (!allowedNullValue && (value == null || (value instanceof String && StringUtils.isEmpty((String) value)))) {
+                throwExceptionHandler.throwFillNotAllowedValueException(dataClassModel, describe, modifyCondition, data, dataClassModel.getClassName() + " property " + property + " value not allowed null.");
             }
             if (value != null) {
                 isGroupValueNull = false;
@@ -348,20 +343,21 @@ public class RdtFillBuilder {
         List<ModifyColumn> modifyColumnList = describe.getColumnList();
 
         Map<Class, List<FillOneKeyModel>> fillKeyModelListMap = fillRSModel.getFillKeyModelListMap();
-        Class dataClass = dataClassModel.getCurrentClass();
 
         //处理当前entityClass某单列作为key查询条件的数据
-        FillOneKeyModel fillOneKeyModel = fillRSModel.getFillKeyModel(entityClassModel.getCurrentClass(), modifyCondition, fillKeyModelListMap);
+        FillOneKeyModel fillOneKeyModel = fillRSModel.getFillKeyModel(entityClassModel, modifyCondition, fillKeyModelListMap);
         for (ModifyColumn modifyColumn : modifyColumnList) {
+            //所使用的相关列
             fillOneKeyModel.addColumnValue(modifyColumn.getTargetColumn());
         }
         String property = modifyCondition.getColumn().getProperty();
 
         Object keyVal = rdtResolver.getPropertyValue(data, property);
 
-        if (!allowedNullValue && keyVal == null) {
-            throw new FillNotAllowedValueException(fillOneKeyModel, dataClass, data, describe, property, dataClassModel.getClassName() + " property " + property + " value not allowed null.");
+        if (!allowedNullValue && (keyVal == null || (keyVal instanceof String && StringUtils.isEmpty((String) keyVal)))) {
+            throwExceptionHandler.throwFillNotAllowedValueException(dataClassModel, describe, modifyCondition, data, dataClassModel.getClassName() + " property " + property + " value not allowed null.");
         }
+
         if (describe instanceof ModifyRelyDescribe) {
             fillOneKeyModel.addDescribeKeyValueData((ModifyRelyDescribe) describe, keyVal, data);
         } else {
@@ -385,19 +381,12 @@ public class RdtFillBuilder {
                 if (data != null) {
                     //获取当前数据的类型
                     final Class dataClass = data.getClass();
-                    if (rdtResolver.isIgnoreClass(dataClass)) {
-                        continue;
-                    }
                     ClassModel dataClassModel = configuration.getClassModel(dataClass);
                     if (dataClassModel == null) {
                         logger.debug("rdt not contains class {}, so builder for fill now.", dataClass.getName());
                         configuration.builderClass(dataClass);
                         dataClassModel = configuration.getClassModel(dataClass);
                     }
-                    if (dataClassModel == null) {
-                        continue;
-                    }
-
                     final Map<Class, List<ModifyDescribe>> targetClassModifyDescribeMap = dataClassModel.getTargetClassModifyDescribeMap();
 
                     for (final Class entityClass : targetClassModifyDescribeMap.keySet()) {
@@ -454,7 +443,7 @@ public class RdtFillBuilder {
                                                 logger.warn("rdt fill relationship handle check match type error : " + dataClassModel.getClassName() + " has no rely property " + relyColumn.getProperty() + " value " + relyColumnValue + " to appoint type : [{}(group={}&index={})], and current type values is {}", entityClassModel.getClassName(), describe.getGroup(), describe.getIndex(), relyModel.getExplicitValueList());
                                                 if (checkValue) {
                                                     //验证数据合法性
-                                                    throw new FillNotAllowedValueException(null, dataClass, data, describe, relyColumn.getProperty(), dataClassModel.getClassName() + " has no rely property " + relyColumn.getProperty() + " value " + relyColumnValue + " to appoint type : " + entityClassModel.getClassName());
+                                                    throwExceptionHandler.throwFillNotAllowedValueException(dataClassModel, describe, null, data, dataClassModel.getClassName() + " has no rely property " + relyColumn.getProperty() + " value " + relyColumnValue + " to appoint type : " + entityClassModel.getClassName());
                                                 }
                                             }
                                         }

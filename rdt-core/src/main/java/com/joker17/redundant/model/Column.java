@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 
 //列所相关属性
 public class Column implements Serializable {
+
     private Class entityClass;
     private String alias; //对应的别名
     private Class propertyClass;  //实体属性类型
@@ -13,6 +14,8 @@ public class Column implements Serializable {
     private transient Field field;
     private Boolean isTransient;
     private Boolean isPrimaryId;
+
+    private String notAllowedNullTips;
 
     public Class getEntityClass() {
         return entityClass;
@@ -76,5 +79,13 @@ public class Column implements Serializable {
 
     public void setIsPrimaryId(Boolean primaryId) {
         isPrimaryId = primaryId;
+    }
+
+    public String getNotAllowedNullTips() {
+        return notAllowedNullTips;
+    }
+
+    public void setNotAllowedNullTips(String notAllowedNullTips) {
+        this.notAllowedNullTips = notAllowedNullTips;
     }
 }

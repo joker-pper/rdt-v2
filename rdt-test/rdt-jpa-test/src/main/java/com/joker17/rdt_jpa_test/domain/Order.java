@@ -1,11 +1,11 @@
 package com.joker17.rdt_jpa_test.domain;
 
+import com.joker17.redundant.annotation.RdtFillType;
 import com.joker17.redundant.annotation.field.RdtField;
 import com.joker17.redundant.annotation.field.RdtFieldCondition;
-import com.joker17.redundant.annotation.rely.KeyTarget;
-import com.joker17.redundant.annotation.rely.RdtFieldConditionRely;
-import com.joker17.redundant.annotation.rely.RdtFieldRely;
-import com.joker17.redundant.annotation.rely.RdtRely;
+import com.joker17.redundant.annotation.fill.RdtConditionTips;
+import com.joker17.redundant.annotation.fill.RdtFieldRelyDetail;
+import com.joker17.redundant.annotation.rely.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,7 +25,8 @@ public class Order {
     @Id
     private String id;
 
-    @RdtFieldConditionRely(property = "type", targetPropertys = "id")
+    @RdtConditionTips(nullTips = "商品id不能为空")
+    @RdtFieldConditionRely(property = "type", targetPropertys = "id",group = 1)
     @RdtFieldCondition(target = Goods.class, property = "id")
     private String goodsId;
 
@@ -36,14 +37,14 @@ public class Order {
     /**
      * 当订单类型为2时,当goods的金额值更改后进行更新(配置fillShow后,在fillShow时会依据条件填充该列值)
      */
-    @RdtFieldRely(property = "type")
-    //@RdtFieldRely(property = "type", fillShow = RdtFillType.ENABLE)
+    //@RdtFieldRely(property = "type")
+    @RdtFieldRely(property = "type", fillShow = RdtFillType.ENABLE, disableUpdate = true, details = {@RdtFieldRelyDetail(target = Goods.class, fillShowIgnoresType = "1", disableUpdate = true)},group = 1)
     private Integer price;
 
     /**
-     * type: 1 已完成 2: 未付款 (配置allowValues在save时会忽略对应值的验证,若未找到状态值,保存时将会报错)
+     * type: 1 已完成 2: 未付款 (配置allowValues在save时会忽略对应值的验证,若未找到状态值,在fillSave时将会报错)
      */
-    @RdtRely(value = @KeyTarget(target = Goods.class, value = "2"), allowValues = "1")
+    @RdtRely(value = @KeyTarget(target = Goods.class, value = {"1", "2"}, updateIgnores = {"1"}, disableUpdate = true), allowValues = "3", group = 1)
     private Integer type;
 
 

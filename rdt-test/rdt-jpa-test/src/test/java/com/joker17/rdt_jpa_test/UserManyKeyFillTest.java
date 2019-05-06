@@ -58,7 +58,7 @@ public class UserManyKeyFillTest extends ApplicationTests  {
         for (int i = 0; i < 100; i++) {
             UserManyKeyVo vo = new UserManyKeyVo();
             long val = 2;
-            vo.setUserId(val);
+            vo.setUserId(null);
             vo.setUsername("用户" + val);
             results.add(vo);
             set.add(vo);

@@ -15,7 +15,7 @@ public class UserManyKeyVo {
     /**
      * 基于多组条件列的数据
      */
-    @RdtFieldCondition(property = "id", target = User.class)
+    @RdtFieldCondition(property = "id", target = User.class, nullTips = "userId不能为空")
     private Long userId;
 
     @RdtFieldCondition(target = User.class)

@@ -21,4 +21,10 @@ public @interface RdtFieldConditionRely {
      * @return
      */
     Class target() default Void.class;
+
+    /**
+     * fill时不允许条件为空抛出异常时的提示信息
+     * @return
+     */
+    String[] nullTips() default {};
 }

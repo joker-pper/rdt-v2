@@ -244,7 +244,7 @@ public class RdtConfiguration {
         List<ModifyColumn> columnList = new ArrayList<ModifyColumn>();  //当前值发生变化所要修改的列
         for (ModifyColumn modifyColumn : modifyDescribe.getColumnList()) {
             //如果包含列时加入
-            if (!modifyColumn.getColumn().getIsTransient() && changedPropertys.contains(modifyColumn.getTargetColumn().getProperty())) {
+            if (!modifyColumn.getDisableUpdate() && !modifyColumn.getColumn().getIsTransient() && changedPropertys.contains(modifyColumn.getTargetColumn().getProperty())) {
                 columnList.add(modifyColumn);
             }
         }

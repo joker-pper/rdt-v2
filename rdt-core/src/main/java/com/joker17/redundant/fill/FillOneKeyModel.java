@@ -3,6 +3,7 @@ package com.joker17.redundant.fill;
 import com.joker17.redundant.model.Column;
 import com.joker17.redundant.model.ModifyDescribe;
 import com.joker17.redundant.model.ModifyRelyDescribe;
+import com.joker17.redundant.utils.StringUtils;
 
 import java.util.*;
 
@@ -62,7 +63,16 @@ public class FillOneKeyModel extends FillKeyModel {
     }
 
     public void addKeyValue(Object value) {
-        keyValues.add(value);
+        if (value != null) {
+            boolean add = true;
+            if (value instanceof String) {
+                add = StringUtils.isNotEmpty((String) value);
+            }
+            if (add) {
+                keyValues.add(value);
+            }
+        }
+
     }
 
     public Set<Column> getColumnValues() {
@@ -95,9 +105,8 @@ public class FillOneKeyModel extends FillKeyModel {
     }
 
     public void addDescribeKeyValueData(ModifyDescribe describe, Object keyValue, Object data) {
-        if (keyValue != null) {
-            addKeyValue(keyValue);
-        }
+        addKeyValue(keyValue);
+
         Map<Object, List<Object>> result = getDescribeKeyData(describe);
         List<Object> datas = result.get(keyValue);
         if (datas == null) {
@@ -124,10 +133,9 @@ public class FillOneKeyModel extends FillKeyModel {
         return result;
     }
 
+
     public void addDescribeKeyValueData(ModifyRelyDescribe describe, Object keyValue, Object data) {
-        if (keyValue != null) {
-            addKeyValue(keyValue);
-        }
+        addKeyValue(keyValue);
         Map<Object, List<Object>> result = getDescribeKeyData(describe);
         List<Object> datas = result.get(keyValue);
         if (datas == null) {

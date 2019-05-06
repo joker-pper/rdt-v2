@@ -26,7 +26,7 @@ rdt-config:
 
 logging:
   level:
-    root: INFO
+    root: info
     #org.springframework: debug
     com.joker17.redundant: debug
 

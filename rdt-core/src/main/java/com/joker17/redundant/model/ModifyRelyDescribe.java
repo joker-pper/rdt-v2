@@ -7,19 +7,27 @@ import java.util.List;
 
 /**
  * 用于描述满足带依赖某字段的修改条件时修改相关字段的类
+ *
+ * 当valList.length = updateIgnoresValList.length && notInValList.length = 1时 更新中不包含该对象
  */
 public class ModifyRelyDescribe extends ModifyDescribe {
 
     private int group;
+    /**
+     * 依赖列
+     */
     private Column relyColumn;
 
     private RdtRelyModel rdtRelyModel;
 
-    private Class valType;//值所对应的class,比如依赖字段为枚举类时,该值可能为int.class/String.class
+    /**
+     * 类型值所对应的类型,比如依赖字段为枚举类时,该值可能为int.class/String.class
+     */
+    private Class valType;
 
     /**
      *
-     * 为target class时依赖字段所处已存在的值
+     * 为target class时的所有类型值
      *
      */
     private List<Object> valList = new ArrayList<Object>();
@@ -28,6 +36,22 @@ public class ModifyRelyDescribe extends ModifyDescribe {
      * 依赖字段未处于这些值时为target class(size > 1)
      */
     private List<Object> notInValList = new ArrayList<Object>();
+
+    /**
+     * 更新时所忽略的类型值
+     */
+    private List<Object> updateIgnoresValList = new ArrayList<Object>();
+
+    /**
+     * 是否全局禁用更新
+     */
+    private Boolean disableUpdate;
+
+
+    /**
+     * 未知的依赖值时的提示
+     */
+    private String notAllowedTypeTips;
 
     public int getGroup() {
         return group;
@@ -75,6 +99,30 @@ public class ModifyRelyDescribe extends ModifyDescribe {
 
     public void setNotInValList(List<Object> notInValList) {
         this.notInValList = notInValList;
+    }
+
+    public List<Object> getUpdateIgnoresValList() {
+        return updateIgnoresValList;
+    }
+
+    public void setUpdateIgnoresValList(List<Object> updateIgnoresValList) {
+        this.updateIgnoresValList = updateIgnoresValList;
+    }
+
+    public Boolean getDisableUpdate() {
+        return disableUpdate;
+    }
+
+    public void setDisableUpdate(Boolean disableUpdate) {
+        this.disableUpdate = disableUpdate;
+    }
+
+    public String getNotAllowedTypeTips() {
+        return notAllowedTypeTips;
+    }
+
+    public void setNotAllowedTypeTips(String notAllowedTypeTips) {
+        this.notAllowedTypeTips = notAllowedTypeTips;
     }
 
 }

@@ -43,7 +43,7 @@ public @interface RdtField {
     /**
      * show时: (填充模式为非持久化)
      *  默认只填充非持久化字段
-     *  启用时跟随填充, e.g: 填充已持久化的订单金额在未支付状态下的值
+     *  启用时跟随填充
      *  禁用时会被忽略
      */
     RdtFillType fillShow() default RdtFillType.DEFAULT;

@@ -17,6 +17,12 @@ public class ClassModel {
     private String primaryId;  //当前类的id字段(基本类时必须存在)
 
     /**
+     * 未找到的提示
+     */
+    private String notFoundTips;
+    private String notFoundMoreTips;
+
+    /**
      * 标志 0: 初始化 1: 进行中 2: 已完成
      */
     private Integer builderMark;
@@ -99,6 +105,22 @@ public class ClassModel {
 
     public void setPrimaryId(String primaryId) {
         this.primaryId = primaryId;
+    }
+
+    public String getNotFoundTips() {
+        return notFoundTips;
+    }
+
+    public void setNotFoundTips(String notFoundTips) {
+        this.notFoundTips = notFoundTips;
+    }
+
+    public String getNotFoundMoreTips() {
+        return notFoundMoreTips;
+    }
+
+    public void setNotFoundMoreTips(String notFoundMoreTips) {
+        this.notFoundMoreTips = notFoundMoreTips;
     }
 
     public Integer getBuilderMark() {

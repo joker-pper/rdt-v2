@@ -1,5 +1,6 @@
 package com.joker17.redundant.fill;
 
+import com.joker17.redundant.model.ClassModel;
 import com.joker17.redundant.model.Column;
 import com.joker17.redundant.model.ModifyCondition;
 
@@ -34,15 +35,15 @@ public class FillRSModel implements Serializable {
 
     /**
      * 获取关于当前modifyCondition对应entityClass的FillKeyVO对象
-     * @param entityClass
+     * @param entityClassModel
      * @param modifyCondition
      * @param entityFillKeyVoListMap
      * @return
      */
-    public FillOneKeyModel getFillKeyModel(Class entityClass, ModifyCondition modifyCondition, Map<Class, List<FillOneKeyModel>> entityFillKeyVoListMap) {
+    public FillOneKeyModel getFillKeyModel(ClassModel entityClassModel, ModifyCondition modifyCondition, Map<Class, List<FillOneKeyModel>> entityFillKeyVoListMap) {
         Column targetColumn = modifyCondition.getTargetColumn();
+        Class entityClass = entityClassModel.getCurrentClass();
         List<FillOneKeyModel> fillOneKeyModelList = entityFillKeyVoListMap.get(entityClass);
-
         if (fillOneKeyModelList == null) {
             fillOneKeyModelList = new ArrayList<FillOneKeyModel>(16);
             entityFillKeyVoListMap.put(entityClass, fillOneKeyModelList);
@@ -62,6 +63,7 @@ public class FillRSModel implements Serializable {
             fillOneKeyModel = new FillOneKeyModel();
             fillOneKeyModel.setKey(targetProperty);
             fillOneKeyModel.setEntityClass(entityClass);
+            fillOneKeyModel.setClassModel(entityClassModel);
             fillOneKeyModel.setKeyColumn(targetColumn);
             fillOneKeyModelList.add(fillOneKeyModel);
         }

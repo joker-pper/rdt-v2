@@ -3,11 +3,10 @@ package com.joker17.redundant.core;
 import com.joker17.redundant.annotation.RdtId;
 import com.joker17.redundant.annotation.base.RdtBaseEntity;
 import com.joker17.redundant.annotation.base.RdtBaseField;
-
-import com.joker17.redundant.support.Prototype;
-import com.joker17.redundant.utils.StringUtils;
 import com.joker17.redundant.model.*;
+import com.joker17.redundant.support.Prototype;
 import com.joker17.redundant.utils.*;
+import com.joker17.redundant.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -522,6 +521,11 @@ public abstract class RdtResolver {
         return new ArrayList<T>(sourceList);
     }
 
+    public final String getNotEmptyValue(String value) {
+        return StringUtils.isNotEmpty(value) ? value : null;
+    }
+
+
 
     public final String getRedText(String text) {
         if (text == null) {
@@ -594,8 +598,10 @@ public abstract class RdtResolver {
 
                     appendLogOutput(sb, "\n\t\t\t",
                             dataList,
-                            Arrays.asList(null, "fillShowType", "fillSaveType"),
-                            Arrays.asList(new Object[]{mark, modifyColumn.getFillShowType(), modifyColumn.getFillSaveType()})
+                            Arrays.asList(null, "disableUpdate", "fillShowType",
+                                    "fillSaveType", "fillShowIgnoresType", "fillSaveIgnoresType"),
+                            Arrays.asList(new Object[]{mark, modifyColumn.getDisableUpdate(), modifyColumn.getFillShowType(),
+                                    modifyColumn.getFillSaveType(), modifyColumn.getFillShowIgnoresType(), modifyColumn.getFillSaveIgnoresType()})
                     );
                 }
             }
@@ -634,8 +640,10 @@ public abstract class RdtResolver {
             sb.append("\n\trely column: {}");
             sb.append("\n\tgroup: {}");
             sb.append("\n\tindex: {}");
+            sb.append("\n\tdisableUpdate: {}");
             sb.append("\n\tvalType: {}");
             sb.append("\n\tvalList: {}");
+            sb.append("\n\tupdateIgnoresValList: {}");
             sb.append("\n\tnotInValList: {}");
             sb.append("\n\tModifyConditions:");
 
@@ -644,8 +652,10 @@ public abstract class RdtResolver {
             dataList.add(relyDescribe.getRelyColumn().getProperty());
             dataList.add(relyDescribe.getGroup());
             dataList.add(relyDescribe.getIndex());
+            dataList.add(relyDescribe.getDisableUpdate());
             dataList.add(relyDescribe.getValType().getName());
             dataList.add(relyDescribe.getValList());
+            dataList.add(relyDescribe.getUpdateIgnoresValList());
             dataList.add(relyDescribe.getNotInValList());
 
             boolean hasWarn = appendModifyConditionsAndModifyColumnsLogOutput(sb, dataList, relyDescribe);

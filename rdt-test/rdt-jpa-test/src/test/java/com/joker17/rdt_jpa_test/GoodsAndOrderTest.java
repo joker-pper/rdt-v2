@@ -3,19 +3,19 @@ package com.joker17.rdt_jpa_test;
 import com.alibaba.fastjson.JSON;
 import com.joker17.rdt_jpa_test.domain.Goods;
 import com.joker17.rdt_jpa_test.domain.Order;
+import com.joker17.rdt_jpa_test.domain.User;
 import com.joker17.rdt_jpa_test.service.IGoodsService;
 import com.joker17.rdt_jpa_test.service.IOrderService;
 import com.joker17.rdt_jpa_test.support.JsonUtils;
+import com.joker17.redundant.core.RdtConfiguration;
 import com.joker17.redundant.fill.FillType;
+import com.joker17.redundant.model.ComplexAnalysis;
 import org.junit.Test;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class GoodsAndOrderTest extends ApplicationTests {
 
@@ -24,6 +24,9 @@ public class GoodsAndOrderTest extends ApplicationTests {
 
     @Resource
     private IOrderService orderService;
+
+    @Resource
+    private RdtConfiguration rdtConfiguration;
 
     /**
      * 初始化数据
@@ -107,5 +110,20 @@ public class GoodsAndOrderTest extends ApplicationTests {
     }
 
 
+    @Test
+    public void newOrderWithFills() {
+        Order order = new Order();
+        order.setId("222");
+        order.setGoodsId("1");
+        order.setGoodsName("sadsada");
+        order.setType(3);
+        //save填充当前数据中要持久化的price字段
+        rdtOperation.fillForSave(Arrays.asList(order));
+        logger.info("result: {}", JsonUtils.toJson(order));
 
+        //show填充当前数据中未持久化的goodsName字段
+        rdtOperation.fillForShow(Arrays.asList(order), true);
+        logger.info("result: {}", JsonUtils.toJson(order));
+
+    }
 }

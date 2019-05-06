@@ -14,6 +14,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 public class BuilderTest {
@@ -107,6 +109,23 @@ public class BuilderTest {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
+    }
+
+    @Test
+    public void test3() {
+        List<User> userList = new ArrayList<User>();
+        userList.add(new User());
+
+        List<User> userList2 = new ArrayList<User>(userList);
+
+        userList.clear();
+
+        System.out.println(userList);
+        System.out.println(userList2);
+
+        System.out.println(rdtResolver.parseAnnotationValues(new String[]{"null"}, String.class).get(0) == null);
+        System.out.println(rdtResolver.parseAnnotationValues(new String[]{null}, User.AccountType.class));
 
     }
 

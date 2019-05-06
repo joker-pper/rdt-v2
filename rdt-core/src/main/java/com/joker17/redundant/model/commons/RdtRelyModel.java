@@ -7,16 +7,13 @@ import java.util.*;
  * @RdtRely所解析的模型
  */
 public class RdtRelyModel implements Serializable {
+
     /**
-     * 多个@KeyTarget注解顺序的target class
+     * 为target class时对应的值(class按照@KeyTarget注解顺序)
      */
-    private List<Class> keyTargetClassList = new ArrayList<Class>();
-    /**
-     * 为target class时所需要对应的值
-     */
-    private Map<Class, List<Object>> targetClassValueMap = new LinkedHashMap<Class, List<Object>>();
+    private Map<Class, KeyTargetModel> targetClassValueMap = new LinkedHashMap<Class, KeyTargetModel>();
     private Class valType;
-    private Class nullType;//存在时最后添加到targetClassValueMap中
+
     private Class unknownType;
 
     /**
@@ -34,19 +31,13 @@ public class RdtRelyModel implements Serializable {
      */
     private List<Object> explicitValueList;
 
-    public List<Class> getKeyTargetClassList() {
-        return keyTargetClassList;
-    }
+    private String notAllowedTypeTips;
 
-    public void setKeyTargetClassList(List<Class> keyTargetClassList) {
-        this.keyTargetClassList = keyTargetClassList;
-    }
-
-    public Map<Class, List<Object>> getTargetClassValueMap() {
+    public Map<Class, KeyTargetModel> getTargetClassValueMap() {
         return targetClassValueMap;
     }
 
-    public void setTargetClassValueMap(Map<Class, List<Object>> targetClassValueMap) {
+    public void setTargetClassValueMap(Map<Class, KeyTargetModel> targetClassValueMap) {
         this.targetClassValueMap = targetClassValueMap;
     }
 
@@ -56,14 +47,6 @@ public class RdtRelyModel implements Serializable {
 
     public void setValType(Class valType) {
         this.valType = valType;
-    }
-
-    public Class getNullType() {
-        return nullType;
-    }
-
-    public void setNullType(Class nullType) {
-        this.nullType = nullType;
     }
 
     public Class getUnknownType() {
@@ -94,18 +77,23 @@ public class RdtRelyModel implements Serializable {
     public List<Object> getExplicitValueList() {
         if (explicitValueList == null) {
             Set<Object> values = new HashSet<Object>(16);
-            for (List<Object> list : targetClassValueMap.values()) {
-                values.addAll(list);
+            for (KeyTargetModel keyTargetModel : targetClassValueMap.values()) {
+                values.addAll(keyTargetModel.getValueList());
             }
-            if (nullType != null) {
-                values.add(null);
-            }
+
             values.addAll(allowValues);
             explicitValueList = new ArrayList<Object>(values);
         }
         return explicitValueList;
     }
 
+    public String getNotAllowedTypeTips() {
+        return notAllowedTypeTips;
+    }
+
+    public void setNotAllowedTypeTips(String notAllowedTypeTips) {
+        this.notAllowedTypeTips = notAllowedTypeTips;
+    }
 
     public boolean isValueAllowed(Object value) {
         if (unknownType != null) {

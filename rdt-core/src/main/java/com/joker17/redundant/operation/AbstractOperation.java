@@ -2,9 +2,10 @@ package com.joker17.redundant.operation;
 
 import com.joker17.redundant.core.RdtConfiguration;
 import com.joker17.redundant.core.RdtProperties;
-import com.joker17.redundant.core.RdtResolver;
 import com.joker17.redundant.fill.*;
 import com.joker17.redundant.model.*;
+import com.joker17.redundant.core.RdtResolver;
+import com.joker17.redundant.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +13,7 @@ import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.util.*;
 
-public abstract class AbstractOperation implements RdtOperation {
+public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExceptionHandler {
 
     protected final Logger logger = LoggerFactory.getLogger(RdtOperation.class);
 
@@ -33,7 +34,7 @@ public abstract class AbstractOperation implements RdtOperation {
         this.configuration = configuration;
         this.rdtResolver = configuration.getRdtResolver();
         this.properties = configuration.getProperties();
-        this.fillBuilder = RdtFillBuilder.of(configuration);
+        this.fillBuilder = RdtFillBuilder.of(configuration, this);
     }
 
 
@@ -276,8 +277,7 @@ public abstract class AbstractOperation implements RdtOperation {
         ClassModel classModel = getClassModel(entityClass);
         if (classModel == null) {
             logger.debug("rdt not contains class {} will continue", entityClass.getName());
-        }
-        else {
+        } else {
             String entityClassName = classModel.getClassName();
             if (!classModel.getBaseClass()) {
                 logger.warn("{} is not base class, can't to modify", entityClassName);
@@ -733,9 +733,8 @@ public abstract class AbstractOperation implements RdtOperation {
                             }
 
                             if (checkValue && !isAllowed) {
-                                throw new FillNotAllowedDataException(fillManyKeyModel, entityClass, entityClass.getName() + " can't find one data with " + fillBuilder.getConditionMark(conditionColumnValues, groupValue));
+                                throwFillNotAllowedDataException(fillManyKeyModel, 1, entityClass.getName() + " can't find one data with " + fillBuilder.getConditionMark(conditionColumnValues, groupValue));
                             }
-
                         }
 
                         if (clear || entityData != null) {
@@ -765,11 +764,67 @@ public abstract class AbstractOperation implements RdtOperation {
                 List<FillOneKeyModel> fillOneKeyModelList = fillKeyModelListMap.get(entityClass);
                 for (FillOneKeyModel fillOneKeyModel : fillOneKeyModelList) {
                     List<Object> entityList = findByFillKeyModel(fillOneKeyModel);
-                    fillBuilder.setFillKeyData(fillOneKeyModel, entityClass, entityList, checkValue, clear);
+                    String key = fillOneKeyModel.getKey();
+                    Map<Object, Object> entityDataMap = configuration.transferMap(entityList, key);
+
+                    if (checkValue) {
+                        int keyValuesSize = fillOneKeyModel.getKeyValues().size();
+
+                        //查找的结果值必须与key value的个数相同
+                        if (keyValuesSize != entityDataMap.size()) {
+                            throwFillNotAllowedDataException(fillOneKeyModel, keyValuesSize, entityClass.getName() + " can't find all data with property " + fillOneKeyModel.getKey() + " value in " + rdtResolver.toJson(fillOneKeyModel.getKeyValues()));
+                        }
+                    }
+                    fillBuilder.setFillKeyData(fillOneKeyModel, entityClass, entityDataMap, checkValue, clear);
                 }
             }
         }
     }
+
+    /**
+     * 未满足匹配数据个数时抛出
+     * @param fillKeyModel
+     * @param expectSize 期望个数
+     * @param msg 默认提示信息
+     */
+    @Override
+    public void throwFillNotAllowedDataException(FillKeyModel fillKeyModel, int expectSize, String msg) {
+        Class entityClass = fillKeyModel.getEntityClass();
+        ClassModel classModel = fillKeyModel.getClassModel();
+        String tips = classModel.getNotFoundTips();
+        if (expectSize > 1) {
+            String notFoundMoreTips = classModel.getNotFoundMoreTips();
+            if (StringUtils.isNotBlank(notFoundMoreTips)) {
+                tips = notFoundMoreTips;
+            }
+        }
+        tips = StringUtils.isNotBlank(tips) ? tips : msg;
+        throw new FillNotAllowedDataException(fillKeyModel, entityClass, tips);
+    }
+
+    @Override
+    public void throwFillNotAllowedValueException(ClassModel dataClassModel, ModifyDescribe modifyDescribe, ModifyCondition modifyCondition, Object data, String msg) {
+        String tips = null;
+        String property = null;
+        if (modifyCondition != null) {
+            //条件优先
+            property = modifyCondition.getColumn().getProperty();
+            tips = modifyCondition.getNotAllowedNullTips();
+            if (StringUtils.isEmpty(tips)) {
+                tips = modifyCondition.getColumn().getNotAllowedNullTips();
+            }
+        } else {
+            if (modifyDescribe instanceof ModifyRelyDescribe) {
+                //依赖列
+                ModifyRelyDescribe modifyRelyDescribe = ((ModifyRelyDescribe) modifyDescribe);
+                tips = modifyRelyDescribe.getNotAllowedTypeTips();
+                property = modifyRelyDescribe.getRelyColumn().getProperty();
+            }
+        }
+        tips = StringUtils.isNotEmpty(tips) ? tips : msg;
+        throw new FillNotAllowedValueException(tips, dataClassModel, data, property, modifyDescribe);
+    }
+
 
     /**
      * 处理关系

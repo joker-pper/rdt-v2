@@ -29,4 +29,11 @@ public @interface RdtFieldCondition {
      * @return
      */
     int index() default 0;
+
+    /**
+     * fill时不允许条件为空抛出异常时的提示信息
+     * @return
+     */
+    String nullTips() default "";
+
 }

@@ -1,5 +1,6 @@
 package com.joker17.redundant.fill;
 
+import com.joker17.redundant.model.ClassModel;
 import com.joker17.redundant.model.ModifyDescribe;
 
 /**
@@ -7,13 +8,13 @@ import com.joker17.redundant.model.ModifyDescribe;
  */
 public class FillNotAllowedValueException extends IllegalArgumentException {
 
-    private FillKeyModel fillKeyModel;
+    private ClassModel classModel;
+
+    private Class dataType;
 
     private Object data;
 
     private String property;
-
-    private Class dataType;
 
     private ModifyDescribe describe;
 
@@ -34,22 +35,29 @@ public class FillNotAllowedValueException extends IllegalArgumentException {
     }
 
 
-    public FillNotAllowedValueException(FillKeyModel fillKeyModel, Class dataType, Object data, ModifyDescribe describe, String property, String message) {
+    public FillNotAllowedValueException(String message, ClassModel classModel, Object data, String property, ModifyDescribe describe) {
         super(message);
-        this.fillKeyModel = fillKeyModel;
+        this.classModel = classModel;
+        this.dataType = classModel.getCurrentClass();
         this.data = data;
-        this.describe = describe;
         this.property = property;
+        this.describe = describe;
+    }
+
+    public ClassModel getClassModel() {
+        return classModel;
+    }
+
+    public void setClassModel(ClassModel classModel) {
+        this.classModel = classModel;
+    }
+
+    public Class getDataType() {
+        return dataType;
+    }
+
+    public void setDataType(Class dataType) {
         this.dataType = dataType;
-    }
-
-
-    public FillKeyModel getFillKeyModel() {
-        return fillKeyModel;
-    }
-
-    public void setFillKeyModel(FillKeyModel fillKeyModel) {
-        this.fillKeyModel = fillKeyModel;
     }
 
     public Object getData() {
@@ -66,14 +74,6 @@ public class FillNotAllowedValueException extends IllegalArgumentException {
 
     public void setProperty(String property) {
         this.property = property;
-    }
-
-    public Class getDataType() {
-        return dataType;
-    }
-
-    public void setDataType(Class dataType) {
-        this.dataType = dataType;
     }
 
     public ModifyDescribe getDescribe() {

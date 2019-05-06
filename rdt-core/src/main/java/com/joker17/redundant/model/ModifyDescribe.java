@@ -57,6 +57,8 @@ public class ModifyDescribe implements Comparable, Serializable {
         this.columnList = columnList;
     }
 
+
+
     @Override
     public int compareTo(Object o) {
         int x = this.getIndex();

@@ -7,15 +7,21 @@ import com.joker17.redundant.annotation.field.RdtField;
 import com.joker17.redundant.annotation.field.RdtFieldCondition;
 import com.joker17.redundant.annotation.field.RdtFieldConditions;
 import com.joker17.redundant.annotation.field.RdtFields;
+import com.joker17.redundant.annotation.fill.RdtConditionTips;
+import com.joker17.redundant.annotation.fill.RdtEntityTips;
+import com.joker17.redundant.annotation.fill.RdtFieldRelyDetail;
 import com.joker17.redundant.annotation.rely.*;
+import com.joker17.redundant.model.*;
+import com.joker17.redundant.model.commons.KeyTargetModel;
 import com.joker17.redundant.model.commons.RdtRelyModel;
+import com.joker17.redundant.model.commons.RdtRelyTargetColumnDetailModel;
 import com.joker17.redundant.model.commons.RdtRelyTargetColumnModel;
 import com.joker17.redundant.utils.ClassUtils;
 import com.joker17.redundant.utils.PojoUtils;
 import com.joker17.redundant.utils.StringUtils;
-import com.joker17.redundant.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.*;
@@ -148,6 +154,7 @@ public class RdtPropertiesBuilder {
                     List<ModifyRelyDescribe> describeList = groupDataMap.get(group);
                     for (ModifyRelyDescribe describe : describeList) {
                         rdtResolver.modifyRelyDescribeLogOutput(describe, properties.getShowDescribe());
+
                     }
                 }
             }
@@ -157,6 +164,7 @@ public class RdtPropertiesBuilder {
 
     /**
      * 将依赖信息进行转换成对应的数据,若依赖列的group索引未被列引用不会出现该索引的配置
+     * 如果依赖列没有被其他列所引用也不会产生ModifyRelyDescribe
      * @param classModel
      * @param condition
      */
@@ -177,22 +185,34 @@ public class RdtPropertiesBuilder {
                         for (Integer index : indexRelyMap.keySet()) {
                             RdtRelyTargetColumnModel columnModel = indexRelyMap.get(index);
                             Integer group = columnModel.getGroup(); //所属group
-                            Map<Class, Column> classColumnMap = columnModel.getClassTargetColumnMap(); //class类型所对应的列
+                            //class类型所对应的列
+                            Map<Class, RdtRelyTargetColumnDetailModel> classTargetColumnDetailMap = columnModel.getClassTargetColumnDetailMap();
 
-                            if (classColumnMap != null) {
-                                Map<Class, RdtFillType> fillShowTypeMap = columnModel.getFillShowTypeMap();
-                                Map<Class, RdtFillType> fillSaveTypeMap = columnModel.getFillSaveTypeMap();
-                                for (Class targetClass : classColumnMap.keySet()) {
-                                    Column targetColumn = classColumnMap.get(targetClass);
+                            if (classTargetColumnDetailMap != null) {
+
+                                for (Class targetClass : classTargetColumnDetailMap.keySet()) {
                                     ModifyRelyDescribe modifyRelyDescribe = getModifyRelyDescribe(classModel, getClassModel(targetClass), relyColumn, index, group);
-
+                                    RdtRelyTargetColumnDetailModel detailModel = classTargetColumnDetailMap.get(targetClass);
+                                    Column targetColumn = detailModel.getTargetColumn();
                                     if (condition) {
                                         ModifyCondition modifyCondition = getModifyCondition(currentColumn, targetColumn);
+                                        modifyCondition.setNotAllowedNullTips(rdtResolver.getNotEmptyValue(detailModel.getNotAllowedNullTips()));
                                         modifyRelyDescribe.getConditionList().add(modifyCondition);
                                     } else {
-                                        ModifyColumn modifyColumn = getModifyColumn(currentColumn, targetColumn);
-                                        modifyColumn.setFillShowType(fillShowTypeMap.get(targetClass));
-                                        modifyColumn.setFillSaveType(fillSaveTypeMap.get(targetClass));
+                                        ModifyColumn modifyColumn = null;
+                                        try {
+                                            modifyColumn = getModifyColumn(currentColumn, targetColumn);
+                                        } catch (Exception e) {
+                                            e.printStackTrace();
+                                        }
+                                        modifyColumn.setFillShowType(detailModel.getFillShowType());
+                                        modifyColumn.setFillSaveType(detailModel.getFillSaveType());
+                                        modifyColumn.setFillSaveIgnoresType(detailModel.getFillSaveIgnoresType());
+                                        modifyColumn.setFillShowIgnoresType(detailModel.getFillShowIgnoresType());
+                                        if (!modifyColumn.getColumn().getIsTransient()) {
+                                            //只有为持久化字段时再修改默认的disableUpdate
+                                            modifyColumn.setDisableUpdate(detailModel.getDisableUpdate());
+                                        }
                                         modifyRelyDescribe.getColumnList().add(modifyColumn);
                                     }
                                 }
@@ -278,7 +298,9 @@ public class RdtPropertiesBuilder {
 
         //添加修改条件
         ModifyDescribe modifyDescribe = getModifyDescribe(classModel, targetClassModel, index);
-        modifyDescribe.getConditionList().add(getModifyCondition(column, targetColumn));
+        ModifyCondition modifyCondition = getModifyCondition(column, targetColumn);
+        modifyCondition.setNotAllowedNullTips(rdtResolver.getNotEmptyValue(rdtAnnotation.nullTips()));
+        modifyDescribe.getConditionList().add(modifyCondition);
     }
 
 
@@ -290,16 +312,21 @@ public class RdtPropertiesBuilder {
      */
     private void builderPropertyRelyGroupConfigData(ClassModel classModel, Column column, Annotation annotation) {
         boolean isConditionRely = false;
+        boolean disableUpdate = false;
         int group;
         int relyIndex;
         String[] targetPropertys;
-        Class actualClass = null;
+        Class actualClass;
 
         String relyProperty;  //依赖的字段别名
 
         List<RdtFillType> fillShowTypeList = new ArrayList<RdtFillType>();
         List<RdtFillType> fillSaveTypeList = new ArrayList<RdtFillType>();
+        List<String> nullTipsList = new ArrayList<String>();
 
+        Map<Class, RdtRelyTargetColumnDetailModel> classTargetColumnDetailMap = new HashMap<Class, RdtRelyTargetColumnDetailModel>();
+
+        RdtFieldRelyDetail[] fieldRelyDetails = new RdtFieldRelyDetail[0];
         if (annotation instanceof RdtFieldConditionRely) {
             isConditionRely = true;
             RdtFieldConditionRely rdt = (RdtFieldConditionRely) annotation;
@@ -309,7 +336,7 @@ public class RdtPropertiesBuilder {
 
             targetPropertys = rdt.targetPropertys();
             actualClass = rdt.target() == Void.class ? null : rdt.target();
-
+            nullTipsList.addAll(rdtResolver.parseAnnotationValues(rdt.nullTips(), String.class));
         } else if (annotation instanceof RdtFieldRely) {
             RdtFieldRely rdt = (RdtFieldRely) annotation;
             group = rdt.group();
@@ -317,7 +344,7 @@ public class RdtPropertiesBuilder {
             relyProperty = rdt.property();
             targetPropertys = rdt.targetPropertys();
             actualClass = rdt.target() == Void.class ? null : rdt.target();
-
+            disableUpdate = rdt.disableUpdate();
             for (RdtFillType type : rdt.fillShow()) {
                 fillShowTypeList.add(type);
             }
@@ -325,6 +352,9 @@ public class RdtPropertiesBuilder {
             for (RdtFillType type : rdt.fillSave()) {
                 fillSaveTypeList.add(type);
             }
+
+            fieldRelyDetails = rdt.details();
+
         } else throw new IllegalArgumentException("rdt builder rely config not support this type");
 
         String property = column.getProperty();
@@ -364,7 +394,9 @@ public class RdtPropertiesBuilder {
         RdtRelyTargetColumnModel rdtRelyTargetColumnModel = relyIndexDataMap.get(relyIndex);
         if (rdtRelyTargetColumnModel != null) throw new IllegalArgumentException(hintPrefix + " already exist");
 
-        List<Class> keyTargetClassList = rdtRelyModel.getKeyTargetClassList();
+        Map<Class, KeyTargetModel> targetClassValueMap = rdtRelyModel.getTargetClassValueMap();
+
+        List<Class> keyTargetClassList = new ArrayList<Class>(targetClassValueMap.keySet());
         boolean hasActualClass = actualClass != null;
         if (hasActualClass) {
             //check actual class in key class list
@@ -377,8 +409,51 @@ public class RdtPropertiesBuilder {
         relyIndexDataMap.put(relyIndex, rdtRelyTargetColumnModel);
         rdtRelyTargetColumnModel.setGroup(group);
 
+
+        if (fieldRelyDetails != null) {
+            for (RdtFieldRelyDetail detail : fieldRelyDetails) {
+                Class targetClass = detail.target();
+                if (!keyTargetClassList.contains(targetClass)) {
+                    throw new IllegalArgumentException(hintPrefix + " @RdtFieldRelyDetail target class " + targetClass.getName() + " not in rely column class list");
+                }
+                if (classTargetColumnDetailMap.get(detail.target()) != null) {
+                    throw new IllegalArgumentException(hintPrefix + " @RdtFieldRelyDetail target class " + targetClass.getName() + " must be only one");
+                }
+                RdtRelyTargetColumnDetailModel detailModel = new RdtRelyTargetColumnDetailModel();
+
+                KeyTargetModel keyTargetModel = targetClassValueMap.get(targetClass);
+                List<Object> targetValueList = keyTargetModel.getValueList();
+
+                List<Object> fillSaveIgnoresType = rdtResolver.parseAnnotationValues(detail.fillSaveIgnoresType(), rdtRelyModel.getValType());
+                List<Object> fillShowIgnoresType = rdtResolver.parseAnnotationValues(detail.fillShowIgnoresType(), rdtRelyModel.getValType());
+                if (!fillSaveIgnoresType.isEmpty()) {
+                    //check value
+                    for (Object value : fillSaveIgnoresType) {
+                        if (!targetValueList.contains(value)) {
+                            //忽略更新的值必须在值列表中
+                            throw new IllegalArgumentException(hintPrefix + " @RdtFieldRelyDetail target class " + targetClass.getName() + " fill save val " + value + " must be in value: " + targetValueList);
+                        }
+                    }
+                }
+                if (!fillShowIgnoresType.isEmpty()) {
+                    //check value
+                    for (Object value : fillShowIgnoresType) {
+                        if (!targetValueList.contains(value)) {
+                            //忽略更新的值必须在值列表中
+                            throw new IllegalArgumentException(hintPrefix + " @RdtFieldRelyDetail target class " + targetClass.getName() + " fill show val " + value + " must be in value: " + targetValueList);
+                        }
+                    }
+                }
+                detailModel.setFillSaveIgnoresType(fillSaveIgnoresType);
+                detailModel.setFillShowIgnoresType(fillShowIgnoresType);
+                detailModel.setDisableUpdate(detail.disableUpdate());
+                classTargetColumnDetailMap.put(targetClass, detailModel);
+            }
+        }
+
+
         //初始化各个class所使用的column对象
-        Map<Class, Column> classTargetColumnMap = rdtRelyTargetColumnModel.getClassTargetColumnMap();
+        Map<Class, Column> classTargetColumnMap = new HashMap<Class, Column>();
         int targetEqPropertysLength = targetPropertys.length;
         int classSize = keyTargetClassList.size();
 
@@ -404,6 +479,7 @@ public class RdtPropertiesBuilder {
 
         int expectShowSize = -1;
         int expectSaveSize = -1;
+        int nullTipsSize = nullTipsList.size();
         if (!isConditionRely) {
             expectShowSize = 1;
             expectSaveSize = 1;
@@ -422,11 +498,23 @@ public class RdtPropertiesBuilder {
             if (fillSaveTypeSize != expectSaveSize) {
                 throw new IllegalArgumentException(hintPrefix + " expect fill save type length is " + expectSaveSize);
             }
+        } else {
+            if (nullTipsSize > 1 && nullTipsSize != classSize) {
+                throw new IllegalArgumentException(hintPrefix + " expect fill save type length is " + expectSaveSize);
+            }
         }
+
         for (int i = 0; i < classSize; i ++) {
             Class targetClass = keyTargetClassList.get(i);
             if (hasActualClass) {
                 targetClass = actualClass;
+            }
+            RdtRelyTargetColumnDetailModel detailModel = classTargetColumnDetailMap.get(targetClass);
+
+            boolean hasDetailModel = detailModel != null;
+            if (!hasDetailModel) {
+                detailModel = new RdtRelyTargetColumnDetailModel();
+                classTargetColumnDetailMap.put(targetClass, detailModel);
             }
 
             if (!isConditionRely) {
@@ -445,20 +533,38 @@ public class RdtPropertiesBuilder {
                 } else {
                     fillSaveType = fillSaveTypeList.get(i);
                 }
-                rdtRelyTargetColumnModel.getFillSaveTypeMap().put(targetClass, fillSaveType);
-                rdtRelyTargetColumnModel.getFillShowTypeMap().put(targetClass, fillShowType);
+                detailModel.setFillSaveType(fillSaveType);
+                detailModel.setFillShowType(fillShowType);
+
+                if (!hasDetailModel) {
+                    //没有额外配置时则使用全局
+                    detailModel.setDisableUpdate(disableUpdate);
+                }
+
+            } else {
+                if (nullTipsSize > 0) {
+                    String nullTips = nullTipsSize == 1 ? nullTipsList.get(0) : nullTipsList.get(i);
+                    detailModel.setNotAllowedNullTips(nullTips);
+                }
+
             }
+
 
             if (!oneProperty) {
                 alias = usePropertyList.get(i);
             }
 
+
             builderPropertyRelyGroupTypeData(classModel, column, isConditionRely, targetClass, alias, classTargetColumnMap, hintPrefix, " target type appointed ");
+
+            detailModel.setTargetColumn(classTargetColumnMap.get(targetClass));
+            classTargetColumnDetailMap.put(targetClass, detailModel);
 
             if (hasActualClass) {
                 break;
             }
         }
+        rdtRelyTargetColumnModel.setClassTargetColumnDetailMap(classTargetColumnDetailMap);
     }
 
     private void builderPropertyRelyGroupTypeData(ClassModel classModel, Column column, boolean isConditionRely, Class type, String typePropertyAlias, Map<Class, Column> classTargetColumnMap, String hintPrefix, String describe) {
@@ -532,6 +638,7 @@ public class RdtPropertiesBuilder {
         rdtRelyModel = new RdtRelyModel();
         currentRelyDataMap.put(group, rdtRelyModel);
 
+        rdtRelyModel.setNotAllowedTypeTips(rdtResolver.getNotEmptyValue(rdtRely.typeTips()));
 
         //获取@RdtRely的值类型
         Class propertyClass = column.getPropertyClass();
@@ -544,21 +651,20 @@ public class RdtPropertiesBuilder {
         Class unknownType = rdtRely.unknownType() == Void.class ? null : rdtRely.unknownType();
         List<Class> emptyTargetValueList = new ArrayList<Class>();
         //处理 target class所对应的值
-        Map<Class, List<Object>> targetClassValueMap = rdtRelyModel.getTargetClassValueMap();
+        Map<Class, KeyTargetModel> targetClassValueMap = rdtRelyModel.getTargetClassValueMap();
         Map<Object, Class> typeValClassMap = new HashMap<Object, Class>(16);
         for (KeyTarget keyTarget : rdtRely.value()) {
 
             //验证并添加target class列表
             Class target = keyTarget.target();
-            List<Object> valList = targetClassValueMap.get(target);
-            if (valList != null) {
+            KeyTargetModel keyTargetModel = targetClassValueMap.get(target);
+            if (keyTargetModel != null) {
                 //target class只允许出现一次,通过value配置相关类型值
                 throw new IllegalArgumentException(hintPrefix +
                         " @KeyTarget target type " + target.getName() + " only allowed setting once");
             }
-            valList = new ArrayList<Object>();
-            targetClassValueMap.put(target, valList);
-            rdtRelyModel.getKeyTargetClassList().add(target);
+            keyTargetModel = new KeyTargetModel();
+            targetClassValueMap.put(target, keyTargetModel);
 
             //解析处理当前target class的val值
             List<Object> targetValueList = rdtResolver.parseAnnotationValues(keyTarget.value(), valType, hintPrefix + " @KeyTarget target type " + target.getName() + " has no enum " + valType.getName() + " type val: ");
@@ -574,34 +680,48 @@ public class RdtPropertiesBuilder {
                     typeValClassMap.put(value, target);
                 }
             }
-            valList.addAll(targetValueList);
 
-            if (valList.isEmpty()) {
+            if (targetValueList.isEmpty()) {
                 emptyTargetValueList.add(target);
             }
+
+            List<Object> updateIgnoresValueList = rdtResolver.parseAnnotationValues(keyTarget.updateIgnores(), valType, hintPrefix + " @KeyTarget target type " + target.getName() + " has no enum " + valType.getName() + " type val: ");
+            if (!updateIgnoresValueList.isEmpty()) {
+                for (Object value : updateIgnoresValueList) {
+                    if (!targetValueList.contains(value)) {
+                        //忽略更新的值必须在值列表中
+                        throw new IllegalArgumentException(hintPrefix + " @KeyTarget target type " + target.getName() + " disableUpdate ignores val " + value + " must be in value: " + targetValueList);
+                    }
+                }
+            }
+
+            keyTargetModel.setValueList(targetValueList);
+            keyTargetModel.setDisableUpdate(keyTarget.disableUpdate());
+            //设置type tips
+            String typeTips = rdtResolver.getNotEmptyValue(keyTarget.typeTips());
+            keyTargetModel.setNotAllowedTypeTips(StringUtils.isNotEmpty(typeTips) ? typeTips : rdtRelyModel.getNotAllowedTypeTips());
+            keyTargetModel.setUpdateIgnoresValueList(updateIgnoresValueList);
         }
 
 
         //处理unknown type
         if (unknownType != null) {
-            //获取为unknownType时所对应的全部值
-            List<Object> unknownTypeValList = targetClassValueMap.get(unknownType);
-
-            if (unknownTypeValList == null) {
+            KeyTargetModel unknownTypeKeyTargetModel = targetClassValueMap.get(unknownType);
+            if (unknownTypeKeyTargetModel == null) {
                 throw new IllegalArgumentException(hintPrefix +
                         " @KeyTarget not config target type with unknown type " + unknownType.getName());
             }
-
             if (!emptyTargetValueList.isEmpty()) {
                 emptyTargetValueList.remove(unknownType);
             }
-
+            List<Object> unknownTypeValList = unknownTypeKeyTargetModel.getValueList();
             List<Object> unknownNotExistValues = rdtRelyModel.getUnknownNotExistValues();
             //先存放已存在的全部类型值
-            for (List<Object> values : targetClassValueMap.values()) {
-                unknownNotExistValues.addAll(values);
+            for (KeyTargetModel keyTargetModel : targetClassValueMap.values()) {
+                unknownNotExistValues.addAll(keyTargetModel.getValueList());
             }
 
+            //获取为unknownType时所对应的全部值
             if (!unknownTypeValList.isEmpty()) {
                 //只保留除unknownType外所存在的类型值
                 unknownNotExistValues.removeAll(unknownTypeValList);
@@ -614,6 +734,7 @@ public class RdtPropertiesBuilder {
                     " @KeyTarget about target type " + target.getName() + " should config value list or designated as unknownType.");
         }
 
+
         List<Object> allowValueList = rdtResolver.parseAnnotationValues(rdtRely.allowValues(), valType, hintPrefix + " has no enum " + valType.getName() + " type val: " );
         rdtRelyModel.getAllowValues().addAll(allowValueList);
 
@@ -621,8 +742,8 @@ public class RdtPropertiesBuilder {
         rdtRelyModel.setUnknownType(unknownType);
 
         //加载target class
-        for (Class current : targetClassValueMap.keySet()) {
-            loadClassWithAnnotation(current);
+        for (Class targetClass : targetClassValueMap.keySet()) {
+            loadClassWithAnnotation(targetClass);
         }
     }
 
@@ -651,6 +772,14 @@ public class RdtPropertiesBuilder {
                 }
             }
             classModel.setFieldList(rdtResolver.getFields(currentClass));
+
+            //fill未找到期望数据个数时的提示
+            RdtEntityTips rdtEntityTips = rdtResolver.getAnnotation(currentClass, RdtEntityTips.class);
+            if (rdtEntityTips != null) {
+                classModel.setNotFoundTips(rdtResolver.getNotEmptyValue(rdtEntityTips.notFound()));
+                classModel.setNotFoundMoreTips(rdtResolver.getNotEmptyValue(rdtEntityTips.notFoundMore()));
+            }
+
             classModelMap.put(currentClass, classModel);
         }
         return classModel;
@@ -678,12 +807,18 @@ public class RdtPropertiesBuilder {
             Map<String, String> aliasPropertyMap = classModel.getAliasPropertyMap();  //该类属性别名对应的该类属性名称
             String alias = column.getAlias();
             String aliasProperty = aliasPropertyMap.get(alias);
-            if (StringUtils.isEmpty(aliasProperty))
+            if (StringUtils.isEmpty(aliasProperty)) {
                 aliasPropertyMap.put(column.getAlias(), propertyName);
-            else
+            } else {
                 throw new IllegalArgumentException(classModel.getClassName() + " property " + propertyName + "can't to alias named " + alias + "," +
                         " because " + aliasProperty + " has named this alias");
+            }
 
+            //获取nullTips
+            RdtConditionTips tips = rdtResolver.getAnnotation(field, RdtConditionTips.class);
+            if (tips != null) {
+                column.setNotAllowedNullTips(rdtResolver.getNotEmptyValue(tips.nullTips()));
+            }
             propertyColumnMap.put(propertyName, column);
         }
     }
@@ -861,12 +996,18 @@ public class RdtPropertiesBuilder {
         Map<Integer, RdtRelyModel> groupModelMap = propertyRelyDataMap.get(relyColumn.getProperty());
         RdtRelyModel rdtRelyModel = groupModelMap.get(group);
 
-        Map<Class, List<Object>> targetClassValueMap = rdtRelyModel.getTargetClassValueMap();
-
+        Map<Class, KeyTargetModel> targetClassValueMap = rdtRelyModel.getTargetClassValueMap();
         Class targetClass = targetClassModel.getCurrentClass();
+        KeyTargetModel keyTargetModel = targetClassValueMap.get(targetClass);
+
         modifyDescribe.setValType(rdtRelyModel.getValType());
-        modifyDescribe.setValList(targetClassValueMap.get(targetClass));
+        modifyDescribe.setValList(keyTargetModel.getValueList());
         modifyDescribe.setRdtRelyModel(rdtRelyModel);
+        modifyDescribe.setUpdateIgnoresValList(keyTargetModel.getUpdateIgnoresValueList());
+        modifyDescribe.setNotAllowedTypeTips(keyTargetModel.getNotAllowedTypeTips());
+        modifyDescribe.setDisableUpdate(keyTargetModel.getDisableUpdate());
+
+        //如果target class等于 unknown type
         if (targetClass.equals(rdtRelyModel.getUnknownType())) {
             modifyDescribe.setNotInValList(rdtRelyModel.getUnknownNotExistValues());
         }
@@ -884,7 +1025,8 @@ public class RdtPropertiesBuilder {
             //设置target class被使用的字段
             ClassModel targetModel = getClassModel(targetColumn.getEntityClass());
             targetModel.addUsedProperty(targetColumn.getProperty());
-
+        } else {
+            modifyColumn.setDisableUpdate(true);
         }
         return modifyColumn;
     }
@@ -899,6 +1041,7 @@ public class RdtPropertiesBuilder {
         modifyCondition.setTargetColumn(targetColumn);
         return modifyCondition;
     }
+
 
     /**
      * 处理关系,将当前class设置为target class的处理类的类型
