@@ -274,7 +274,9 @@ public abstract class AbstractOperation implements RdtOperation {
         //获取当前entity的class
         Class entityClass = current.getClass();
         ClassModel classModel = getClassModel(entityClass);
-        if (classModel == null) logger.warn("rdt not contains class {} will continue", entityClass.getName());
+        if (classModel == null) {
+            logger.debug("rdt not contains class {} will continue", entityClass.getName());
+        }
         else {
             String entityClassName = classModel.getClassName();
             if (!classModel.getBaseClass()) {
