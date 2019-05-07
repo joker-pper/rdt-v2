@@ -18,11 +18,6 @@ public class RdtRelyTargetColumnDetailModel {
     private String notAllowedNullTips;
 
     /**
-     * 该列是否禁用更新
-     */
-    private boolean disableUpdate;
-
-    /**
      * fillShow忽略的依赖列类型值列表
      */
     private List<Object> fillShowIgnoresType = new ArrayList<Object>();
@@ -65,13 +60,7 @@ public class RdtRelyTargetColumnDetailModel {
         this.notAllowedNullTips = notAllowedNullTips;
     }
 
-    public boolean getDisableUpdate() {
-        return disableUpdate;
-    }
 
-    public void setDisableUpdate(boolean disableUpdate) {
-        this.disableUpdate = disableUpdate;
-    }
 
     public List<Object> getFillShowIgnoresType() {
         return fillShowIgnoresType;

@@ -33,10 +33,7 @@ public class ModifyColumn implements Serializable {
      */
     private List<Object> fillSaveIgnoresType = new ArrayList<Object>();
 
-    /**
-     * 当前数据是否禁用更新 (非持久化字段时默认为禁用)
-     */
-    private boolean disableUpdate;
+
 
     public Column getColumn() {
         return column;
@@ -86,11 +83,5 @@ public class ModifyColumn implements Serializable {
         this.fillSaveIgnoresType = fillSaveIgnoresType;
     }
 
-    public boolean getDisableUpdate() {
-        return disableUpdate;
-    }
 
-    public void setDisableUpdate(boolean disableUpdate) {
-        this.disableUpdate = disableUpdate;
-    }
 }

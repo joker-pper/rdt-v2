@@ -53,9 +53,4 @@ public @interface RdtFieldRely {
     RdtFieldRelyDetail[] details() default {};
 
 
-    /**
-     * 是否禁用更新(全局)
-     * @return
-     */
-    boolean disableUpdate() default false;
 }

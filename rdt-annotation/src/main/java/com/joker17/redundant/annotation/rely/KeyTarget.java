@@ -14,22 +14,17 @@ public @interface KeyTarget {
 
     Class target();
 
-    /**
-     * 是否禁用更新
-     * @return
-     */
-    boolean disableUpdate() default false;
 
     /**
      * 更新时所忽略的值,配置后更新时将会移除在当前中的状态值后再匹配(不影响填充)
      *
      */
-    String[] updateIgnores() default {};
+    String[] ignoreUpdateValue() default {};
 
     /**
      * fill时未找到状态值抛出异常时的提示信息
      * @return
      */
-    String typeTips() default "";
+    String typeNotAllowedTips() default "";
 
 }

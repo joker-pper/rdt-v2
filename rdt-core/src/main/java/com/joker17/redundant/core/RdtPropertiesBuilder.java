@@ -211,7 +211,7 @@ public class RdtPropertiesBuilder {
                                         modifyColumn.setFillShowIgnoresType(detailModel.getFillShowIgnoresType());
                                         if (!modifyColumn.getColumn().getIsTransient()) {
                                             //只有为持久化字段时再修改默认的disableUpdate
-                                            modifyColumn.setDisableUpdate(detailModel.getDisableUpdate());
+                                            //modifyColumn.setDisableUpdate(detailModel.getDisableUpdate());
                                         }
                                         modifyRelyDescribe.getColumnList().add(modifyColumn);
                                     }
@@ -344,7 +344,6 @@ public class RdtPropertiesBuilder {
             relyProperty = rdt.property();
             targetPropertys = rdt.targetPropertys();
             actualClass = rdt.target() == Void.class ? null : rdt.target();
-            disableUpdate = rdt.disableUpdate();
             for (RdtFillType type : rdt.fillShow()) {
                 fillShowTypeList.add(type);
             }
@@ -446,7 +445,6 @@ public class RdtPropertiesBuilder {
                 }
                 detailModel.setFillSaveIgnoresType(fillSaveIgnoresType);
                 detailModel.setFillShowIgnoresType(fillShowIgnoresType);
-                detailModel.setDisableUpdate(detail.disableUpdate());
                 classTargetColumnDetailMap.put(targetClass, detailModel);
             }
         }
@@ -538,7 +536,7 @@ public class RdtPropertiesBuilder {
 
                 if (!hasDetailModel) {
                     //没有额外配置时则使用全局
-                    detailModel.setDisableUpdate(disableUpdate);
+                    //detailModel.setDisableUpdate(disableUpdate);
                 }
 
             } else {
@@ -685,7 +683,7 @@ public class RdtPropertiesBuilder {
                 emptyTargetValueList.add(target);
             }
 
-            List<Object> updateIgnoresValueList = rdtResolver.parseAnnotationValues(keyTarget.updateIgnores(), valType, hintPrefix + " @KeyTarget target type " + target.getName() + " has no enum " + valType.getName() + " type val: ");
+            List<Object> updateIgnoresValueList = rdtResolver.parseAnnotationValues(keyTarget.ignoreUpdateValue(), valType, hintPrefix + " @KeyTarget target type " + target.getName() + " has no enum " + valType.getName() + " type val: ");
             if (!updateIgnoresValueList.isEmpty()) {
                 for (Object value : updateIgnoresValueList) {
                     if (!targetValueList.contains(value)) {
@@ -696,10 +694,9 @@ public class RdtPropertiesBuilder {
             }
 
             keyTargetModel.setValueList(targetValueList);
-            keyTargetModel.setDisableUpdate(keyTarget.disableUpdate());
-            //设置type tips
-            String typeTips = rdtResolver.getNotEmptyValue(keyTarget.typeTips());
-            keyTargetModel.setNotAllowedTypeTips(StringUtils.isNotEmpty(typeTips) ? typeTips : rdtRelyModel.getNotAllowedTypeTips());
+            //keyTargetModel.setDisableUpdate(keyTarget.disableUpdate());
+            String typeNotAllowedTips = rdtResolver.getNotEmptyValue(keyTarget.typeNotAllowedTips());
+            keyTargetModel.setNotAllowedTypeTips(StringUtils.isNotEmpty(typeNotAllowedTips) ? typeNotAllowedTips : rdtRelyModel.getNotAllowedTypeTips());
             keyTargetModel.setUpdateIgnoresValueList(updateIgnoresValueList);
         }
 
@@ -1026,7 +1023,7 @@ public class RdtPropertiesBuilder {
             ClassModel targetModel = getClassModel(targetColumn.getEntityClass());
             targetModel.addUsedProperty(targetColumn.getProperty());
         } else {
-            modifyColumn.setDisableUpdate(true);
+            //modifyColumn.setDisableUpdate(true);
         }
         return modifyColumn;
     }

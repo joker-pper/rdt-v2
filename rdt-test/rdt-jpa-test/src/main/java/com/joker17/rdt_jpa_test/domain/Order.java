@@ -26,7 +26,7 @@ public class Order {
     private String id;
 
     @RdtConditionTips(nullTips = "商品id不能为空")
-    @RdtFieldConditionRely(property = "type", targetPropertys = "id",group = 1)
+    @RdtFieldConditionRely(property = "type", targetPropertys = "id", group = 1)
     @RdtFieldCondition(target = Goods.class, property = "id")
     private String goodsId;
 
@@ -38,13 +38,13 @@ public class Order {
      * 当订单类型为2时,当goods的金额值更改后进行更新(配置fillShow后,在fillShow时会依据条件填充该列值)
      */
     //@RdtFieldRely(property = "type")
-    @RdtFieldRely(property = "type", fillShow = RdtFillType.ENABLE, disableUpdate = true, details = {@RdtFieldRelyDetail(target = Goods.class, fillShowIgnoresType = "1", disableUpdate = true)},group = 1)
+    @RdtFieldRely(property = "type", fillShow = RdtFillType.ENABLE, details = {@RdtFieldRelyDetail(target = Goods.class, fillShowIgnoresType = "1")}, group = 1)
     private Integer price;
 
     /**
      * type: 1 已完成 2: 未付款 (配置allowValues在save时会忽略对应值的验证,若未找到状态值,在fillSave时将会报错)
      */
-    @RdtRely(value = @KeyTarget(target = Goods.class, value = {"1", "2"}, updateIgnores = {"1"}, disableUpdate = true), allowValues = "3", group = 1)
+    @RdtRely(value = @KeyTarget(target = Goods.class, value = {"1", "2"}, ignoreUpdateValue = {"1"}), allowValues = "3", group = 1)
     private Integer type;
 
 
