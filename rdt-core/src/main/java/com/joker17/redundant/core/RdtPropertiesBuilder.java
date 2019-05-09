@@ -138,7 +138,7 @@ public class RdtPropertiesBuilder {
         for (Class targetClass : targetClassModifyDescribeMap.keySet()) {
             List<ModifyDescribe> describeList = targetClassModifyDescribeMap.get(targetClass);
             for (ModifyDescribe describe : describeList) {
-                rdtResolver.modifyDescribeLogOutput(describe, properties.getShowDescribe());
+                rdtResolver.revealModifyDescribeLogs(describe, properties.getShowDescribe());
             }
         }
         Map<Class, Map<Column, Map<Integer, List<ModifyRelyDescribe>>>> targetClassModifyRelyDescribeMap = classModel.getTargetClassModifyRelyDescribeMap();
@@ -153,7 +153,7 @@ public class RdtPropertiesBuilder {
                 for (Integer group : groupDataMap.keySet()) {
                     List<ModifyRelyDescribe> describeList = groupDataMap.get(group);
                     for (ModifyRelyDescribe describe : describeList) {
-                        rdtResolver.modifyRelyDescribeLogOutput(describe, properties.getShowDescribe());
+                        rdtResolver.revealModifyRelyDescribeLogs(describe, properties.getShowDescribe());
 
                     }
                 }
@@ -196,7 +196,7 @@ public class RdtPropertiesBuilder {
                                     Column targetColumn = detailModel.getTargetColumn();
                                     if (condition) {
                                         ModifyCondition modifyCondition = getModifyCondition(currentColumn, targetColumn);
-                                        modifyCondition.setNotAllowedNullTips(rdtResolver.getNotEmptyValue(detailModel.getNotAllowedNullTips()));
+                                        modifyCondition.setNotAllowedNullTips(rdtResolver.getTipsContent(detailModel.getNotAllowedNullTips()));
                                         modifyRelyDescribe.getConditionList().add(modifyCondition);
                                     } else {
                                         ModifyColumn modifyColumn = null;
@@ -299,7 +299,7 @@ public class RdtPropertiesBuilder {
         //添加修改条件
         ModifyDescribe modifyDescribe = getModifyDescribe(classModel, targetClassModel, index);
         ModifyCondition modifyCondition = getModifyCondition(column, targetColumn);
-        modifyCondition.setNotAllowedNullTips(rdtResolver.getNotEmptyValue(rdtAnnotation.nullTips()));
+        modifyCondition.setNotAllowedNullTips(rdtResolver.getTipsContent(rdtAnnotation.nullTips()));
         modifyDescribe.getConditionList().add(modifyCondition);
     }
 
@@ -636,7 +636,7 @@ public class RdtPropertiesBuilder {
         rdtRelyModel = new RdtRelyModel();
         currentRelyDataMap.put(group, rdtRelyModel);
 
-        rdtRelyModel.setNotAllowedTypeTips(rdtResolver.getNotEmptyValue(rdtRely.typeTips()));
+        rdtRelyModel.setNotAllowedTypeTips(rdtResolver.getTipsContent(rdtRely.typeTips()));
 
         //获取@RdtRely的值类型
         Class propertyClass = column.getPropertyClass();
@@ -694,8 +694,7 @@ public class RdtPropertiesBuilder {
             }
 
             keyTargetModel.setValueList(targetValueList);
-            //keyTargetModel.setDisableUpdate(keyTarget.disableUpdate());
-            String typeNotAllowedTips = rdtResolver.getNotEmptyValue(keyTarget.typeNotAllowedTips());
+            String typeNotAllowedTips = rdtResolver.getTipsContent(keyTarget.typeNotAllowedTips());
             keyTargetModel.setNotAllowedTypeTips(StringUtils.isNotEmpty(typeNotAllowedTips) ? typeNotAllowedTips : rdtRelyModel.getNotAllowedTypeTips());
             keyTargetModel.setUpdateIgnoresValueList(updateIgnoresValueList);
         }
@@ -732,7 +731,7 @@ public class RdtPropertiesBuilder {
         }
 
 
-        List<Object> allowValueList = rdtResolver.parseAnnotationValues(rdtRely.allowValues(), valType, hintPrefix + " has no enum " + valType.getName() + " type val: " );
+        List<Object> allowValueList = rdtResolver.parseAnnotationValues(rdtRely.allowValue(), valType, hintPrefix + " has no enum " + valType.getName() + " type val: " );
         rdtRelyModel.getAllowValues().addAll(allowValueList);
 
         rdtRelyModel.setValType(valType);
@@ -773,8 +772,8 @@ public class RdtPropertiesBuilder {
             //fill未找到期望数据个数时的提示
             RdtEntityTips rdtEntityTips = rdtResolver.getAnnotation(currentClass, RdtEntityTips.class);
             if (rdtEntityTips != null) {
-                classModel.setNotFoundTips(rdtResolver.getNotEmptyValue(rdtEntityTips.notFound()));
-                classModel.setNotFoundMoreTips(rdtResolver.getNotEmptyValue(rdtEntityTips.notFoundMore()));
+                classModel.setNotFoundTips(rdtResolver.getTipsContent(rdtEntityTips.notFound()));
+                classModel.setNotFoundMoreTips(rdtResolver.getTipsContent(rdtEntityTips.notFoundMore()));
             }
 
             classModelMap.put(currentClass, classModel);
@@ -814,7 +813,7 @@ public class RdtPropertiesBuilder {
             //获取nullTips
             RdtConditionTips tips = rdtResolver.getAnnotation(field, RdtConditionTips.class);
             if (tips != null) {
-                column.setNotAllowedNullTips(rdtResolver.getNotEmptyValue(tips.nullTips()));
+                column.setNotAllowedNullTips(rdtResolver.getTipsContent(tips.nullTips()));
             }
             propertyColumnMap.put(propertyName, column);
         }
@@ -1002,14 +1001,12 @@ public class RdtPropertiesBuilder {
         modifyDescribe.setRdtRelyModel(rdtRelyModel);
         modifyDescribe.setUpdateIgnoresValList(keyTargetModel.getUpdateIgnoresValueList());
         modifyDescribe.setNotAllowedTypeTips(keyTargetModel.getNotAllowedTypeTips());
-        modifyDescribe.setDisableUpdate(keyTargetModel.getDisableUpdate());
 
         //如果target class等于 unknown type
         if (targetClass.equals(rdtRelyModel.getUnknownType())) {
             modifyDescribe.setNotInValList(rdtRelyModel.getUnknownNotExistValues());
         }
     }
-
 
 
     private ModifyColumn getModifyColumn(Column column, Column targetColumn) {

@@ -50,7 +50,7 @@ public @interface RdtRely {
      * 配置除value配置外允许的值列表,仅用于通过填充时的验证(既不影响fill,又不影响update,等同于略过状态值)
      * @return
      */
-   String[] allowValues() default {};
+   String[] allowValue() default {};
 
 
    /**

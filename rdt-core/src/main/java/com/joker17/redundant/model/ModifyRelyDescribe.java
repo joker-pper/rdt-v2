@@ -42,10 +42,6 @@ public class ModifyRelyDescribe extends ModifyDescribe {
      */
     private List<Object> updateIgnoresValList = new ArrayList<Object>();
 
-    /**
-     * 是否全局禁用更新
-     */
-    private Boolean disableUpdate;
 
 
     /**
@@ -107,14 +103,6 @@ public class ModifyRelyDescribe extends ModifyDescribe {
 
     public void setUpdateIgnoresValList(List<Object> updateIgnoresValList) {
         this.updateIgnoresValList = updateIgnoresValList;
-    }
-
-    public Boolean getDisableUpdate() {
-        return disableUpdate;
-    }
-
-    public void setDisableUpdate(Boolean disableUpdate) {
-        this.disableUpdate = disableUpdate;
     }
 
     public String getNotAllowedTypeTips() {

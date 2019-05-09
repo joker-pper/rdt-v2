@@ -10,8 +10,6 @@ public class KeyTargetModel implements Serializable {
 
     private String notAllowedTypeTips;
 
-    private Boolean disableUpdate;
-
     private List<Object> updateIgnoresValueList = new ArrayList<Object>();
 
     public List<Object> getValueList() {
@@ -30,13 +28,6 @@ public class KeyTargetModel implements Serializable {
         this.notAllowedTypeTips = notAllowedTypeTips;
     }
 
-    public Boolean getDisableUpdate() {
-        return disableUpdate;
-    }
-
-    public void setDisableUpdate(Boolean disableUpdate) {
-        this.disableUpdate = disableUpdate;
-    }
 
     public List<Object> getUpdateIgnoresValueList() {
         return updateIgnoresValueList;
