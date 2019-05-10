@@ -59,7 +59,7 @@ public class RdtPropertiesBuilder {
         List<Field> fieldList = classModel.getFieldList();
         List<Class<? extends Annotation>> sortAnnotationClassList = Arrays.asList(
                 RdtRelys.class, RdtRely.class,
-                RdtFieldConditionRely.class, RdtFieldRely.class,
+                RdtFieldConditionRelys.class, RdtFieldConditionRely.class, RdtFieldRely.class,
                 RdtFieldConditions.class, RdtFields.class,
                 RdtFieldCondition.class, RdtField.class,
                 RdtOne.class, RdtMany.class);
@@ -169,7 +169,7 @@ public class RdtPropertiesBuilder {
      * @param condition
      */
     private void builderModifyRelyDescribe(ClassModel classModel, boolean condition) {
-        Map<String, Map<Column, Map<Integer, RdtRelyTargetColumnModel>>> propertyTargetMap;
+        Map<String, Map<Column, Map<String, RdtRelyTargetColumnModel>>> propertyTargetMap;
 
         if (condition) propertyTargetMap = classModel.getPropertyTargetConditionRelyMap();
         else propertyTargetMap = classModel.getPropertyTargetRelyMap();
@@ -177,13 +177,17 @@ public class RdtPropertiesBuilder {
         for (String property : propertyTargetMap.keySet()) {
             Column currentColumn = getColumn(classModel, property, false);//当前列信息
 
-            Map<Column, Map<Integer, RdtRelyTargetColumnModel>> targetRelyMap = propertyTargetMap.get(property);
+            Map<Column, Map<String, RdtRelyTargetColumnModel>> targetRelyMap = propertyTargetMap.get(property);
             if (targetRelyMap != null) {
                 for(Column relyColumn : targetRelyMap.keySet()) {
-                    Map<Integer, RdtRelyTargetColumnModel> indexRelyMap = targetRelyMap.get(relyColumn);
-                    if (indexRelyMap != null) {
-                        for (Integer index : indexRelyMap.keySet()) {
-                            RdtRelyTargetColumnModel columnModel = indexRelyMap.get(index);
+                    Map<String, RdtRelyTargetColumnModel> relyTargetColumnModelMap = targetRelyMap.get(relyColumn);
+                    if (relyTargetColumnModelMap != null) {
+                        for (String relyTargetKey : relyTargetColumnModelMap.keySet()) {
+
+                            List<Integer> keyResultList = rdtResolver.split(relyTargetKey, "-", Integer.class);
+                            Integer index = keyResultList.get(1);
+
+                            RdtRelyTargetColumnModel columnModel = relyTargetColumnModelMap.get(relyTargetKey);
                             Integer group = columnModel.getGroup(); //所属group
                             //class类型所对应的列
                             Map<Class, RdtRelyTargetColumnDetailModel> classTargetColumnDetailMap = columnModel.getClassTargetColumnDetailMap();
@@ -249,11 +253,16 @@ public class RdtPropertiesBuilder {
                 RdtRely rdtAnnotation = (RdtRely) annotation;
                 builderRdtRelyConfigData(classModel, column, rdtAnnotation);
             } else if (annotation instanceof RdtRelys) {
-                RdtRelys rdtAnnotation = (RdtRelys) annotation;
-                for (RdtRely rdtRely : rdtAnnotation.value()) {
-                    builderRdtRelyConfigData(classModel, column, rdtRely);
+                RdtRelys rdtAnnotations = (RdtRelys) annotation;
+                for (RdtRely rdtAnnotation : rdtAnnotations.value()) {
+                    builderRdtRelyConfigData(classModel, column, rdtAnnotation);
                 }
-            } else if (annotation instanceof RdtFieldConditionRely) {
+            } else if (annotation instanceof RdtFieldConditionRelys) {
+                RdtFieldConditionRelys rdtAnnotations = (RdtFieldConditionRelys) annotation;
+                for (RdtFieldConditionRely rdtAnnotation : rdtAnnotations.value()) {
+                    builderPropertyRelyGroupConfigData(classModel, column, rdtAnnotation);
+                }
+            }  else if (annotation instanceof RdtFieldConditionRely) {
                 builderPropertyRelyGroupConfigData(classModel, column, annotation);
             } else if (annotation instanceof RdtFieldRely) {
                 builderPropertyRelyGroupConfigData(classModel, column, annotation);
@@ -312,7 +321,6 @@ public class RdtPropertiesBuilder {
      */
     private void builderPropertyRelyGroupConfigData(ClassModel classModel, Column column, Annotation annotation) {
         boolean isConditionRely = false;
-        boolean disableUpdate = false;
         int group;
         int relyIndex;
         String[] targetPropertys;
@@ -370,28 +378,33 @@ public class RdtPropertiesBuilder {
         //需要有对应的rely model数据
         if (rdtRelyModel == null) throw new IllegalArgumentException(hintPrefix +  " corresponding rely data config named " +  relyColumn.getProperty() + " not exist");
 
-       //初始化当前column所对应rely column关于第index组的数据(只能指定一次,即仅存在一组配置)
-        Map<String, Map<Column, Map<Integer, RdtRelyTargetColumnModel>>> propertyTargetConditionRelyMap;
+        String relyTargetKey = group + "-" + relyIndex;
+
+        //初始化当前column所对应rely column关于第group-index组的数据
+        Map<String, Map<Column, Map<String, RdtRelyTargetColumnModel>>> propertyTargetConditionRelyMap;
         if (isConditionRely) {
             propertyTargetConditionRelyMap = classModel.getPropertyTargetConditionRelyMap();
         } else {
             propertyTargetConditionRelyMap = classModel.getPropertyTargetRelyMap();
         }
-        Map<Column, Map<Integer, RdtRelyTargetColumnModel>> relyColumnGroupModelMap = propertyTargetConditionRelyMap.get(property);
+        Map<Column, Map<String, RdtRelyTargetColumnModel>> relyColumnGroupModelMap = propertyTargetConditionRelyMap.get(property);
         if (relyColumnGroupModelMap == null) {
-            relyColumnGroupModelMap = new LinkedHashMap<Column, Map<Integer, RdtRelyTargetColumnModel>>();
+            relyColumnGroupModelMap = new LinkedHashMap<Column, Map<String, RdtRelyTargetColumnModel>>();
             propertyTargetConditionRelyMap.put(property, relyColumnGroupModelMap);
         }
 
-        Map<Integer, RdtRelyTargetColumnModel> relyIndexDataMap = relyColumnGroupModelMap.get(relyColumn);
-        if (relyIndexDataMap == null) {
-            relyIndexDataMap = new HashMap<Integer, RdtRelyTargetColumnModel>();
-            relyColumnGroupModelMap.put(relyColumn, relyIndexDataMap);
+        Map<String, RdtRelyTargetColumnModel> relyTargetColumnModelMap = relyColumnGroupModelMap.get(relyColumn);
+        if (relyTargetColumnModelMap == null) {
+            relyTargetColumnModelMap = new HashMap<String, RdtRelyTargetColumnModel>();
+            relyColumnGroupModelMap.put(relyColumn, relyTargetColumnModelMap);
         }
 
+
         //初始化数据
-        RdtRelyTargetColumnModel rdtRelyTargetColumnModel = relyIndexDataMap.get(relyIndex);
-        if (rdtRelyTargetColumnModel != null) throw new IllegalArgumentException(hintPrefix + " already exist");
+        RdtRelyTargetColumnModel rdtRelyTargetColumnModel = relyTargetColumnModelMap.get(relyTargetKey);
+        if (rdtRelyTargetColumnModel != null) {
+            throw new IllegalArgumentException(hintPrefix + " already exist");
+        }
 
         Map<Class, KeyTargetModel> targetClassValueMap = rdtRelyModel.getTargetClassValueMap();
 
@@ -405,7 +418,7 @@ public class RdtPropertiesBuilder {
         }
 
         rdtRelyTargetColumnModel = new RdtRelyTargetColumnModel();
-        relyIndexDataMap.put(relyIndex, rdtRelyTargetColumnModel);
+        relyTargetColumnModelMap.put(relyTargetKey, rdtRelyTargetColumnModel);
         rdtRelyTargetColumnModel.setGroup(group);
 
 
@@ -683,15 +696,28 @@ public class RdtPropertiesBuilder {
                 emptyTargetValueList.add(target);
             }
 
-            List<Object> updateIgnoresValueList = rdtResolver.parseAnnotationValues(keyTarget.ignoreUpdateValue(), valType, hintPrefix + " @KeyTarget target type " + target.getName() + " has no enum " + valType.getName() + " type val: ");
-            if (!updateIgnoresValueList.isEmpty()) {
-                for (Object value : updateIgnoresValueList) {
-                    if (!targetValueList.contains(value)) {
-                        //忽略更新的值必须在值列表中
-                        throw new IllegalArgumentException(hintPrefix + " @KeyTarget target type " + target.getName() + " disableUpdate ignores val " + value + " must be in value: " + targetValueList);
+
+            String[] ignoreUpdateValueArray = keyTarget.ignoreUpdateValue();
+            List<Object> updateIgnoresValueList;
+
+            if (ignoreUpdateValueArray != null && ignoreUpdateValueArray.length == 1 && StringUtils.equals("$value", ignoreUpdateValueArray[0])) {
+                updateIgnoresValueList = new ArrayList<Object>(targetValueList);
+            } else {
+                updateIgnoresValueList = rdtResolver.parseAnnotationValues(ignoreUpdateValueArray, valType, hintPrefix + " @KeyTarget target type " + target.getName() + " has no enum " + valType.getName() + " type val: ");
+                if (!updateIgnoresValueList.isEmpty()) {
+                    for (Object value : updateIgnoresValueList) {
+                        if (!targetValueList.contains(value)) {
+                            //忽略更新的值必须在值列表中
+                            throw new IllegalArgumentException(hintPrefix + " @KeyTarget target type " + target.getName() + " update ignores val " + value + " must be in value: " + targetValueList);
+                        }
+                    }
+
+                    if (updateIgnoresValueList.size() > targetValueList.size()) {
+                        throw new IllegalArgumentException(hintPrefix + " @KeyTarget target type " + target.getName() + " update ignores val: " + updateIgnoresValueList + String.format(" size(%s) ", updateIgnoresValueList.size()) + "must be lt value: " + targetValueList + String.format(" size(%s)", targetValueList.size()));
                     }
                 }
             }
+
 
             keyTargetModel.setValueList(targetValueList);
             String typeNotAllowedTips = rdtResolver.getTipsContent(keyTarget.typeNotAllowedTips());
@@ -731,7 +757,7 @@ public class RdtPropertiesBuilder {
         }
 
 
-        List<Object> allowValueList = rdtResolver.parseAnnotationValues(rdtRely.allowValue(), valType, hintPrefix + " has no enum " + valType.getName() + " type val: " );
+        List<Object> allowValueList = rdtResolver.parseAnnotationValues(rdtRely.allowValues(), valType, hintPrefix + " has no enum " + valType.getName() + " type val: " );
         rdtRelyModel.getAllowValues().addAll(allowValueList);
 
         rdtRelyModel.setValType(valType);
@@ -1019,8 +1045,6 @@ public class RdtPropertiesBuilder {
             //设置target class被使用的字段
             ClassModel targetModel = getClassModel(targetColumn.getEntityClass());
             targetModel.addUsedProperty(targetColumn.getProperty());
-        } else {
-            //modifyColumn.setDisableUpdate(true);
         }
         return modifyColumn;
     }

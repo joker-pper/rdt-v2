@@ -34,9 +34,9 @@ public class ClassModel {
 
     private Map<String, Map<Integer, RdtRelyModel>> propertyRelyDataMap = new LinkedHashMap<String, Map<Integer, RdtRelyModel>>(16);  //该属性的指定group索引所依赖数据信息
 
-    //当前属性所对应的依赖列的所对应的index对应的RdtRelyTargetColumnModel
-    private Map<String, Map<Column, Map<Integer, RdtRelyTargetColumnModel>>> propertyTargetRelyMap = new LinkedHashMap<String, Map<Column, Map<Integer, RdtRelyTargetColumnModel>>>(16);
-    private Map<String, Map<Column, Map<Integer, RdtRelyTargetColumnModel>>> propertyTargetConditionRelyMap = new LinkedHashMap<String, Map<Column, Map<Integer, RdtRelyTargetColumnModel>>>(16);
+    //当前属性所对应的依赖列的所对应的group-index对应的RdtRelyTargetColumnModel
+    private Map<String, Map<Column, Map<String, RdtRelyTargetColumnModel>>> propertyTargetRelyMap = new LinkedHashMap<String, Map<Column, Map<String, RdtRelyTargetColumnModel>>>(16);
+    private Map<String, Map<Column, Map<String, RdtRelyTargetColumnModel>>> propertyTargetConditionRelyMap = new LinkedHashMap<String, Map<Column, Map<String, RdtRelyTargetColumnModel>>>(16);
 
     private Set<String> usedPropertySet = new HashSet<String>(16);  //被其他持久化使用(所保存)的冗余字段
 
@@ -171,19 +171,19 @@ public class ClassModel {
         this.propertyRelyDataMap = propertyRelyDataMap;
     }
 
-    public Map<String, Map<Column, Map<Integer, RdtRelyTargetColumnModel>>> getPropertyTargetRelyMap() {
+    public Map<String, Map<Column, Map<String, RdtRelyTargetColumnModel>>> getPropertyTargetRelyMap() {
         return propertyTargetRelyMap;
     }
 
-    public void setPropertyTargetRelyMap(Map<String, Map<Column, Map<Integer, RdtRelyTargetColumnModel>>> propertyTargetRelyMap) {
+    public void setPropertyTargetRelyMap(Map<String, Map<Column, Map<String, RdtRelyTargetColumnModel>>> propertyTargetRelyMap) {
         this.propertyTargetRelyMap = propertyTargetRelyMap;
     }
 
-    public Map<String, Map<Column, Map<Integer, RdtRelyTargetColumnModel>>> getPropertyTargetConditionRelyMap() {
+    public Map<String, Map<Column, Map<String, RdtRelyTargetColumnModel>>> getPropertyTargetConditionRelyMap() {
         return propertyTargetConditionRelyMap;
     }
 
-    public void setPropertyTargetConditionRelyMap(Map<String, Map<Column, Map<Integer, RdtRelyTargetColumnModel>>> propertyTargetConditionRelyMap) {
+    public void setPropertyTargetConditionRelyMap(Map<String, Map<Column, Map<String, RdtRelyTargetColumnModel>>> propertyTargetConditionRelyMap) {
         this.propertyTargetConditionRelyMap = propertyTargetConditionRelyMap;
     }
 

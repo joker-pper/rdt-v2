@@ -28,4 +28,15 @@ public class StringUtils {
     public static boolean isNotBlank(String str) {
         return !isBlank(str);
     }
+
+    public static boolean equals(String str1, String str2) {
+        if (str1 != null) {
+            return str1.equals(str2);
+        } else {
+            return str2 == null;
+        }
+    }
+
+
+
 }

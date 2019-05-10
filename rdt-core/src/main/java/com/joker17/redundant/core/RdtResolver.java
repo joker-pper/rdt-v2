@@ -486,6 +486,8 @@ public abstract class RdtResolver {
      */
     public abstract String toJson(Object o);
 
+
+
     public String getConditionMark(Collection<String> keys, List<Object> values) {
         StringBuilder sb = new StringBuilder("[");
         if (keys != null && values != null) {
@@ -520,6 +522,21 @@ public abstract class RdtResolver {
     public final <T> List<T> getNewList(List<T> sourceList) {
         return new ArrayList<T>(sourceList);
     }
+
+
+    public final <T> List<T> split(String value, String regex, Class<T> type) {
+        List<T> results = new ArrayList<T>();
+        if (StringUtils.isNotEmpty(value)) {
+            String[] array = value.split(regex);
+            for (String current : array) {
+                results.add(cast(current, type));
+            }
+        }
+        return results;
+    }
+
+
+
 
     public final String getNotEmptyValue(String value) {
         return StringUtils.isNotEmpty(value) ? value : null;

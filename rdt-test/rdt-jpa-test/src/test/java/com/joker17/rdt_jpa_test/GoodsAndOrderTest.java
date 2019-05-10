@@ -47,6 +47,7 @@ public class GoodsAndOrderTest extends ApplicationTests {
             //设置商品名称,由于设置为@Transient不会被保存
             order.setGoodsName(goods.getName());
             order.setPrice(goods.getPrice());
+            order.setPrice2(goods.getPrice());
             order.setType(new Random().nextInt(2) + 1);
             orderList.add(order);
         }
@@ -64,7 +65,7 @@ public class GoodsAndOrderTest extends ApplicationTests {
         Goods goods = goodsService.getOne("1");
         Goods before = JSON.parseObject(JsonUtils.toJson(goods), Goods.class);
         goods.setName("新商品1");
-        goods.setPrice(6666);
+        goods.setPrice(new Random().nextInt(666));
         goodsService.save(goods);
         //更新相关数据,将会只更新order表中price相关的数据
         rdtOperation.updateMulti(goods, before);

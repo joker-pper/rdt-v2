@@ -17,7 +17,7 @@ public @interface KeyTarget {
 
     /**
      * 更新时所忽略的值,配置后更新时将会移除在当前中的状态值后再匹配(不影响填充)
-     *
+     * 单项时支持 $value(即使用value的值)
      */
     String[] ignoreUpdateValue() default {};
 

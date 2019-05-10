@@ -25,7 +25,17 @@ public @interface RdtFieldRely {
      * @return
      */
     String[] targetPropertys() default {};
-    int group() default 0;//依赖property的第几组
+
+    /**
+     * 依赖property的第几组配置项
+     * @return
+     */
+    int group() default 0;
+
+    /**
+     * 所依赖组配置的索引值
+     * @return
+     */
     int index() default 0;
 
     /**
@@ -34,7 +44,14 @@ public @interface RdtFieldRely {
      */
     Class target() default Void.class;
 
-
+    /**
+     * 只配置一个时为全局所对应的填充类型,若存在不同则需要按照target class的顺序依次配置
+     *
+     * save时: (填充模式为处理持久化字段)
+     * 默认只填充持久化字段
+     * 启用时跟随填充
+     * 禁用时会被忽略
+     */
     RdtFillType[] fillSave() default RdtFillType.DEFAULT;
 
 

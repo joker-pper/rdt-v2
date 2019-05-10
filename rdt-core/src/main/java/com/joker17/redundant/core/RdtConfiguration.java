@@ -117,23 +117,40 @@ public class RdtConfiguration {
         void notIn(List<Object> notInValList);
     }
 
+
+    /**
+     * 将匹配类型值条件进行统一处理,通过回调函数在对应的方法中进行筛选
+     * @param describe
+     * @param callback
+     * @param isUpdate
+     */
     public void matchedTypeHandle(ModifyRelyDescribe describe, MatchedTypeCallback callback, boolean isUpdate) {
 
-        if (callback != null) {
-            List<Object> notInValList = rdtResolver.getNewList(describe.getNotInValList());
-            List<Object> valList = rdtResolver.getNewList(describe.getValList());
+        if (callback == null || describe == null) {
+            throw new IllegalArgumentException("matchedTypeCallback and modifyRelyDescribe must be not null!");
+        }
 
-            if (!valList.isEmpty()) {
-                if (notInValList.isEmpty()) {
-                    callback.in(valList);
-                } else {
-                    //满足在valList 或 非notInValList时
-                    callback.or(valList, notInValList);
-                }
+        List<Object> notInValList = rdtResolver.getNewList(describe.getNotInValList());
+        List<Object> valList = rdtResolver.getNewList(describe.getValList());
+
+        if (isUpdate) {
+            //为更新时移除需要忽略的列表值
+            List<Object> updateIgnoresValList = rdtResolver.getNewList(describe.getUpdateIgnoresValList());
+            if (!updateIgnoresValList.isEmpty()) {
+                valList.removeAll(updateIgnoresValList);
+            }
+        }
+
+        if (!valList.isEmpty()) {
+            if (notInValList.isEmpty()) {
+                callback.in(valList);
             } else {
-                if (!notInValList.isEmpty()) {
-                    callback.notIn(notInValList);
-                }
+                //满足在valList 或 非notInValList时
+                callback.or(valList, notInValList);
+            }
+        } else {
+            if (!notInValList.isEmpty()) {
+                callback.notIn(notInValList);
             }
         }
 
@@ -184,6 +201,7 @@ public class RdtConfiguration {
      * @param describe
      * @param data
      * @param classModel
+     * @param isUpdate 是否为更新
      * @return
      */
     public boolean isMatchedType(ModifyDescribe describe, Object data, ClassModel classModel, boolean isUpdate) {
@@ -228,7 +246,9 @@ public class RdtConfiguration {
      */
     public List<ModifyDescribe> getModifyDescribeData(ClassModel classModel, Class entityClass) {
         List<ModifyDescribe> result = classModel.getTargetClassModifyDescribes(entityClass);
-        if (result == null) result = new ArrayList<ModifyDescribe>();
+        if (result == null) {
+            result = new ArrayList<ModifyDescribe>();
+        }
         return result;
     }
 
@@ -244,7 +264,7 @@ public class RdtConfiguration {
         List<ModifyColumn> columnList = new ArrayList<ModifyColumn>();  //当前值发生变化所要修改的列
         for (ModifyColumn modifyColumn : modifyDescribe.getColumnList()) {
             //如果包含列时加入
-            if (/*!modifyColumn.getDisableUpdate() && */!modifyColumn.getColumn().getIsTransient() && changedPropertys.contains(modifyColumn.getTargetColumn().getProperty())) {
+            if (!modifyColumn.getColumn().getIsTransient() && changedPropertys.contains(modifyColumn.getTargetColumn().getProperty())) {
                 columnList.add(modifyColumn);
             }
         }
@@ -290,14 +310,23 @@ public class RdtConfiguration {
     public ModifyRelyDescribe getModifyRelyDescribe(ModifyRelyDescribe describe, List<String> changedPropertys) {
         ModifyRelyDescribe temp = null;
         List<ModifyColumn> columnList = new ArrayList<ModifyColumn>();
-        for (ModifyColumn modifyColumn : describe.getColumnList()) {
-            if (!modifyColumn.getColumn().getIsTransient() && changedPropertys.contains(modifyColumn.getTargetColumn().getProperty())) { //值变化所要修改的列
-                columnList.add(modifyColumn);
+
+        List<Object> updateIgnoresValList = describe.getUpdateIgnoresValList();
+        List<Object> valList = describe.getValList();
+
+        //当忽略更新值不等同于所处值列表时才进行更新
+        boolean willUpdate = !(valList.size() == updateIgnoresValList.size() && updateIgnoresValList.containsAll(valList));
+
+        if (willUpdate) {
+            for (ModifyColumn modifyColumn : describe.getColumnList()) {
+                if (!modifyColumn.getColumn().getIsTransient() && changedPropertys.contains(modifyColumn.getTargetColumn().getProperty())) {
+                    //值变化所要修改的列
+                    columnList.add(modifyColumn);
+                }
             }
         }
 
         if (!columnList.isEmpty()) {
-
             temp = new ModifyRelyDescribe();
             temp.setIndex(describe.getIndex());
             temp.setConditionList(describe.getConditionList());
@@ -309,6 +338,7 @@ public class RdtConfiguration {
             temp.setRelyColumn(describe.getRelyColumn());
             temp.setValList(describe.getValList());
             temp.setNotInValList(describe.getNotInValList());
+            temp.setUpdateIgnoresValList(describe.getUpdateIgnoresValList());
         }
         return getDeepCloneModifyRelyDescribe(temp);
     }
@@ -561,7 +591,14 @@ public class RdtConfiguration {
     }
 
 
-    //是否移除当前列避免填充
+
+
+    /**
+     * 是否移除当前列避免填充(依据是否为填充持久化模式)
+     * @param modifyColumn
+     * @param isPersistentType
+     * @return
+     */
     public boolean isModifyColumnRemove(ModifyColumn modifyColumn, boolean isPersistentType) {
         boolean isTransient = modifyColumn.getColumn().getIsTransient();
         RdtFillType fillType;

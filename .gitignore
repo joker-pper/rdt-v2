@@ -4,3 +4,5 @@
 *.iws
 .idea/
 pom.xml.versionsBackup
+/rdt-*/target
+
