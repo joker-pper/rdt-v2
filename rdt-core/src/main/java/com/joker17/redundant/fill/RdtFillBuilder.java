@@ -29,7 +29,7 @@ public class RdtFillBuilder {
         return new RdtFillBuilder(support, throwExceptionHandler) ;
     }
 
-    public void setFillKeyData(FillOneKeyModel fillOneKeyModel, Class entityClass, Map<Object, Object> entityDataMap, boolean checkValue, boolean clear) {
+    public void setFillKeyData(FillOneKeyModel fillOneKeyModel, Class entityClass, Map<Object, Object> entityDataMap, boolean checkValue, boolean clear, FillType fillType) {
         String key = fillOneKeyModel.getKey();
 
         if (!entityDataMap.isEmpty() || clear) {
@@ -43,7 +43,7 @@ public class RdtFillBuilder {
                     if (!modifyData.isEmpty()) {
                         //获取当前值所对应的数据
                         Object entityData = entityDataMap.get(keyValue);
-                        setFillKeyData(entityData, entityClass, getConditionMark(key, keyValue), modifyData, modifyDescribe, clear);
+                        setFillKeyData(entityData, entityClass, getConditionMark(key, keyValue), modifyData, modifyDescribe, clear, fillType);
                     }
                 }
             }
@@ -54,7 +54,8 @@ public class RdtFillBuilder {
                     List<Object> modifyData = keyValueData.get(keyValue);
                     if (!modifyData.isEmpty()) {
                         Object entityData = entityDataMap.get(keyValue);
-                        setFillKeyData(entityData, entityClass, getConditionMark(key, keyValue), modifyData, modifyDescribe, clear);                    }
+                        setFillKeyData(entityData, entityClass, getConditionMark(key, keyValue), modifyData, modifyDescribe, clear, fillType);
+                    }
                 }
             }
         }
@@ -94,12 +95,12 @@ public class RdtFillBuilder {
         return sb.toString();
     }
 
-    public void setFillManyKeyData(Object entityData, Class entityClass, Collection<Object> waitFillData, ModifyDescribe describe, boolean clear, String conditionMark) {
-        setFillKeyData(entityData, entityClass, conditionMark, waitFillData, describe, clear);
+    public void setFillManyKeyData(Object entityData, Class entityClass, Collection<Object> waitFillData, ModifyDescribe describe, boolean clear, String conditionMark, FillType fillType) {
+        setFillKeyData(entityData, entityClass, conditionMark, waitFillData, describe, clear, fillType);
     }
 
 
-    private void setFillKeyData(Object entityData, Class entityClass, String conditionMark, Collection<Object> waitFillDatas, ModifyDescribe describe, boolean clear) {
+    private void setFillKeyData(Object entityData, Class entityClass, String conditionMark, Collection<Object> waitFillDatas, ModifyDescribe describe, boolean clear, FillType fillType) {
         if (entityData != null || clear) {
             //当持久化数据存在或者clear时
             List<ModifyColumn> columnList = describe.getColumnList();
@@ -109,6 +110,9 @@ public class RdtFillBuilder {
                 ModifyRelyDescribe modifyRelyDescribe = (ModifyRelyDescribe) describe;
                 relyColumn = modifyRelyDescribe.getRelyColumn();
             }
+
+            boolean hasRelyColumn = relyColumn != null;
+            String relyProperty = hasRelyColumn ? relyColumn.getProperty() : null;
 
             //依据列信息进行赋值
             for (Object waitFillData : waitFillDatas) {
@@ -120,6 +124,8 @@ public class RdtFillBuilder {
                     String primaryId = waitClassModel.getPrimaryId();
                     text = StringUtils.isNotEmpty(primaryId) ? getConditionMark(primaryId, rdtResolver.getPropertyValue(waitFillData, primaryId)) : "";
                 }
+
+                Object relyPropertyValue = hasRelyColumn ? rdtResolver.getPropertyValue(waitFillData, relyProperty) : null;
                 boolean clearMark = entityData == null;
                 if (clearMark) {
                     //清空条件列的值
@@ -141,15 +147,16 @@ public class RdtFillBuilder {
                             //设置当前填充列字段的值
                             rdtResolver.setPropertyValue(waitFillData, property, value);
 
-                            if (relyColumn != null) {
-                                String relyProperty = relyColumn.getProperty();
-                                logger.info("rdt fill clear condition with rely property {}({}-[{}]) about {}{} set [{}({})={}] from [{}{}]", relyProperty, relyColumn.getPropertyClass().getName(), rdtResolver.getPropertyValue(waitFillData, relyProperty), waitClassModel.getClassName(), text, property, propertyClass.getName(), value, entityClass.getName(), conditionMark);
+                            if (hasRelyColumn) {
+                                logger.info("rdt fill clear condition with rely property {}({}-[{}]) about {}{} set [{}({})={}] from [{}{}]", relyProperty, relyColumn.getPropertyClass().getName(), relyPropertyValue, waitClassModel.getClassName(), text, property, propertyClass.getName(), value, entityClass.getName(), conditionMark);
                             } else {
                                 logger.info("rdt fill clear condition about {}{} set [{}({})={}] from [{}{}]", waitClassModel.getClassName(), text, property, propertyClass.getName(), value, entityClass.getName(), conditionMark);
                             }
                         }
                     }
                 }
+
+
 
 
                 for (ModifyColumn modifyColumn : columnList) {
@@ -161,11 +168,28 @@ public class RdtFillBuilder {
                     String targetProperty = targetColumn.getProperty();
                     Class targetPropertyClass = targetColumn.getPropertyClass();
 
+                    //获取是否忽略填充该字段的值
+                    boolean isFillIgnore = false;
+                    List<Object> fillIgnoresType = null;
+
+                    if (hasRelyColumn) {
+                        //当依赖列存在的情况下才有忽略填充属性值
+                        if (FillType.PERSISTENT == fillType) {
+                            fillIgnoresType = modifyColumn.getFillSaveIgnoresType();
+                        } else if (FillType.TRANSIENT == fillType) {
+                            fillIgnoresType = modifyColumn.getFillShowIgnoresType();
+                        }
+                        fillIgnoresType = fillIgnoresType == null ? new ArrayList<Object>() : fillIgnoresType;
+                        if (!fillIgnoresType.isEmpty() && fillIgnoresType.contains(relyPropertyValue)) {
+                            isFillIgnore = true;
+                        }
+                    }
 
                     //处理填充列字段所对应的值
                     Object value = null;
+
                     if (!clearMark) {
-                        //匹配到对应数据值时
+                        //非清除时,获取对应数据值
                         value = rdtResolver.getPropertyValue(entityData, targetProperty);
                     }
 
@@ -176,23 +200,30 @@ public class RdtFillBuilder {
                         logger.warn("rdt cast val error", e);
                     }
 
-                    //设置当前填充列字段的值
-                    rdtResolver.setPropertyValue(waitFillData, property, value);
+                    //即便处于忽略填充,当清除时也要进行处理
+                    if (clearMark || !isFillIgnore) {
 
-                    if (relyColumn != null) {
-                        String relyProperty = relyColumn.getProperty();
-                        if (clearMark) {
-                            logger.info("rdt fill clear column with rely property {}({}-[{}]) about {}{} set [{}({})->{}({})={}] from [{}{}]", relyProperty, relyColumn.getPropertyClass().getName(), rdtResolver.getPropertyValue(waitFillData, relyProperty), waitClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), conditionMark);
+                        //设置当前填充列字段的值
+                        rdtResolver.setPropertyValue(waitFillData, property, value);
+                        if (hasRelyColumn) {
+                            if (clearMark) {
+                                logger.info("rdt fill clear column with rely property {}({}-[{}]) about {}{} set [{}({})->{}({})={}] from [{}{}]", relyProperty, relyColumn.getPropertyClass().getName(), relyPropertyValue, waitClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), conditionMark);
+                            } else {
+                                logger.debug("rdt fill column with rely property {}({}-[{}]) about {}{} set [{}({})->{}({})={}] from [{}{}]", relyProperty, relyColumn.getPropertyClass().getName(), relyPropertyValue, waitClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), conditionMark);
+                            }
                         } else {
-                            logger.debug("rdt fill column with rely property {}({}-[{}]) about {}{} set [{}({})->{}({})={}] from [{}{}]", relyProperty, relyColumn.getPropertyClass().getName(), rdtResolver.getPropertyValue(waitFillData, relyProperty), waitClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), conditionMark);
+                            if (clearMark) {
+                                logger.info("rdt fill clear column about {}{} set [{}({})->{}({})={}] from [{}{}]", waitClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), conditionMark);
+                            } else {
+                                logger.debug("rdt fill column about {}{} set [{}({})->{}({})={}] from [{}{}]", waitClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), conditionMark);
+                            }
                         }
                     } else {
-                        if (clearMark) {
-                            logger.info("rdt fill clear column about {}{} set [{}({})->{}({})={}] from [{}{}]", waitClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), conditionMark);
-                        } else {
-                            logger.debug("rdt fill column about {}{} set [{}({})->{}({})={}] from [{}{}]", waitClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), conditionMark);
-                        }
+                        logger.debug("rdt ignore fill column with rely property {}({}-[{}]) adn ignore types-{} about {}{} set [{}({})->{}({})={}] from [{}{}]", relyProperty, relyColumn.getPropertyClass().getName(), relyPropertyValue, fillIgnoresType, waitClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), conditionMark);
+
                     }
+
+
 
                 }
             }
@@ -287,6 +318,7 @@ public class RdtFillBuilder {
             String property = column.getProperty();
             Object value = rdtResolver.getPropertyValue(data, property);
             if (!allowedNullValue && (value == null || (value instanceof String && StringUtils.isEmpty((String) value)))) {
+                //不允许为空时
                 throwExceptionHandler.throwFillNotAllowedValueException(dataClassModel, describe, modifyCondition, data, dataClassModel.getClassName() + " property " + property + " value not allowed null.");
             }
             if (value != null) {

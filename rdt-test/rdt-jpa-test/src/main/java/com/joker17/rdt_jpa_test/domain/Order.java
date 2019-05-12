@@ -26,14 +26,13 @@ public class Order {
     private String id;
 
     @RdtConditionTips(nullTips = "商品id不能为空")
-
     /**
      * 依赖type列的标识条件
      */
     @RdtFieldConditionRelys(value = {
             @RdtFieldConditionRely(property = "type", targetPropertys = "id", group = 2),
+            @RdtFieldConditionRely(property = "type", targetPropertys = "id", group = 1)
     })
-    @RdtFieldConditionRely(property = "type", targetPropertys = "id", group = 1)
 
     /**
      * 作为填充goodsName的标识条件
@@ -58,7 +57,7 @@ public class Order {
      * fillShow只填充未付款的金额
      * (当前为持久化列,fillShow采用ENABLE模式,fillShow时除忽略类型值外直接使用数据本身值)
      */
-    @RdtFieldRely(property = "type", targetPropertys = "price", fillShow = RdtFillType.ENABLE, details = {@RdtFieldRelyDetail(target = Goods.class, fillShowIgnoresType = {"1", "2"}, fillSaveIgnoresType = "1")}, group = 2)
+    @RdtFieldRely(property = "type", targetPropertys = "price", fillShow = RdtFillType.ENABLE, details = {@RdtFieldRelyDetail(target = Goods.class, fillShowIgnoresType = {"1"}, fillSaveIgnoresType = "1")}, group = 2)
     private Integer price2;
 
 

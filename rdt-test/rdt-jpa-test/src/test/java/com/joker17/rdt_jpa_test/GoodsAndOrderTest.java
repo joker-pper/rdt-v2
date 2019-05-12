@@ -10,6 +10,7 @@ import com.joker17.rdt_jpa_test.support.JsonUtils;
 import com.joker17.redundant.core.RdtConfiguration;
 import com.joker17.redundant.fill.FillType;
 import com.joker17.redundant.model.ComplexAnalysis;
+import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
@@ -81,6 +82,7 @@ public class GoodsAndOrderTest extends ApplicationTests {
         logger.info("result: {}", JsonUtils.toJson(orderService.findAll()));
     }
 
+/*
     @Test
     public void newOrderWithFill() {
         Order order = new Order();
@@ -94,6 +96,53 @@ public class GoodsAndOrderTest extends ApplicationTests {
         //show填充当前数据中未持久化的goodsName字段
         rdtOperation.fillForShow(Arrays.asList(order));
         logger.info("result: {}", JsonUtils.toJson(order));
+
+    }
+
+    */
+    @Test
+    public void newOrderWithFill() {
+        Goods goods = goodsService.getOne("1");
+
+        Order order = new Order();
+        order.setId("222");
+        order.setGoodsId(goods.getId());
+        order.setType(2);
+
+        //save填充当前数据中要持久化的price、price2字段
+        rdtOperation.fillForSave(Arrays.asList(order));
+
+        Assert.assertTrue("fillForSave price/price2 should be same goods price!", order.getPrice().equals(order.getPrice2()) && order.getPrice().equals(goods.getPrice()));
+        logger.info("fillForSave result: {}", JsonUtils.toJson(order));
+
+
+        //show填充当前数据中未持久化的goodsName字段以及price2字段(已持久化但启用填充策略)
+        //随机修改price2的值
+        order.setPrice2(new Random().nextInt(111));
+        rdtOperation.fillForShow(Arrays.asList(order));
+        Assert.assertTrue("fillForShow goodsName should be same goods name!", order.getGoodsName().equals(goods.getName()));
+        Assert.assertTrue("fillForShow price2 should be same goods price!", order.getPrice2().equals(goods.getPrice()));
+
+        logger.info("fillForShow result: {}", JsonUtils.toJson(order));
+
+        //模拟为已支付完成订单状态
+        order.setType(1);
+        Order beforeOrder = JSON.parseObject(JsonUtils.toJson(order), Order.class);
+
+        //支付完成时 fillForShow price与price2应与填充前的数据一致(以持久化的数据为准)
+        rdtOperation.fillForShow(Arrays.asList(order));
+        Assert.assertTrue("fillForShow goodsName should be same goods name!", order.getGoodsName().equals(goods.getName()));
+        Assert.assertTrue("fillForShow price should be same before price!", order.getPrice().equals(beforeOrder.getPrice()));
+        Assert.assertTrue("fillForShow price2 should be same before price2!", order.getPrice2().equals(beforeOrder.getPrice2()));
+        logger.info("fillForShow result: {}", JsonUtils.toJson(order));
+
+
+        //支付完成时 fillForSave price与price2应与填充前的数据一致
+        rdtOperation.fillForSave(Arrays.asList(order));
+
+        Assert.assertTrue("fillForSave price should be same before price!", order.getPrice().equals(beforeOrder.getPrice()));
+        Assert.assertTrue("fillForSave price2 should be same before price2!", order.getPrice2().equals(beforeOrder.getPrice2()));
+        logger.info("fillForSave result: {}", JsonUtils.toJson(order));
 
     }
 

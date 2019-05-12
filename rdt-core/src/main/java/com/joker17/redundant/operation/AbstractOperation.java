@@ -682,12 +682,18 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
 
     @Override
     public void fillForSave(Collection<?> collection, boolean allowedNullValue) {
-        fillForSave(collection, allowedNullValue, FillType.PERSISTENT);
+        fillForSave(collection, allowedNullValue, true);
     }
 
     @Override
-    public void fillForSave(Collection<?> collection, boolean allowedNullValue, FillType fillType) {
-        fill(collection, allowedNullValue, true, true, fillType);
+    public void fillForSave(Collection<?> collection, boolean allowedNullValue, boolean checkValue) {
+        fillForSave(collection, allowedNullValue, checkValue, FillType.PERSISTENT);
+    }
+
+
+    @Override
+    public void fillForSave(Collection<?> collection, boolean allowedNullValue, boolean checkValue, FillType fillType) {
+        fill(collection, allowedNullValue, checkValue, true, fillType);
     }
 
     @Override
@@ -742,13 +748,13 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
                             Map<ModifyDescribe, List<Object>> describeMap = detail.getDescribeMap(groupValue);
                             for (ModifyDescribe describe : describeMap.keySet()) {
                                 List<Object> waitFillData = describeMap.get(describe);
-                                fillBuilder.setFillManyKeyData(entityData, entityClass, waitFillData, describe, clear, conditionMark);
+                                fillBuilder.setFillManyKeyData(entityData, entityClass, waitFillData, describe, clear, conditionMark, fillType);
                             }
 
                             Map<ModifyRelyDescribe, List<Object>> relyDescribeMap = detail.getRelyDescribeMap(groupValue);
                             for (ModifyRelyDescribe describe : relyDescribeMap.keySet()) {
                                 List<Object> waitFillData = relyDescribeMap.get(describe);
-                                fillBuilder.setFillManyKeyData(entityData, entityClass, waitFillData, describe, clear, conditionMark);
+                                fillBuilder.setFillManyKeyData(entityData, entityClass, waitFillData, describe, clear, conditionMark, fillType);
                             }
                         }
                     }
@@ -775,7 +781,7 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
                             throwFillNotAllowedDataException(fillOneKeyModel, keyValuesSize, entityClass.getName() + " can't find all data with property " + fillOneKeyModel.getKey() + " value in " + rdtResolver.toJson(fillOneKeyModel.getKeyValues()));
                         }
                     }
-                    fillBuilder.setFillKeyData(fillOneKeyModel, entityClass, entityDataMap, checkValue, clear);
+                    fillBuilder.setFillKeyData(fillOneKeyModel, entityClass, entityDataMap, checkValue, clear, fillType);
                 }
             }
         }
@@ -798,6 +804,7 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
                 tips = notFoundMoreTips;
             }
         }
+        //获取要提示的信息
         tips = StringUtils.isNotBlank(tips) ? tips : msg;
         throw new FillNotAllowedDataException(fillKeyModel, entityClass, tips);
     }

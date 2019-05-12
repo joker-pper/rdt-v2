@@ -160,18 +160,18 @@ public interface RdtOperation {
      */
     void fillForSave(Collection<?> collection);
 
-    /**
-     *  fillForSave(collection, allowedNullValue, FillType.PERSISTENT);
-     */
+
     void fillForSave(Collection<?> collection, boolean allowedNullValue);
+
+    void fillForSave(Collection<?> collection, boolean allowedNullValue, boolean checkValue);
 
     /**
      * 对持久化数据保存的填充,默认check, 条件值的个数必须不等于所匹配的结果个数时会抛出FillNotAllowedDataException 异常
-     * fill(collection, allowedNullValue, true, true, fillType);
+     * fill(collection, allowedNullValue, checkValue, true, fillType);
      * @param collection
      * @param allowedNullValue 是否允许条件列值为null,为false时存在null值会抛出 FillNotAllowedValueException 异常
      * @param fillType
      *
      */
-    void fillForSave(Collection<?> collection, boolean allowedNullValue, FillType fillType);
+    void fillForSave(Collection<?> collection, boolean allowedNullValue, boolean checkValue, FillType fillType);
 }

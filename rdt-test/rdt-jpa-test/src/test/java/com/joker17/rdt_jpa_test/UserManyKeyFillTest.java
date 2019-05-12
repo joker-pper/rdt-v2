@@ -63,7 +63,7 @@ public class UserManyKeyFillTest extends ApplicationTests  {
             results.add(vo);
             set.add(vo);
         }
-        rdtOperation.fillForSave(results);
+        rdtOperation.fillForSave(results, true, false);
         logger.info("results: {}", JsonUtils.toJson(results));
     }
 

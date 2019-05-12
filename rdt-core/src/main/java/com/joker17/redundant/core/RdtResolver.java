@@ -536,13 +536,11 @@ public abstract class RdtResolver {
     }
 
 
-
-
-    public final String getNotEmptyValue(String value) {
-        return StringUtils.isNotEmpty(value) ? value : null;
-    }
-
-
+    /**
+     * 获取提示信息(可重写支持国际化)
+     * @param tips
+     * @return
+     */
     public String getTipsContent(String tips) {
         return StringUtils.isNotEmpty(tips) ? tips : null;
     }
@@ -564,7 +562,12 @@ public abstract class RdtResolver {
         return result;
     }
 
-    public final void revealModifyDescribeLogs(ModifyDescribe relyDescribe, boolean show) {
+    /**
+     * 输出关系log
+     * @param relyDescribe
+     * @param show
+     */
+    public void revealModifyDescribeLogs(ModifyDescribe relyDescribe, boolean show) {
         if (relyDescribe != null) {
 
             List<Object> dataList = new ArrayList<Object>();
@@ -584,7 +587,7 @@ public abstract class RdtResolver {
 
     }
 
-    public final void revealModifyRelyDescribeLogs(ModifyRelyDescribe relyDescribe, boolean show) {
+    public void revealModifyRelyDescribeLogs(ModifyRelyDescribe relyDescribe, boolean show) {
         if (relyDescribe != null) {
             List<Object> dataList = new ArrayList<Object>();
             StringBuilder sb = new StringBuilder("{}");
@@ -617,7 +620,7 @@ public abstract class RdtResolver {
     }
 
 
-    private boolean getResolveDescribeLogsModifyConditionsAndModifyColumnsHasWarn(StringBuilder logContentBuilder, List<Object> dataList, ModifyDescribe describe) {
+    protected boolean getResolveDescribeLogsModifyConditionsAndModifyColumnsHasWarn(StringBuilder logContentBuilder, List<Object> dataList, ModifyDescribe describe) {
         boolean warn = false;
         if (describe != null) {
             logContentBuilder.append("\n\tModifyConditions:");
@@ -677,7 +680,7 @@ public abstract class RdtResolver {
 
 
 
-    private void resolveDescribeLogsKeyAndValue(StringBuilder logContentBuilder, String connector, List<Object> dataList, Collection<String> keys, List<Object> values) {
+    protected void resolveDescribeLogsKeyAndValue(StringBuilder logContentBuilder, String connector, List<Object> dataList, Collection<String> keys, List<Object> values) {
         if (!keys.isEmpty()) {
             int index = 0;
             for (String key : keys) {
@@ -700,8 +703,6 @@ public abstract class RdtResolver {
                     logContentBuilder.append("{}");
                     dataList.add(value);
                 }
-
-
             }
         }
     }
