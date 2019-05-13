@@ -3,10 +3,7 @@ package com.joker17.redundant.core;
 import com.joker17.redundant.annotation.RdtFillType;
 import com.joker17.redundant.annotation.RdtMany;
 import com.joker17.redundant.annotation.RdtOne;
-import com.joker17.redundant.annotation.field.RdtField;
-import com.joker17.redundant.annotation.field.RdtFieldCondition;
-import com.joker17.redundant.annotation.field.RdtFieldConditions;
-import com.joker17.redundant.annotation.field.RdtFields;
+import com.joker17.redundant.annotation.field.*;
 import com.joker17.redundant.annotation.fill.RdtConditionTips;
 import com.joker17.redundant.annotation.fill.RdtEntityTips;
 import com.joker17.redundant.annotation.fill.RdtFieldRelyDetail;
@@ -58,7 +55,7 @@ public class RdtPropertiesBuilder {
 
         List<Field> fieldList = classModel.getFieldList();
         List<Class<? extends Annotation>> sortAnnotationClassList = Arrays.asList(
-                RdtRelys.class, RdtRely.class,
+                RdtLogicalField.class, RdtRelys.class, RdtRely.class,
                 RdtFieldConditionRelys.class, RdtFieldConditionRely.class, RdtFieldRely.class,
                 RdtFieldConditions.class, RdtFields.class,
                 RdtFieldCondition.class, RdtField.class,
@@ -266,6 +263,8 @@ public class RdtPropertiesBuilder {
                 builderPropertyRelyGroupConfigData(classModel, column, annotation);
             } else if (annotation instanceof RdtFieldRely) {
                 builderPropertyRelyGroupConfigData(classModel, column, annotation);
+            } else if (annotation instanceof RdtLogicalField) {
+                builderRdtLogicalFieldConfigData(classModel, column, (RdtLogicalField) annotation);
             }
         }
     }
@@ -767,6 +766,28 @@ public class RdtPropertiesBuilder {
         for (Class targetClass : targetClassValueMap.keySet()) {
             loadClassWithAnnotation(targetClass);
         }
+    }
+
+    private void builderRdtLogicalFieldConfigData(ClassModel classModel, Column column, RdtLogicalField rdtAnnotation) {
+        String hint = classModel.getClassName() + " build " + column.getProperty() + " config has error with @RdtLogicalField, cause by : ";
+        LogicalModel logicalModel = classModel.getLogicalModel();
+        logicalModel.setColumn(column);
+        Class valType = getRdtValType(rdtAnnotation.valType(), column.getPropertyClass(), hint);
+        logicalModel.setType(valType);
+
+        List<Object> values = logicalModel.getValues();
+
+        List<Object> parsedValues = rdtResolver.parseAnnotationValues(rdtAnnotation.value(), valType, hint + "the enum " + valType.getName() + " type has no val: ");
+
+        if (parsedValues.isEmpty()) {
+            parsedValues = rdtResolver.parseAnnotationValues(properties.getDefaultLogicalValue(), valType, hint + "the enum " + valType.getName() + " type has no val: ");
+        }
+
+        if (parsedValues.isEmpty()) {
+            throw new IllegalArgumentException(hint + "the value must be not empty");
+        }
+
+        values.addAll(parsedValues);
     }
 
     public ClassModel getClassModel(Class currentClass) {

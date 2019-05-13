@@ -59,6 +59,10 @@ public class ClassModel {
      */
     private Set<Class> changedComplexClassSet = new LinkedHashSet<Class>(16);
 
+
+    private LogicalModel logicalModel;
+
+
     public Class getCurrentClass() {
         return currentClass;
     }
@@ -254,5 +258,11 @@ public class ClassModel {
         usedPropertySet.add(property);
     }
 
+    public LogicalModel getLogicalModel() {
+        return logicalModel;
+    }
 
+    public void setLogicalModel(LogicalModel logicalModel) {
+        this.logicalModel = logicalModel;
+    }
 }

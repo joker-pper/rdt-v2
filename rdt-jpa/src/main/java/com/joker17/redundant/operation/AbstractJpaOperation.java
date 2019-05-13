@@ -37,7 +37,11 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
                     sb.append(" SET ");
                 }
                 String property = modifyColumn.getColumn().getProperty();
-                sb.append(property + "=:" + property + ", ");
+                sb.append(property);
+                sb.append(" =:");
+                sb.append(property);
+                sb.append(", ");
+                //sb.append(property + " =:" + property + ", ");
                 updateDataMap.put(property, targetPropertyVal);
             }
         });
@@ -57,7 +61,11 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
                     sb.append(" WHERE ");
                 }
                 String property = modifyCondition.getColumn().getProperty();
-                sb.append(property + " =:" + property + andText);
+                sb.append(property);
+                sb.append(" =:");
+                sb.append(property);
+                sb.append(andText);
+                //sb.append(property + " =:" + property + andText);
                 conditionDataMap.put(property, targetPropertyVal);
             }
         });

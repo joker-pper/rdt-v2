@@ -70,6 +70,12 @@ public class RdtProperties {
      */
     private Boolean closeUpdateMulti = false;
 
+
+    /**
+     * 默认全局逻辑正常状态值(局部覆盖,可多个)
+     */
+    private String[] defaultLogicalValue = new String[]{"1"};
+
     /**
      * 当前类的数据
      */
@@ -205,6 +211,15 @@ public class RdtProperties {
 
     public void setCloseUpdateMulti(Boolean closeUpdateMulti) {
         this.closeUpdateMulti = closeUpdateMulti;
+    }
+
+
+    public String[] getDefaultLogicalValue() {
+        return defaultLogicalValue;
+    }
+
+    public void setDefaultLogicalValue(String[] defaultLogicalValue) {
+        this.defaultLogicalValue = defaultLogicalValue;
     }
 
     public Map<Class, ClassModel> getClassModelMap() {
