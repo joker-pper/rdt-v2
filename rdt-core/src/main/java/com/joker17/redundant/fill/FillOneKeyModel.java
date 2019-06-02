@@ -2,6 +2,7 @@ package com.joker17.redundant.fill;
 
 import com.joker17.redundant.model.Column;
 import com.joker17.redundant.model.ModifyDescribe;
+import com.joker17.redundant.model.ModifyGroupDescribe;
 import com.joker17.redundant.model.ModifyRelyDescribe;
 import com.joker17.redundant.utils.StringUtils;
 
@@ -17,6 +18,7 @@ public class FillOneKeyModel extends FillKeyModel {
      */
     private String key;
 
+    private boolean isPrimaryKey;
 
     private Column keyColumn;
 
@@ -38,12 +40,22 @@ public class FillOneKeyModel extends FillKeyModel {
      */
     private Map<ModifyRelyDescribe, Map<Object, List<Object>>> relyDescribeKeyDataMap = new HashMap<ModifyRelyDescribe, Map<Object, List<Object>>>(16);
 
+    private Map<ModifyGroupDescribe, List<Object>> groupDescribeKeyDataMap = new HashMap<ModifyGroupDescribe, List<Object>>(16);
+
     public String getKey() {
         return key;
     }
 
     public void setKey(String key) {
         this.key = key;
+    }
+
+    public boolean getIsPrimaryKey() {
+        return isPrimaryKey;
+    }
+
+    public void setIsPrimaryKey(boolean isPrimaryKey) {
+        this.isPrimaryKey = isPrimaryKey;
     }
 
     public Column getKeyColumn() {

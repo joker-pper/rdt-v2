@@ -49,6 +49,8 @@ public class ClassModel {
     //当前类中存在依赖列字段下的target class所对应的修改信息 (integer key 对应的为 group)
     private Map<Class, Map<Column, Map<Integer, List<ModifyRelyDescribe>>>> targetClassModifyRelyDescribeMap = new LinkedHashMap<Class, Map<Column, Map<Integer, List<ModifyRelyDescribe>>>>(16) ;
 
+    private Map<Class, List<ModifyGroupDescribe>> targetClassModifyGroupDescribeMap = new LinkedHashMap<Class, List<ModifyGroupDescribe>>(16);
+
     /**
      * 当前类拥有的关联对象列表,依赖于注解@RdtOne,@RdtMany(用于文档型更新/子对象填充)
      */
@@ -221,6 +223,14 @@ public class ClassModel {
 
     public void setTargetClassModifyRelyDescribeMap(Map<Class, Map<Column, Map<Integer, List<ModifyRelyDescribe>>>> targetClassModifyRelyDescribeMap) {
         this.targetClassModifyRelyDescribeMap = targetClassModifyRelyDescribeMap;
+    }
+
+    public Map<Class, List<ModifyGroupDescribe>> getTargetClassModifyGroupDescribeMap() {
+        return targetClassModifyGroupDescribeMap;
+    }
+
+    public void setTargetClassModifyGroupDescribeMap(Map<Class, List<ModifyGroupDescribe>> targetClassModifyGroupDescribeMap) {
+        this.targetClassModifyGroupDescribeMap = targetClassModifyGroupDescribeMap;
     }
 
     /**

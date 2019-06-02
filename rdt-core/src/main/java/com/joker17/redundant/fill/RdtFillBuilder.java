@@ -235,7 +235,7 @@ public class RdtFillBuilder {
     public static boolean equalsElement(Collection collection1, Collection collection2) {
         boolean result = false;
         if (collection1 != null && collection2 != null) {
-            if (collection1.equals(collection2)) {
+            if (collection1 == collection2 || collection1.equals(collection2)) {
                 result = true;
             } else {
                 if (collection1.size() == collection2.size()) {

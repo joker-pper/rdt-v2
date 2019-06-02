@@ -65,6 +65,7 @@ public class FillRSModel implements Serializable {
             fillOneKeyModel.setEntityClass(entityClass);
             fillOneKeyModel.setClassModel(entityClassModel);
             fillOneKeyModel.setKeyColumn(targetColumn);
+            fillOneKeyModel.setIsPrimaryKey(targetColumn.getIsPrimaryId());
             fillOneKeyModelList.add(fillOneKeyModel);
         }
         return fillOneKeyModel;
