@@ -486,6 +486,19 @@ public class RdtFillBuilder {
                         });
                     }
 
+
+                    final Map<Class, List<ModifyGroupDescribe>> targetClassModifyGroupDescribeMap = dataClassModel.getTargetClassModifyGroupDescribeMap();
+                    for (final Class entityClass : targetClassModifyGroupDescribeMap.keySet()) {
+                        ClassModel entityClassModel = configuration.getClassModel(entityClass);
+                        configuration.doModifyGroupDescribeHandle(entityClassModel, dataClassModel, new RdtConfiguration.ModifyGroupDescribeCallBack() {
+                            @Override
+                            public void execute(ClassModel classModel, ClassModel modifyClassModel, ModifyGroupDescribe describe) {
+
+                            }
+                        });
+                    }
+
+
                     //处理当前数据中的存在的关联字段的数据
                     for (ComplexModel complexModel : dataClassModel.getComplexModelList()) {
                         String complexProperty = complexModel.getProperty();

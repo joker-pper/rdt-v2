@@ -252,6 +252,16 @@ public class RdtConfiguration {
         return result;
     }
 
+
+    public List<ModifyGroupDescribe> getModifyGroupDescribeData(ClassModel classModel, Class entityClass) {
+        List<ModifyGroupDescribe> result = classModel.getTargetClassModifyGroupDescribeMap().get(entityClass);
+        if (result == null) {
+            result = new ArrayList<ModifyGroupDescribe>();
+        }
+        return result;
+    }
+
+
     /**
      * 根据发生改变的属性列表返回当前的修改条件,如果返回为空时则无需修改
      *
@@ -539,6 +549,27 @@ public class RdtConfiguration {
             }
         }
     }
+
+
+
+
+    public static abstract class ModifyGroupDescribeCallBack {
+        public abstract void execute(ClassModel classModel, ClassModel modifyClassModel, ModifyGroupDescribe describe);
+    }
+
+
+    public void doModifyGroupDescribeHandle(ClassModel classModel, ClassModel modifyClassModel, ModifyGroupDescribeCallBack callBack) {
+        Class entityClass = classModel.getCurrentClass();
+        List<ModifyGroupDescribe> modifyDescribeList = getModifyGroupDescribeData(modifyClassModel, entityClass);
+        if (!modifyDescribeList.isEmpty()) {
+            for (ModifyGroupDescribe modifyDescribe : modifyDescribeList) {
+                callBack.execute(classModel, modifyClassModel, modifyDescribe);
+            }
+        }
+    }
+
+
+
 
     public static abstract class ModifyColumnCallBack {
 

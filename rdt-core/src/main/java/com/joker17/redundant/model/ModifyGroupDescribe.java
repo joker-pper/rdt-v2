@@ -1,6 +1,8 @@
 package com.joker17.redundant.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ModifyGroupDescribe implements Comparable, Serializable {
 
@@ -8,6 +10,9 @@ public class ModifyGroupDescribe implements Comparable, Serializable {
     private Class targetClass;
 
     private int index;
+
+    private ModifyGroupKeysColumn modifyGroupKeysColumn;
+    private List<ModifyGroupConcatColumn> modifyGroupConcatColumnList = new ArrayList<ModifyGroupConcatColumn>(16);
 
     public Class getEntityClass() {
         return entityClass;
@@ -31,6 +36,23 @@ public class ModifyGroupDescribe implements Comparable, Serializable {
 
     public void setIndex(int index) {
         this.index = index;
+    }
+
+
+    public ModifyGroupKeysColumn getModifyGroupKeysColumn() {
+        return modifyGroupKeysColumn;
+    }
+
+    public void setModifyGroupKeysColumn(ModifyGroupKeysColumn modifyGroupKeysColumn) {
+        this.modifyGroupKeysColumn = modifyGroupKeysColumn;
+    }
+
+    public List<ModifyGroupConcatColumn> getModifyGroupConcatColumnList() {
+        return modifyGroupConcatColumnList;
+    }
+
+    public void setModifyGroupConcatColumnList(List<ModifyGroupConcatColumn> modifyGroupConcatColumnList) {
+        this.modifyGroupConcatColumnList = modifyGroupConcatColumnList;
     }
 
     @Override

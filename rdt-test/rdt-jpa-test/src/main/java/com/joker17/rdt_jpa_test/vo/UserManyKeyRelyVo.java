@@ -2,6 +2,7 @@ package com.joker17.rdt_jpa_test.vo;
 
 import com.joker17.rdt_jpa_test.domain.Role;
 import com.joker17.rdt_jpa_test.domain.User;
+import com.joker17.redundant.annotation.fill.RdtVO;
 import com.joker17.redundant.annotation.rely.KeyTarget;
 import com.joker17.redundant.annotation.rely.RdtFieldConditionRely;
 import com.joker17.redundant.annotation.rely.RdtFieldRely;
@@ -15,6 +16,7 @@ import javax.persistence.Transient;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@RdtVO
 public class UserManyKeyRelyVo {
 
     /**

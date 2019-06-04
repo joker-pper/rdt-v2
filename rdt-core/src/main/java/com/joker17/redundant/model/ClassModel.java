@@ -13,14 +13,24 @@ public class ClassModel {
     private String className;
     private String simpleName;
     private String entityName;  //数据库表名
-    private Boolean baseClass;  //是否为基本类(类有注解@RdtBaseEntity或通过实现方法进行判断)
-    private String primaryId;  //当前类的id字段(基本类时必须存在)
+
+    /**
+     * 是否为基本类(类有注解@RdtBaseEntity或通过实现方法进行判断--持久化类)
+     */
+    private Boolean baseClass;
+    /**
+     * 当前类的id字段(基本类时必须存在)
+     */
+    private String primaryId;
+
 
     /**
      * 未找到的提示
      */
     private String notFoundTips;
     private String notFoundMoreTips;
+
+    private Boolean isVoClass;
 
     /**
      * 标志 0: 初始化 1: 进行中 2: 已完成
@@ -127,6 +137,14 @@ public class ClassModel {
 
     public void setNotFoundMoreTips(String notFoundMoreTips) {
         this.notFoundMoreTips = notFoundMoreTips;
+    }
+
+    public Boolean getIsVoClass() {
+        return isVoClass;
+    }
+
+    public void setIsVoClass(Boolean isVoClass) {
+        this.isVoClass = isVoClass;
     }
 
     public Integer getBuilderMark() {

@@ -1,5 +1,6 @@
 package com.joker17.redundant.core;
 
+import com.joker17.redundant.annotation.RdtFillType;
 import com.joker17.redundant.annotation.RdtId;
 import com.joker17.redundant.annotation.base.RdtBaseEntity;
 import com.joker17.redundant.annotation.base.RdtBaseField;
@@ -227,8 +228,8 @@ public abstract class RdtResolver {
             }
             columnTransientAnnotationClassList = classList;
         }
-        Boolean result = false;
 
+        Boolean result = false;
         for (Class current : columnTransientAnnotationClassList) {
             if (getAnnotation(field, current) != null) {
                 result = true;
@@ -307,11 +308,11 @@ public abstract class RdtResolver {
     }
 
 
-    public boolean isIgnoreClass(Class modelClass) {
+    public boolean isIgnoreModelClass(Class modelClass) {
         if (modelClass == null || modelClass.isInterface() || modelClass.isEnum() || modelClass.isAnnotation() || modelClass.isPrimitive()) {
             return true;
         }
-        for (Class type : Arrays.asList(Map.class, Collection.class, Date.class, Number.class)) {
+        for (Class type : Arrays.asList(Map.class, Collection.class, Date.class, Number.class, String.class)) {
             if (ClassUtils.familyClass(modelClass, type)) {
                 return true;
             }
@@ -319,6 +320,45 @@ public abstract class RdtResolver {
 
         return false;
     }
+
+    protected String[] getOtherBasicClassStrArray() {
+        return new String[] {"java.time.LocalDateTime"};
+    }
+
+
+    /**
+     * 获取class是否为基础类型
+     * @param current
+     * @return
+     */
+    public boolean isBasicClass(Class current) {
+        boolean result =
+                (
+                        current.isPrimitive()
+                        || Date.class.isAssignableFrom(current)
+                        || String.class.isAssignableFrom(current)
+                        || Number.class.isAssignableFrom(current)
+                        || Boolean.class.isAssignableFrom(current)
+                        || Character.class.isAssignableFrom(current)
+                );
+        if (!result) {
+            String[] otherClassStrArray = getOtherBasicClassStrArray();
+            if (otherClassStrArray != null) {
+                for (String otherClassStr : otherClassStrArray) {
+                    try {
+                        Class otherClass = Class.forName(otherClassStr);
+                        result = otherClass.isAssignableFrom(current);
+                    } catch (ClassNotFoundException e) {
+                    }
+                    if (result) {
+                        break;
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
 
     /**
      * 获取当前类的fields
@@ -471,7 +511,7 @@ public abstract class RdtResolver {
      * @param <T>
      * @return
      */
-    public <T> T cast(Object obj, Class<T> clazz) {
+    public static  <T> T cast(Object obj, Class<T> clazz) {
         return TypeUtils.cast(obj, clazz);
     }
 
@@ -523,17 +563,6 @@ public abstract class RdtResolver {
         return new ArrayList<T>(sourceList);
     }
 
-
-    public final <T> List<T> split(String value, String regex, Class<T> type) {
-        List<T> results = new ArrayList<T>();
-        if (StringUtils.isNotEmpty(value)) {
-            String[] array = value.split(regex);
-            for (String current : array) {
-                results.add(cast(current, type));
-            }
-        }
-        return results;
-    }
 
 
     /**
@@ -738,4 +767,90 @@ public abstract class RdtResolver {
         }
     }
 
+    public RdtFillType getFillShowType(ClassModel classModel, Column column, RdtFillType fillShowType) {
+        if (fillShowType == null || RdtFillType.DEFAULT == fillShowType) {
+            if (classModel.getIsVoClass()) {
+                return RdtFillType.ENABLE;
+            }
+        }
+        return fillShowType;
+    }
+
+    public RdtFillType getFillSaveType(ClassModel classModel, Column column, RdtFillType fillShowType) {
+        if (fillShowType == null || RdtFillType.DEFAULT == fillShowType) {
+            if (classModel.getIsVoClass()) {
+                return RdtFillType.ENABLE;
+            }
+        }
+        return fillShowType;
+    }
+
+
+    public static <T> List<T> split(String text, String symbol, Class<T> type, boolean containsNullOrBlank) {
+        List<T> results = new ArrayList<T>();
+        type = type == null ? (Class<T>)String.class : type;
+        String[] splitArray = null;
+        if (text != null) {
+            splitArray = text.split(symbol, -1);
+        }
+        if (splitArray != null) {
+            for (String value : splitArray) {
+                if (type == String.class) {
+                    boolean add = containsNullOrBlank || StringUtils.isNotBlank(value);
+                    if (add) {
+                        results.add((T)value);
+                    }
+                } else {
+                    T castValue = cast(value, type);
+                    if (containsNullOrBlank || castValue != null) {
+                        results.add(castValue);
+                    }
+                }
+            }
+        }
+        return results;
+    }
+
+    public static List<String> split(String text, String symbol, boolean containsNullOrBlank) {
+        return split(text, symbol, String.class, containsNullOrBlank);
+    }
+
+    public static List<String> split(String text, String symbol) {
+        return split(text, symbol, false);
+    }
+
+    public static <T> List<T> split(String text, String symbol, Class<T> type) {
+        return split(text, symbol, type, false);
+    }
+
+    public static String join(Iterable<?> iterable, String separator, boolean isToEmpty) {
+        if (separator == null) {
+            separator = ",";
+        }
+        StringBuilder builder = new StringBuilder();
+        if (iterable != null) {
+            Iterator iterator = iterable.iterator();
+            while (iterator.hasNext()) {
+                builder.append(iterator.next()).append(separator);
+            }
+            int length = builder.length();
+            if (length > 0) {
+                builder.delete(length - separator.length(), length);
+            }
+        }
+        String result = builder.toString();
+        return StringUtils.isNotEmpty(result) ? result : isToEmpty ? "" : null;
+    }
+
+    public static String join(Iterable<?> iterable, String separator) {
+        return join(iterable, separator, false);
+    }
+
+    public static Class getFieldClass(Field field) {
+        return PojoUtils.getFieldClass(field);
+    }
+
+    public static <T> T[] newInstanceArray(Class<T> classType, int length) {
+        return PojoUtils.newInstanceArray(classType, length);
+    }
 }

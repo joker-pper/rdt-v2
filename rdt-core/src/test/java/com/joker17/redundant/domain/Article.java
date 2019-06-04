@@ -4,9 +4,13 @@ import com.joker17.redundant.annotation.RdtId;
 import com.joker17.redundant.annotation.base.RdtBaseEntity;
 import com.joker17.redundant.annotation.field.RdtField;
 import com.joker17.redundant.annotation.field.RdtFieldCondition;
+import com.joker17.redundant.annotation.fill.RdtGroupConcatField;
+import com.joker17.redundant.annotation.fill.RdtGroupKeys;
 import com.joker17.redundant.annotation.rely.KeyTarget;
 import com.joker17.redundant.annotation.rely.RdtFieldRely;
 import com.joker17.redundant.annotation.rely.RdtRely;
+
+import java.util.List;
 
 @RdtBaseEntity
 public class Article {
@@ -50,5 +54,18 @@ public class Article {
     private boolean hasReply2;
 
 
+    @RdtGroupKeys(property = "id", target = Role.class)
+    private List<String> roleList;
+
+    @RdtGroupConcatField(property = "id", target = Role.class)
+    private List<String> roleNameList;
+
+
+
+    @RdtGroupKeys(property = "id", target = Role.class, index = 1)
+    private String roles;
+
+    @RdtGroupKeys(property = "id", target = Role.class, index = 2)
+    private String[] roleArray;
 
 }

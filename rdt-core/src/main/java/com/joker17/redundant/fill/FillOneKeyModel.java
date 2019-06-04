@@ -40,7 +40,8 @@ public class FillOneKeyModel extends FillKeyModel {
      */
     private Map<ModifyRelyDescribe, Map<Object, List<Object>>> relyDescribeKeyDataMap = new HashMap<ModifyRelyDescribe, Map<Object, List<Object>>>(16);
 
-    private Map<ModifyGroupDescribe, List<Object>> groupDescribeKeyDataMap = new HashMap<ModifyGroupDescribe, List<Object>>(16);
+
+    private Map<ModifyGroupDescribe, Map<List<Object>, List<Object>>> groupDescribeKeyDataMap = new HashMap<ModifyGroupDescribe, Map<List<Object>, List<Object>>>(16);
 
     public String getKey() {
         return key;
@@ -156,5 +157,6 @@ public class FillOneKeyModel extends FillKeyModel {
         }
         datas.add(data);
     }
+
 
 }

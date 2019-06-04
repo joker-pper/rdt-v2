@@ -1,8 +1,5 @@
 package com.joker17.redundant.model;
 
-import java.io.Serializable;
+public class ModifyGroupKeysColumn extends ModifyGroupBaseColumn {
 
-public class ModifyGroupKeysColumn implements Serializable {
-    private Column column;
-    private Column targetColumn;
 }

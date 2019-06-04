@@ -4,17 +4,11 @@ import com.joker17.redundant.annotation.RdtFillType;
 import com.joker17.redundant.annotation.RdtMany;
 import com.joker17.redundant.annotation.RdtOne;
 import com.joker17.redundant.annotation.field.*;
-import com.joker17.redundant.annotation.fill.RdtConditionTips;
-import com.joker17.redundant.annotation.fill.RdtEntityTips;
-import com.joker17.redundant.annotation.fill.RdtFieldRelyDetail;
+import com.joker17.redundant.annotation.fill.*;
 import com.joker17.redundant.annotation.rely.*;
 import com.joker17.redundant.model.*;
-import com.joker17.redundant.model.commons.KeyTargetModel;
-import com.joker17.redundant.model.commons.RdtRelyModel;
-import com.joker17.redundant.model.commons.RdtRelyTargetColumnDetailModel;
-import com.joker17.redundant.model.commons.RdtRelyTargetColumnModel;
+import com.joker17.redundant.model.commons.*;
 import com.joker17.redundant.utils.ClassUtils;
-import com.joker17.redundant.utils.PojoUtils;
 import com.joker17.redundant.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +31,7 @@ public class RdtPropertiesBuilder {
 
 
     public void builderClass(Class currentClass) {
-        if (rdtResolver.isIgnoreClass(currentClass)) {
+        if (rdtResolver.isIgnoreModelClass(currentClass)) {
             if (currentClass != null) {
                 logger.debug("ignore builder class : {}", currentClass.getName());
             }
@@ -59,7 +53,9 @@ public class RdtPropertiesBuilder {
                 RdtFieldConditionRelys.class, RdtFieldConditionRely.class, RdtFieldRely.class,
                 RdtFieldConditions.class, RdtFields.class,
                 RdtFieldCondition.class, RdtField.class,
-                RdtOne.class, RdtMany.class);
+                RdtGroupKeys.class, RdtGroupConcatField.class,
+                RdtOne.class, RdtMany.class
+        );
 
         Map<Class, Map<Field, Annotation>> sortAnnotationClassMap = new LinkedHashMap<Class, Map<Field, Annotation>>(16);
 
@@ -206,8 +202,8 @@ public class RdtPropertiesBuilder {
                                         } catch (Exception e) {
                                             e.printStackTrace();
                                         }
-                                        modifyColumn.setFillShowType(detailModel.getFillShowType());
-                                        modifyColumn.setFillSaveType(detailModel.getFillSaveType());
+                                        modifyColumn.setFillShowType(rdtResolver.getFillShowType(classModel, currentColumn, detailModel.getFillShowType()));
+                                        modifyColumn.setFillSaveType(rdtResolver.getFillSaveType(classModel, currentColumn, detailModel.getFillSaveType()));
                                         modifyColumn.setFillSaveIgnoresType(detailModel.getFillSaveIgnoresType());
                                         modifyColumn.setFillShowIgnoresType(detailModel.getFillShowIgnoresType());
                                         if (!modifyColumn.getColumn().getIsTransient()) {
@@ -265,6 +261,10 @@ public class RdtPropertiesBuilder {
                 builderPropertyRelyGroupConfigData(classModel, column, annotation);
             } else if (annotation instanceof RdtLogicalField) {
                 builderRdtLogicalFieldConfigData(classModel, column, (RdtLogicalField) annotation);
+            } else if (annotation instanceof RdtGroupKeys) {
+                builderRdtGroupKeysConfigData(classModel, column, (RdtGroupKeys) annotation);
+            } else if (annotation instanceof RdtGroupConcatField) {
+                builderRdtGroupConcatFieldConfigData(classModel, column, (RdtGroupConcatField) annotation);
             }
         }
     }
@@ -286,8 +286,8 @@ public class RdtPropertiesBuilder {
         //添加修改属性内容
         ModifyDescribe modifyDescribe = getModifyDescribe(classModel, targetClassModel, index);
         ModifyColumn modifyColumn = getModifyColumn(column, targetColumn);
-        modifyColumn.setFillSaveType(rdtAnnotation.fillSave());
-        modifyColumn.setFillShowType(rdtAnnotation.fillShow());
+        modifyColumn.setFillSaveType(rdtResolver.getFillSaveType(classModel, column, rdtAnnotation.fillSave()));
+        modifyColumn.setFillShowType(rdtResolver.getFillShowType(classModel, column, rdtAnnotation.fillShow()));
         modifyDescribe.getColumnList().add(modifyColumn);
     }
 
@@ -790,6 +790,87 @@ public class RdtPropertiesBuilder {
         values.addAll(parsedValues);
     }
 
+
+
+
+
+    private void builderRdtGroupKeysConfigData(ClassModel classModel, Column column, RdtGroupKeys rdtAnnotation) {
+        Class targetClass = rdtAnnotation.target();  //对应的class
+        loadClassWithAnnotation(targetClass);
+
+        String targetProperty = rdtAnnotation.property();  //对应的别名
+        targetProperty = StringUtils.isEmpty(targetProperty) ? column.getProperty() : targetProperty;
+        int index = rdtAnnotation.index();
+
+        //获取target class对应的列
+        ClassModel targetClassModel = getClassModel(targetClass);
+
+        Column targetColumn = getColumn(targetClassModel, targetProperty);
+
+        ModifyGroupDescribe modifyDescribe = getModifyGroupDescribe(classModel, targetClassModel, index);
+        ModifyGroupKeysColumn groupKeysColumn = new ModifyGroupKeysColumn();
+        builderModifyGroupBaseColumnConfigData(groupKeysColumn, column, targetColumn, rdtAnnotation.connector());
+        modifyDescribe.setModifyGroupKeysColumn(groupKeysColumn);
+
+    }
+
+    private void builderRdtGroupConcatFieldConfigData(ClassModel classModel, Column column, RdtGroupConcatField rdtAnnotation) {
+        Class targetClass = rdtAnnotation.target();  //对应的class
+        loadClassWithAnnotation(targetClass);
+
+        String targetProperty = rdtAnnotation.property();  //对应的别名
+        targetProperty = StringUtils.isEmpty(targetProperty) ? column.getProperty() : targetProperty;
+        int index = rdtAnnotation.index();
+
+        //获取target class对应的列
+        ClassModel targetClassModel = getClassModel(targetClass);
+        Column targetColumn = getColumn(targetClassModel, targetProperty);
+
+        ModifyGroupDescribe modifyDescribe = getModifyGroupDescribe(classModel, targetClassModel, index);
+
+        ModifyGroupConcatColumn groupConcatColumn = new ModifyGroupConcatColumn();
+        groupConcatColumn.setFillSaveType(rdtAnnotation.fillSave());
+        groupConcatColumn.setFillShowType(rdtAnnotation.fillShow());
+        builderModifyGroupBaseColumnConfigData(groupConcatColumn, column, targetColumn, rdtAnnotation.connector());
+        modifyDescribe.getModifyGroupConcatColumnList().add(groupConcatColumn);
+    }
+
+    private void builderModifyGroupBaseColumnConfigData(ModifyGroupBaseColumn groupBaseColumn, Column column, Column targetColumn, String connector) {
+        groupBaseColumn.setColumn(column);
+        groupBaseColumn.setTargetColumn(targetColumn);
+        groupBaseColumn.setConnector(connector);
+
+        Class columnPropertyClass = column.getPropertyClass();
+
+        ClassTypeEnum columnClassType;
+        if (List.class.isAssignableFrom(columnPropertyClass)) {
+            columnClassType = ClassTypeEnum.LIST;
+        } else if (Set.class.isAssignableFrom(columnPropertyClass)) {
+            columnClassType = ClassTypeEnum.SET;
+        } else if (columnPropertyClass.isArray()) {
+            columnClassType = ClassTypeEnum.ARRAY;
+        } else {
+            columnClassType = ClassTypeEnum.BASIC;
+        }
+
+        Class columnBasicClass;
+        if (columnClassType == ClassTypeEnum.BASIC) {
+            columnBasicClass = columnPropertyClass;
+        } else {
+            if (columnClassType == ClassTypeEnum.ARRAY) {
+                columnBasicClass = columnPropertyClass.getComponentType();
+            } else {
+                columnBasicClass = ClassUtils.getActualTypeArgumentClass(column.getField());
+            }
+        }
+        groupBaseColumn.setColumnClassType(columnClassType);
+        groupBaseColumn.setColumnClass(columnPropertyClass);
+        groupBaseColumn.setTargetColumnClass(targetColumn.getPropertyClass());
+        groupBaseColumn.setColumnBasicClass(columnBasicClass);
+    }
+
+
+
     public ClassModel getClassModel(Class currentClass) {
         Map<Class, ClassModel> classModelMap = properties.getClassModelMap();
         ClassModel classModel = classModelMap.get(currentClass);
@@ -799,6 +880,16 @@ public class RdtPropertiesBuilder {
             classModel.setSimpleName(currentClass.getSimpleName());
             classModel.setCurrentClass(currentClass);
             classModel.setBaseClass(rdtResolver.isBaseClass(currentClass));
+
+            Boolean isVoClass = false;
+            if (classModel.getBaseClass() == false) {
+                //获取class是否为vo class
+                RdtVO rdtVO = rdtResolver.getAnnotation(currentClass, RdtVO.class);
+                isVoClass = rdtVO != null;
+            }
+
+            classModel.setIsVoClass(isVoClass);
+
             classModel.setBuilderMark(0);
             if (classModel.getBaseClass()) {
                 //必须有空的构造方法
@@ -842,7 +933,7 @@ public class RdtPropertiesBuilder {
             if (properties.getEnableColumnName()) {
                 column.setName(rdtResolver.getColumnName(classModel.getCurrentClass(), field));
             }
-            column.setPropertyClass(PojoUtils.getFieldClass(field));
+            column.setPropertyClass(rdtResolver.getFieldClass(field));
             column.setAlias(rdtResolver.getPropertyAlias(field, propertyName));  //alias
             column.setIsTransient(rdtResolver.isColumnTransient(classModel, field));
             column.setIsPrimaryId(false);
@@ -931,9 +1022,9 @@ public class RdtPropertiesBuilder {
      * @return
      */
     private ModifyDescribe getModifyDescribe(ClassModel classModel, ClassModel targetClassModel, int index) {
-        //@RdtField及@RdtFieldCondition中的target应该为base class
-        if (!targetClassModel.getBaseClass()) throw new IllegalArgumentException(classModel.getClassName() + " field target class " + targetClassModel.getClassName()
-                + "and index " + index + " must be base class");
+
+        checkTargetClassModel(classModel, targetClassModel, index);
+
         Class targetClass = targetClassModel.getCurrentClass();
 
         //处理当前类与target class的关系
@@ -977,9 +1068,9 @@ public class RdtPropertiesBuilder {
      * @return
      */
     private ModifyRelyDescribe getModifyRelyDescribe(ClassModel classModel, ClassModel targetClassModel, Column relyColumn, int index, int group) {
-        //@RdtField及@RdtFieldCondition中的target应该为base class
-        if (!targetClassModel.getBaseClass()) throw new IllegalArgumentException(classModel.getClassName() + " field target class " + targetClassModel.getClassName()
-                + "and index " + index + " must be base class");
+
+        checkTargetClassModel(classModel, targetClassModel, index);
+
         Class targetClass = targetClassModel.getCurrentClass();
 
         //处理当前类与target class的关系
@@ -1032,6 +1123,52 @@ public class RdtPropertiesBuilder {
         }
         return modifyDescribe;
     }
+
+    private void checkTargetClassModel(ClassModel classModel, ClassModel targetClassModel, int index) {
+        if (!targetClassModel.getBaseClass()) {
+            throw new IllegalArgumentException(classModel.getClassName() + " field target class " + targetClassModel.getClassName()
+                    + "and index " + index + " must be base class");
+        }
+    }
+
+    private ModifyGroupDescribe getModifyGroupDescribe(ClassModel classModel, ClassModel targetClassModel, int index) {
+
+        checkTargetClassModel(classModel, targetClassModel, index);
+
+        Class targetClass = targetClassModel.getCurrentClass();
+
+        //处理当前类与target class的关系
+        judgeClassRelation(classModel, targetClassModel);
+
+        Map<Class, List<ModifyGroupDescribe>> targetClassModifyGroupDescribeMa = classModel.getTargetClassModifyGroupDescribeMap();
+        List<ModifyGroupDescribe> modifyDescribeList = targetClassModifyGroupDescribeMa.get(targetClass);
+        if (modifyDescribeList == null) {
+            modifyDescribeList = new ArrayList<ModifyGroupDescribe>();
+            targetClassModifyGroupDescribeMa.put(targetClass, modifyDescribeList);
+        }
+
+        int position = 0;
+
+        ModifyGroupDescribe modifyDescribe = null;
+        for (ModifyGroupDescribe current : modifyDescribeList) {
+            if (current.getIndex() == index) {
+                modifyDescribe = current;
+                break;
+            } else if (current.getIndex() > index) break;
+            position ++;
+        }
+
+        if (modifyDescribe == null) {
+            modifyDescribe = new ModifyGroupDescribe();
+            modifyDescribe.setEntityClass(classModel.getCurrentClass());
+            modifyDescribe.setTargetClass(targetClass);
+            modifyDescribe.setIndex(index);
+            modifyDescribeList.add(position, modifyDescribe);
+        }
+        return modifyDescribe;
+    }
+
+
 
     //设置modifyRelyDescribe当前所依赖列字段为targetClassModel时的值及值类型
     private void findModifyDescribeRelyValue(ClassModel classModel, ClassModel targetClassModel, Column relyColumn, int group, ModifyRelyDescribe modifyDescribe) {
@@ -1103,12 +1240,7 @@ public class RdtPropertiesBuilder {
         Class current = rdtResolver.getRelationModelCurrentClassType(classModel, column, one); //获取类型
         complexModel.setCurrentType(current);
 
-        if (current.isPrimitive()|| Date.class.isAssignableFrom(current)
-                || String.class.isAssignableFrom(current)
-                || Number.class.isAssignableFrom(current)
-                || Boolean.class.isAssignableFrom(current)
-                || Character.class.isAssignableFrom(current)
-                ) {
+        if (rdtResolver.isBasicClass(current)) {
             throw new IllegalArgumentException(classModel.getClassName() + " property " + column.getProperty() + " type is " + current.getName() + ", it's not allowed association object type");
         }
 

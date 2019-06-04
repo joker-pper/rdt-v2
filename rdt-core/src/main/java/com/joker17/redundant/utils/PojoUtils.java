@@ -812,4 +812,11 @@ public class PojoUtils {
         }
     }
 
+
+    public static <T> T[] newInstanceArray(Class<T> classType, int length) {
+        if (classType == null || classType.isArray()) {
+            throw new IllegalArgumentException("class type must be not null and not array type!");
+        }
+        return (T[])Array.newInstance(classType, length);
+    }
 }

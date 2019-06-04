@@ -15,5 +15,9 @@ public @interface RdtGroupKeys {
 
     int index() default 0;
 
+    /**
+     * 当列为String类型时的连接符号
+     * @return
+     */
     String connector() default ",";
 }
