@@ -809,6 +809,7 @@ public class RdtPropertiesBuilder {
 
         ModifyGroupDescribe modifyDescribe = getModifyGroupDescribe(classModel, targetClassModel, index);
         ModifyGroupKeysColumn groupKeysColumn = new ModifyGroupKeysColumn();
+        groupKeysColumn.setNotAllowedNullTips(rdtResolver.getTipsContent(rdtAnnotation.nullTips()));
         builderModifyGroupBaseColumnConfigData(groupKeysColumn, column, targetColumn, rdtAnnotation.connector());
         modifyDescribe.setModifyGroupKeysColumn(groupKeysColumn);
 

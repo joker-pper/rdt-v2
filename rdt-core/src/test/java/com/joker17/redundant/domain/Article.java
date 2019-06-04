@@ -57,7 +57,7 @@ public class Article {
     @RdtGroupKeys(property = "id", target = Role.class)
     private List<String> roleList;
 
-    @RdtGroupConcatField(property = "id", target = Role.class)
+    @RdtGroupConcatField(property = "name", target = Role.class)
     private List<String> roleNameList;
 
 

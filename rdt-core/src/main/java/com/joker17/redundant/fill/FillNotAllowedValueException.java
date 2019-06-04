@@ -2,6 +2,7 @@ package com.joker17.redundant.fill;
 
 import com.joker17.redundant.model.ClassModel;
 import com.joker17.redundant.model.ModifyDescribe;
+import com.joker17.redundant.model.ModifyGroupDescribe;
 
 /**
  * 不允许参数值时的异常
@@ -17,6 +18,8 @@ public class FillNotAllowedValueException extends IllegalArgumentException {
     private String property;
 
     private ModifyDescribe describe;
+
+    private ModifyGroupDescribe groupDescribe;
 
     public FillNotAllowedValueException() {
         super();
@@ -36,12 +39,21 @@ public class FillNotAllowedValueException extends IllegalArgumentException {
 
 
     public FillNotAllowedValueException(String message, ClassModel classModel, Object data, String property, ModifyDescribe describe) {
+        this(message, classModel, data, property, describe, null);
+    }
+
+    public FillNotAllowedValueException(String message, ClassModel classModel, Object data, String property, ModifyGroupDescribe groupDescribe) {
+        this(message, classModel, data, property, null, groupDescribe);
+    }
+
+    private FillNotAllowedValueException(String message, ClassModel classModel, Object data, String property, ModifyDescribe describe, ModifyGroupDescribe groupDescribe) {
         super(message);
         this.classModel = classModel;
         this.dataType = classModel.getCurrentClass();
         this.data = data;
         this.property = property;
         this.describe = describe;
+        this.groupDescribe = groupDescribe;
     }
 
     public ClassModel getClassModel() {
@@ -82,5 +94,13 @@ public class FillNotAllowedValueException extends IllegalArgumentException {
 
     public void setDescribe(ModifyDescribe describe) {
         this.describe = describe;
+    }
+
+    public ModifyGroupDescribe getGroupDescribe() {
+        return groupDescribe;
+    }
+
+    public void setGroupDescribe(ModifyGroupDescribe groupDescribe) {
+        this.groupDescribe = groupDescribe;
     }
 }

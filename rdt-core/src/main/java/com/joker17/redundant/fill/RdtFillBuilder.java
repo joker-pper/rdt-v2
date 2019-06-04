@@ -2,6 +2,7 @@ package com.joker17.redundant.fill;
 
 import com.joker17.redundant.core.RdtConfiguration;
 
+import com.joker17.redundant.model.commons.ClassTypeEnum;
 import com.joker17.redundant.model.commons.RdtRelyModel;
 import com.joker17.redundant.core.RdtResolver;
 import com.joker17.redundant.utils.StringUtils;
@@ -397,6 +398,72 @@ public class RdtFillBuilder {
         }
     }
 
+
+
+    private void initOneKeyModelData(FillRSModel fillRSModel, ClassModel entityClassModel, ClassModel dataClassModel, ModifyGroupDescribe describe, Object data, boolean allowedNullValue) {
+        ModifyGroupKeysColumn modifyGroupKeysColumn = describe.getModifyGroupKeysColumn();
+        List<ModifyGroupConcatColumn> modifyGroupConcatColumnList = describe.getModifyGroupConcatColumnList();
+
+        Map<Class, List<FillOneKeyModel>> fillKeyModelListMap = fillRSModel.getFillKeyModelListMap();
+
+        //处理当前entityClass某单列作为key查询条件的数据
+        FillOneKeyModel fillOneKeyModel = fillRSModel.getFillKeyModel(entityClassModel, modifyGroupKeysColumn, fillKeyModelListMap);
+        for (ModifyGroupConcatColumn groupConcatColumn : modifyGroupConcatColumnList) {
+            //所使用的相关列
+            fillOneKeyModel.addColumnValue(groupConcatColumn.getTargetColumn());
+        }
+
+        String property = modifyGroupKeysColumn.getColumn().getProperty();
+        //获取当前对象的属性值
+        Object keyVal = rdtResolver.getPropertyValue(data, property);
+        Class columnBasicClass = modifyGroupKeysColumn.getColumnBasicClass();
+        Class targetColumnClass = modifyGroupKeysColumn.getTargetColumnClass();
+        String connector = modifyGroupKeysColumn.getConnector();
+        boolean isBasicEqTargetColumnClass = columnBasicClass.equals(targetColumnClass);
+        List<Object> keyValList = null;
+
+        if (keyVal != null) {
+            ClassTypeEnum columnClassType = modifyGroupKeysColumn.getColumnClassType();
+            switch (columnClassType) {
+                case BASIC:
+                    if (columnBasicClass == String.class) {
+                        keyValList = rdtResolver.split((String)keyVal, connector, targetColumnClass);
+                    } else {
+                        keyValList = Arrays.asList(isBasicEqTargetColumnClass ? keyVal : rdtResolver.cast(keyVal, targetColumnClass));
+                    }
+                    break;
+                case ARRAY:
+                    keyValList = new ArrayList<Object>(16);
+                    for (Object val : (Object[])keyVal) {
+                        keyValList.add(isBasicEqTargetColumnClass ? val : rdtResolver.cast(val, targetColumnClass));
+                    }
+                    break;
+                case SET:
+                case LIST:
+                    keyValList = new ArrayList<Object>(16);
+                    for (Object val : (Collection[])keyVal) {
+                        keyValList.add(isBasicEqTargetColumnClass ? val : rdtResolver.cast(val, targetColumnClass));
+                    }
+                    break;
+            }
+        }
+
+        boolean isKeyValListEmpty = keyValList == null || keyValList.isEmpty();
+        if (!allowedNullValue && isKeyValListEmpty) {
+            throwExceptionHandler.throwFillNotAllowedValueException(dataClassModel, describe, modifyGroupKeysColumn, data, dataClassModel.getClassName() + " property " + property + " value not allowed null or empty.");
+        }
+
+
+        /*
+        if (describe instanceof ModifyRelyDescribe) {
+            fillOneKeyModel.addDescribeKeyValueData((ModifyRelyDescribe) describe, keyVal, data);
+        } else {
+            fillOneKeyModel.addDescribeKeyValueData(describe, keyVal, data);
+        }*/
+    }
+
+
+
     /**
      * 处理关系
      *
@@ -486,18 +553,16 @@ public class RdtFillBuilder {
                         });
                     }
 
-
                     final Map<Class, List<ModifyGroupDescribe>> targetClassModifyGroupDescribeMap = dataClassModel.getTargetClassModifyGroupDescribeMap();
                     for (final Class entityClass : targetClassModifyGroupDescribeMap.keySet()) {
                         ClassModel entityClassModel = configuration.getClassModel(entityClass);
                         configuration.doModifyGroupDescribeHandle(entityClassModel, dataClassModel, new RdtConfiguration.ModifyGroupDescribeCallBack() {
                             @Override
-                            public void execute(ClassModel classModel, ClassModel modifyClassModel, ModifyGroupDescribe describe) {
-
+                            public void execute(ClassModel entityClassModel, ClassModel dataClassModel, ModifyGroupDescribe describe) {
+                                initOneKeyModelData(fillRSModel, entityClassModel, dataClassModel, describe, data, allowedNullValue);
                             }
                         });
                     }
-
 
                     //处理当前数据中的存在的关联字段的数据
                     for (ComplexModel complexModel : dataClassModel.getComplexModelList()) {

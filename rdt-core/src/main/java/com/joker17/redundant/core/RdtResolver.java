@@ -511,7 +511,7 @@ public abstract class RdtResolver {
      * @param <T>
      * @return
      */
-    public static  <T> T cast(Object obj, Class<T> clazz) {
+    public static <T> T cast(Object obj, Class<T> clazz) {
         return TypeUtils.cast(obj, clazz);
     }
 

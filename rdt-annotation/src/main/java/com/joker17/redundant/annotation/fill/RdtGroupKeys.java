@@ -20,4 +20,6 @@ public @interface RdtGroupKeys {
      * @return
      */
     String connector() default ",";
+
+    String nullTips() default "";
 }

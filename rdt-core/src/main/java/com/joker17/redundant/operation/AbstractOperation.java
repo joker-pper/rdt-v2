@@ -832,6 +832,26 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
         throw new FillNotAllowedValueException(tips, dataClassModel, data, property, modifyDescribe);
     }
 
+    @Override
+    public void throwFillNotAllowedValueException(ClassModel dataClassModel, ModifyGroupDescribe modifyGroupDescribe, ModifyGroupKeysColumn modifyGroupKeysColumn, Object data, String msg) {
+        String tips = null;
+        String property = null;
+        if (modifyGroupKeysColumn != null) {
+            //条件优先
+            property = modifyGroupKeysColumn.getColumn().getProperty();
+            tips = modifyGroupKeysColumn.getNotAllowedNullTips();
+            if (StringUtils.isEmpty(tips)) {
+                tips = modifyGroupKeysColumn.getColumn().getNotAllowedNullTips();
+            }
+        }
+        tips = StringUtils.isNotEmpty(tips) ? tips : msg;
+        throw new FillNotAllowedValueException(tips, dataClassModel, data, property, modifyGroupDescribe);
+    }
+
+    @Override
+    public void throwFillNotAllowedValueException(String msg) {
+        throw new FillNotAllowedValueException(msg);
+    }
 
     /**
      * 处理关系

@@ -3,6 +3,7 @@ package com.joker17.redundant.fill;
 import com.joker17.redundant.model.ClassModel;
 import com.joker17.redundant.model.Column;
 import com.joker17.redundant.model.ModifyCondition;
+import com.joker17.redundant.model.ModifyGroupKeysColumn;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -42,6 +43,15 @@ public class FillRSModel implements Serializable {
      */
     public FillOneKeyModel getFillKeyModel(ClassModel entityClassModel, ModifyCondition modifyCondition, Map<Class, List<FillOneKeyModel>> entityFillKeyVoListMap) {
         Column targetColumn = modifyCondition.getTargetColumn();
+        return getFillKeyModel(entityClassModel, targetColumn, entityFillKeyVoListMap);
+    }
+
+    public FillOneKeyModel getFillKeyModel(ClassModel entityClassModel, ModifyGroupKeysColumn modifyGroupKeysColumn, Map<Class, List<FillOneKeyModel>> entityFillKeyVoListMap) {
+        Column targetColumn = modifyGroupKeysColumn.getTargetColumn();
+        return getFillKeyModel(entityClassModel, targetColumn, entityFillKeyVoListMap);
+    }
+
+    protected FillOneKeyModel getFillKeyModel(ClassModel entityClassModel, Column targetColumn, Map<Class, List<FillOneKeyModel>> entityFillKeyVoListMap) {
         Class entityClass = entityClassModel.getCurrentClass();
         List<FillOneKeyModel> fillOneKeyModelList = entityFillKeyVoListMap.get(entityClass);
         if (fillOneKeyModelList == null) {
