@@ -261,6 +261,7 @@ public class RdtFillBuilder {
 
             concatColumnPropertyList.add(concatColumnProperty);
 
+            //获取当前属性的集合值
             List<Object> columnPropertyValueList = new ArrayList<Object>(16);
             for (Object keyValue : keyValueList) {
                 Object entityData = entityDataMap.get(keyValue);
@@ -272,6 +273,7 @@ public class RdtFillBuilder {
                 columnPropertyValueList.add(rdtResolver.cast(concatTargetColumnPropertyValue, columnBasicClass));
             }
 
+            //转换为对应属性值
             Object columnPropertyValue = null;
             ClassTypeEnum columnClassType = groupConcatColumn.getColumnClassType();
             switch (columnClassType) {
@@ -298,7 +300,7 @@ public class RdtFillBuilder {
                     } else {
                         try {
                             //其他类型通过newInstance进行实例化
-                            columnPropertyCollectionValue = (Collection) targetColumnClass.newInstance();
+                            columnPropertyCollectionValue = (Collection) columnClass.newInstance();
                             columnPropertyCollectionValue.addAll(columnPropertyValueList);
                         } catch (Exception e) {
                         }
@@ -487,19 +489,15 @@ public class RdtFillBuilder {
 
 
     protected void initOneKeyModelData(FillRSModel fillRSModel, ClassModel entityClassModel, ClassModel dataClassModel, ModifyGroupDescribe describe, Object data, boolean allowedNullValue) {
-        ModifyGroupKeysColumn modifyGroupKeysColumn = describe.getModifyGroupKeysColumn();
         List<ModifyGroupConcatColumn> modifyGroupConcatColumnList = describe.getModifyGroupConcatColumnList();
-
-        Map<Class, List<FillOneKeyModel>> fillKeyModelListMap = fillRSModel.getFillKeyModelListMap();
-
-        //处理当前entityClass某单列作为key查询条件的数据
-        FillOneKeyModel fillOneKeyModel = fillRSModel.getFillKeyModel(entityClassModel, modifyGroupKeysColumn, fillKeyModelListMap);
-
         if (modifyGroupConcatColumnList.isEmpty()) {
-            logger.debug("rdt init one key model about {} group describe [{}] data continue, cause by: {}", dataClassModel.getClassName(), modifyGroupKeysColumn.getColumn().getProperty(), "has no group concat column.");
             return;
         }
 
+        Map<Class, List<FillOneKeyModel>> fillKeyModelListMap = fillRSModel.getFillKeyModelListMap();
+        ModifyGroupKeysColumn modifyGroupKeysColumn = describe.getModifyGroupKeysColumn();
+        //处理当前entityClass某单列作为key查询条件的数据
+        FillOneKeyModel fillOneKeyModel = fillRSModel.getFillKeyModel(entityClassModel, modifyGroupKeysColumn, fillKeyModelListMap);
         for (ModifyGroupConcatColumn groupConcatColumn : modifyGroupConcatColumnList) {
             //所使用的相关列
             fillOneKeyModel.addColumnValue(groupConcatColumn.getTargetColumn());
@@ -677,11 +675,6 @@ public class RdtFillBuilder {
                 }
             }
         }
-    }
-
-
-    public static void main(String[] args) throws Exception {
-        System.out.println(ArrayList.class.newInstance());
     }
 
 }

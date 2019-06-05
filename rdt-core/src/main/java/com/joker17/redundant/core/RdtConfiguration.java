@@ -673,15 +673,29 @@ public class RdtConfiguration {
      * @return
      */
     public boolean isModifyColumnRemove(ModifyColumn modifyColumn, boolean isPersistentType) {
-        boolean isTransient = modifyColumn.getColumn().getIsTransient();
         RdtFillType fillType;
-
         if (isPersistentType) {
             //填充持久化列时(save)
             fillType = modifyColumn.getFillSaveType();
         } else {
             fillType = modifyColumn.getFillShowType();
         }
+        return isColumnRemove(modifyColumn.getColumn(), fillType, isPersistentType);
+    }
+
+    public boolean isModifyGroupConcatColumnRemove(ModifyGroupConcatColumn modifyGroupConcatColumn, boolean isPersistentType) {
+        RdtFillType fillType;
+        if (isPersistentType) {
+            fillType = modifyGroupConcatColumn.getFillSaveType();
+        } else {
+            fillType = modifyGroupConcatColumn.getFillShowType();
+        }
+        return isColumnRemove(modifyGroupConcatColumn.getColumn(), fillType, isPersistentType);
+    }
+
+
+    protected boolean isColumnRemove(Column column, RdtFillType fillType, boolean isPersistentType) {
+        boolean isTransient = column.getIsTransient();
         switch (fillType) {
             case DEFAULT:
                 if (isPersistentType) {
@@ -697,8 +711,8 @@ public class RdtConfiguration {
                 return true;
         }
         return true;
-    }
 
+    }
     /**
      * 获取根据填充模式所处理后的ModifyDescribe
      * @param describe
@@ -768,7 +782,6 @@ public class RdtConfiguration {
         boolean isPersistentType = FillType.PERSISTENT == type;
         Map<ModifyGroupDescribe, ModifyGroupDescribe> describeMap = isPersistentType ? persistentModifyGroupDescribeCacheMap : transientModifyGroupDescribeCacheMap;
         ModifyGroupDescribe result = describeMap.get(describe);
-
         if (result == null) {
             synchronized (RdtConfiguration.class) {
                 result = describeMap.get(describe);
@@ -776,9 +789,9 @@ public class RdtConfiguration {
                     ModifyGroupDescribe current = getDeepCloneModifyGroupDescribe(describe, false);
                     List<ModifyGroupConcatColumn> columnList = current.getModifyGroupConcatColumnList();
                     for (Iterator<ModifyGroupConcatColumn> columnIterator = columnList.iterator(); columnIterator.hasNext();) {
-                        /*if (isModifyColumnRemove(columnIterator.next(), isPersistentType)) {
+                        if (isModifyGroupConcatColumnRemove(columnIterator.next(), isPersistentType)) {
                             columnIterator.remove();
-                        }*/
+                        }
                     }
                     result = current;
                     describeMap.put(describe, result);
@@ -787,4 +800,5 @@ public class RdtConfiguration {
         }
         return result;
     }
+
 }

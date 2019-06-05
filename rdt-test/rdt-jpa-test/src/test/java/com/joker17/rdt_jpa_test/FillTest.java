@@ -41,8 +41,8 @@ public class FillTest extends ApplicationTests  {
         vo.setRoleId(getRoleRandomId());
         vo.setRoleId2(getRoleRandomId());
         vo.setUsername2(getUserRandomName());
-        vo.setRoleIds(getRoleRandomId() + "," + getRoleRandomId() + "," + getRoleRandomId());
-        vo.setRoleId2List(Arrays.asList(getRoleRandomId() + "", getRoleRandomId() + "", getRoleRandomId() + ""));
+        vo.setRoleIds(getRoleRandomId() + "," + getRoleRandomId() + "," + getRoleRandomId() + ",66");
+        vo.setRoleId2List(Arrays.asList(getRoleRandomId() + "", getRoleRandomId() + "", getRoleRandomId() + "", "66"));
         return vo;
 
     }

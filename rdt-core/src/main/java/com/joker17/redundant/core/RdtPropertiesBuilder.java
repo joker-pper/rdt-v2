@@ -95,7 +95,7 @@ public class RdtPropertiesBuilder {
             String defaultIdKey = properties.getDefaultIdKey();
             if (classModel.getPropertyFieldMap().keySet().contains(defaultIdKey)) {
                 classModel.setPrimaryId(defaultIdKey);
-                logger.warn("rdt " + (isBaseClass ? " base " : "") + "class --- {} not found primary id, so use default primary id : {}, please make sure no problem.", classModel.getClassName(), defaultIdKey);
+                logger.info("rdt " + (isBaseClass ? " base " : "") + "class --- {} not found primary id, so use default primary id : {}, please make sure no problem.", classModel.getClassName(), defaultIdKey);
             }
         }
 
@@ -134,24 +134,40 @@ public class RdtPropertiesBuilder {
                 rdtResolver.revealModifyDescribeLogs(describe, properties.getShowDescribe());
             }
         }
-        Map<Class, Map<Column, Map<Integer, List<ModifyRelyDescribe>>>> targetClassModifyRelyDescribeMap = classModel.getTargetClassModifyRelyDescribeMap();
 
+        Map<Class, Map<Column, Map<Integer, List<ModifyRelyDescribe>>>> targetClassModifyRelyDescribeMap = classModel.getTargetClassModifyRelyDescribeMap();
         for (Class targetClass : targetClassModifyRelyDescribeMap.keySet()) {
             Map<Column, Map<Integer, List<ModifyRelyDescribe>>> relyColumnDataMap = targetClassModifyRelyDescribeMap.get(targetClass);
-            if (relyColumnDataMap == null) continue;
+            if (relyColumnDataMap == null) {
+                continue;
+            }
 
             for (Column relyColumn : relyColumnDataMap.keySet()) {
                 Map<Integer, List<ModifyRelyDescribe>> groupDataMap = relyColumnDataMap.get(relyColumn);
-                if (groupDataMap == null) continue;
+                if (groupDataMap == null) {
+                    continue;
+                }
                 for (Integer group : groupDataMap.keySet()) {
                     List<ModifyRelyDescribe> describeList = groupDataMap.get(group);
                     for (ModifyRelyDescribe describe : describeList) {
                         rdtResolver.revealModifyRelyDescribeLogs(describe, properties.getShowDescribe());
-
                     }
                 }
             }
         }
+
+        Map<Class, List<ModifyGroupDescribe>> targetClassModifyGroupDescribeMap = classModel.getTargetClassModifyGroupDescribeMap();
+        for (Class targetClass : targetClassModifyGroupDescribeMap.keySet()) {
+            List<ModifyGroupDescribe> describeList = targetClassModifyGroupDescribeMap.get(targetClass);
+            for (ModifyGroupDescribe describe : describeList) {
+                ModifyGroupKeysColumn groupKeysColumn = describe.getModifyGroupKeysColumn();
+                if (groupKeysColumn == null) {
+                    throw new RuntimeException(String.format("%s builder about %s ModifyGroupDescribe index %s has error, cause by has no config @RdtGroupKeys.", classModel.getClassName(), describe.getTargetClass().getName(), describe.getIndex()));
+                }
+            }
+
+        }
+
         classModel.setBuilderMark(2);
     }
 
@@ -804,11 +820,17 @@ public class RdtPropertiesBuilder {
 
         //获取target class对应的列
         ClassModel targetClassModel = getClassModel(targetClass);
-
         Column targetColumn = getColumn(targetClassModel, targetProperty);
 
         ModifyGroupDescribe modifyDescribe = getModifyGroupDescribe(classModel, targetClassModel, index);
-        ModifyGroupKeysColumn groupKeysColumn = new ModifyGroupKeysColumn();
+        ModifyGroupKeysColumn groupKeysColumn = modifyDescribe.getModifyGroupKeysColumn();
+        //检查只有一个groupKeysColumn
+        if (groupKeysColumn != null) {
+            String hint = classModel.getClassName() + " build " + column.getProperty() + " config has error with @RdtGroupKeys, cause by : ";
+            throw new IllegalArgumentException(String.format(hint + "%s has already exists for it.", groupKeysColumn.getColumn().getProperty()));
+        }
+
+        groupKeysColumn = new ModifyGroupKeysColumn();
         groupKeysColumn.setNotAllowedNullTips(rdtResolver.getTipsContent(rdtAnnotation.nullTips()));
         builderModifyGroupBaseColumnConfigData(groupKeysColumn, column, targetColumn, rdtAnnotation.connector());
         modifyDescribe.setModifyGroupKeysColumn(groupKeysColumn);
@@ -863,6 +885,15 @@ public class RdtPropertiesBuilder {
             if (columnClassType == ClassTypeEnum.ARRAY) {
                 columnBasicClass = columnPropertyClass.getComponentType();
             } else {
+                //检查类型是否可以进行实例化
+                if (!Arrays.asList(List.class, ArrayList.class, Set.class, LinkedHashSet.class).contains(columnPropertyClass)) {
+                    try {
+                        columnPropertyClass.newInstance();
+                    } catch (Exception e) {
+                        throw new IllegalArgumentException(String.format("%s property %s type is %s, but can't to new instance, please make sure can do it.", column.getEntityClass().getName(), column.getProperty(), columnPropertyClass.getName()));
+                    }
+                }
+                //LIST OR SET获取对应的类型
                 columnBasicClass = ClassUtils.getActualTypeArgumentClass(column.getField());
             }
         }
