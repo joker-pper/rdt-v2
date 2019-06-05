@@ -34,6 +34,10 @@ public class RdtConfiguration {
      */
     private Map<ModifyDescribe, ModifyDescribe> persistentModifyDescribeCacheMap = new HashMap<ModifyDescribe, ModifyDescribe>(16);
 
+    private Map<ModifyGroupDescribe, ModifyGroupDescribe> transientModifyGroupDescribeCacheMap = new HashMap<ModifyGroupDescribe, ModifyGroupDescribe>(16);
+
+    private Map<ModifyGroupDescribe, ModifyGroupDescribe> persistentModifyGroupDescribeCacheMap = new HashMap<ModifyGroupDescribe, ModifyGroupDescribe>(16);
+
     public RdtConfiguration(RdtProperties properties, RdtPropertiesBuilder propertiesBuilder, RdtResolver rdtResolver) {
         this.properties = properties;
         this.rdtResolver = rdtResolver;
@@ -359,16 +363,23 @@ public class RdtConfiguration {
             ModifyColumn column = columnList.get(i);
             ModifyColumn clonedColumn = clonedColumnList.get(i);
 
-            clonedColumn.getColumn().setField(column.getColumn().getField());
-            clonedColumn.getTargetColumn().setField(column.getTargetColumn().getField());
+            handleColumnFieldDeepClone(clonedColumn.getColumn(), column.getColumn());
+            handleColumnFieldDeepClone(clonedColumn.getTargetColumn(), column.getTargetColumn());
         }
 
         for (int i = 0; i < clonedConditionList.size(); i++) {
             ModifyCondition condition = conditionList.get(i);
             ModifyCondition clonedCondition = clonedConditionList.get(i);
 
-            clonedCondition.getColumn().setField(condition.getColumn().getField());
-            clonedCondition.getTargetColumn().setField(condition.getTargetColumn().getField());
+            handleColumnFieldDeepClone(clonedCondition.getColumn(), condition.getColumn());
+            handleColumnFieldDeepClone(clonedCondition.getTargetColumn(), condition.getTargetColumn());
+        }
+    }
+
+    private void handleColumnFieldDeepClone(Column clonedColumn, Column sourceColumn) {
+        if (clonedColumn != null && sourceColumn != null) {
+            //clonedColumn设置sourceColumn的field属性值
+            clonedColumn.setField(sourceColumn.getField());
         }
     }
 
@@ -391,8 +402,39 @@ public class RdtConfiguration {
         return describe;
     }
 
+
     public ModifyRelyDescribe getDeepCloneModifyRelyDescribe(ModifyRelyDescribe describe) {
         return getDeepCloneModifyRelyDescribe(describe, true);
+    }
+
+    private void handleModifyGroupConcatColumnAndModifyGroupKeysColumnDeepClone(List<ModifyGroupConcatColumn> clonedColumnList, List<ModifyGroupConcatColumn> columnList, ModifyGroupKeysColumn clonedKeysColumn, ModifyGroupKeysColumn keysColumn) {
+        for (int i = 0; i < clonedColumnList.size(); i++) {
+            ModifyGroupConcatColumn column = columnList.get(i);
+            ModifyGroupConcatColumn clonedColumn = clonedColumnList.get(i);
+
+            clonedColumn.getColumn().setField(column.getColumn().getField());
+            clonedColumn.getTargetColumn().setField(column.getTargetColumn().getField());
+        }
+        clonedKeysColumn.getColumn().setField(keysColumn.getColumn().getField());
+        clonedKeysColumn.getTargetColumn().setField(keysColumn.getTargetColumn().getField());
+    }
+
+
+    public ModifyGroupDescribe getDeepCloneModifyGroupDescribe(ModifyGroupDescribe describe, boolean withConfig) {
+        if (describe != null) {
+            if (!withConfig || properties.getDeepCloneChangedModify()) {
+                ModifyGroupDescribe cloned = rdtResolver.deepClone(describe);
+                List<ModifyGroupConcatColumn> clonedColumnList = cloned.getModifyGroupConcatColumnList();
+                List<ModifyGroupConcatColumn> columnList = describe.getModifyGroupConcatColumnList();
+
+                ModifyGroupKeysColumn clonedKeysColumn = cloned.getModifyGroupKeysColumn();
+                ModifyGroupKeysColumn keysColumn = describe.getModifyGroupKeysColumn();
+
+                handleModifyGroupConcatColumnAndModifyGroupKeysColumnDeepClone(clonedColumnList, columnList, clonedKeysColumn, keysColumn);
+                return cloned;
+            }
+        }
+        return describe;
     }
 
 
@@ -715,5 +757,34 @@ public class RdtConfiguration {
             }
         }
         return (ModifyRelyDescribe) result;
+    }
+
+
+
+    public ModifyGroupDescribe getModifyGroupDescribeForFill(ModifyGroupDescribe describe, FillType type) {
+        if (FillType.ALL == type) {
+            return describe;
+        }
+        boolean isPersistentType = FillType.PERSISTENT == type;
+        Map<ModifyGroupDescribe, ModifyGroupDescribe> describeMap = isPersistentType ? persistentModifyGroupDescribeCacheMap : transientModifyGroupDescribeCacheMap;
+        ModifyGroupDescribe result = describeMap.get(describe);
+
+        if (result == null) {
+            synchronized (RdtConfiguration.class) {
+                result = describeMap.get(describe);
+                if (result == null) {
+                    ModifyGroupDescribe current = getDeepCloneModifyGroupDescribe(describe, false);
+                    List<ModifyGroupConcatColumn> columnList = current.getModifyGroupConcatColumnList();
+                    for (Iterator<ModifyGroupConcatColumn> columnIterator = columnList.iterator(); columnIterator.hasNext();) {
+                        /*if (isModifyColumnRemove(columnIterator.next(), isPersistentType)) {
+                            columnIterator.remove();
+                        }*/
+                    }
+                    result = current;
+                    describeMap.put(describe, result);
+                }
+            }
+        }
+        return result;
     }
 }

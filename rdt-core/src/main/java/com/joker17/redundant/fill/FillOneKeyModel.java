@@ -20,6 +20,9 @@ public class FillOneKeyModel extends FillKeyModel {
 
     private boolean isPrimaryKey;
 
+    /**
+     * 当前key列
+     */
     private Column keyColumn;
 
     /**
@@ -40,7 +43,9 @@ public class FillOneKeyModel extends FillKeyModel {
      */
     private Map<ModifyRelyDescribe, Map<Object, List<Object>>> relyDescribeKeyDataMap = new HashMap<ModifyRelyDescribe, Map<Object, List<Object>>>(16);
 
-
+    /**
+     * groupDescribe情况下对于key值集合所对应要修改的数据列表
+     */
     private Map<ModifyGroupDescribe, Map<List<Object>, List<Object>>> groupDescribeKeyDataMap = new HashMap<ModifyGroupDescribe, Map<List<Object>, List<Object>>>(16);
 
     public String getKey() {
@@ -156,6 +161,40 @@ public class FillOneKeyModel extends FillKeyModel {
             result.put(keyValue, datas);
         }
         datas.add(data);
+    }
+
+    public Map<ModifyGroupDescribe, Map<List<Object>, List<Object>>> getGroupDescribeKeyDataMap() {
+        return groupDescribeKeyDataMap;
+    }
+
+    public void setGroupDescribeKeyDataMap(Map<ModifyGroupDescribe, Map<List<Object>, List<Object>>> groupDescribeKeyDataMap) {
+        this.groupDescribeKeyDataMap = groupDescribeKeyDataMap;
+    }
+
+
+    public Map<List<Object>, List<Object>> getDescribeKeyData(ModifyGroupDescribe describe) {
+        Map<List<Object>, List<Object>> result = groupDescribeKeyDataMap.get(describe);
+        if (result == null) {
+            result = new HashMap<List<Object>, List<Object>>(16);
+            groupDescribeKeyDataMap.put(describe, result);
+        }
+        return result;
+    }
+
+    public void addDescribeKeyValueData(ModifyGroupDescribe describe, List<Object> keyValueList, Object data) {
+        if (keyValueList != null && !keyValueList.isEmpty()) {
+            for (Object val : keyValueList) {
+                addKeyValue(val);
+            }
+            Map<List<Object>, List<Object>> result = getDescribeKeyData(describe);
+            List<Object> datas = result.get(keyValueList);
+            if (datas == null) {
+                datas = new ArrayList<Object>(16);
+                result.put(keyValueList, datas);
+            }
+            datas.add(data);
+        }
+
     }
 
 

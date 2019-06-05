@@ -748,13 +748,19 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
                             Map<ModifyDescribe, List<Object>> describeMap = detail.getDescribeMap(groupValue);
                             for (ModifyDescribe describe : describeMap.keySet()) {
                                 List<Object> waitFillData = describeMap.get(describe);
-                                fillBuilder.setFillManyKeyData(entityData, entityClass, waitFillData, describe, clear, conditionMark, fillType);
+                                if (waitFillData != null && !waitFillData.isEmpty()) {
+                                    ClassModel modifyClassModel = configuration.getClassModel(describe.getEntityClass());
+                                    fillBuilder.setFillManyKeyData(entityData, entityClass, waitFillData, modifyClassModel, describe, clear, conditionMark, fillType);
+                                }
                             }
 
                             Map<ModifyRelyDescribe, List<Object>> relyDescribeMap = detail.getRelyDescribeMap(groupValue);
                             for (ModifyRelyDescribe describe : relyDescribeMap.keySet()) {
                                 List<Object> waitFillData = relyDescribeMap.get(describe);
-                                fillBuilder.setFillManyKeyData(entityData, entityClass, waitFillData, describe, clear, conditionMark, fillType);
+                                if (waitFillData != null && !waitFillData.isEmpty()) {
+                                    ClassModel modifyClassModel = configuration.getClassModel(describe.getEntityClass());
+                                    fillBuilder.setFillManyKeyData(entityData, entityClass, waitFillData, modifyClassModel, describe, clear, conditionMark, fillType);
+                                }
                             }
                         }
                     }
@@ -781,7 +787,7 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
                             throwFillNotAllowedDataException(fillOneKeyModel, keyValuesSize, entityClass.getName() + " can't find all data with property " + fillOneKeyModel.getKey() + " value in " + rdtResolver.toJson(fillOneKeyModel.getKeyValues()));
                         }
                     }
-                    fillBuilder.setFillKeyData(fillOneKeyModel, entityClass, entityDataMap, checkValue, clear, fillType);
+                    fillBuilder.setFillOneKeyData(fillOneKeyModel, entityClass, entityDataMap, checkValue, clear, fillType);
                 }
             }
         }

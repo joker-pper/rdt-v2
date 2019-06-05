@@ -30,32 +30,46 @@ public class RdtFillBuilder {
         return new RdtFillBuilder(support, throwExceptionHandler) ;
     }
 
-    public void setFillKeyData(FillOneKeyModel fillOneKeyModel, Class entityClass, Map<Object, Object> entityDataMap, boolean checkValue, boolean clear, FillType fillType) {
+    public void setFillOneKeyData(FillOneKeyModel fillOneKeyModel, Class entityClass, Map<Object, Object> entityDataMap, boolean checkValue, boolean clear, FillType fillType) {
         String key = fillOneKeyModel.getKey();
-
         if (!entityDataMap.isEmpty() || clear) {
             //存在数据或clear时进行处理
 
             for (ModifyDescribe modifyDescribe : fillOneKeyModel.getDescribeKeyDataMap().keySet()) {
                 Map<Object, List<Object>> keyValueData = fillOneKeyModel.getDescribeKeyData(modifyDescribe);
+
+                //获取要修改数据的classModel
+                ClassModel modifyClassModel = configuration.getClassModel(modifyDescribe.getEntityClass());
                 for (Object keyValue : keyValueData.keySet()) {
                     //获取当前key要修改的数据列表
-                    List<Object> modifyData = keyValueData.get(keyValue);
-                    if (!modifyData.isEmpty()) {
+                    List<Object> modifyDataList = keyValueData.get(keyValue);
+                    if (!modifyDataList.isEmpty()) {
                         //获取当前值所对应的数据
                         Object entityData = entityDataMap.get(keyValue);
-                        setFillKeyData(entityData, entityClass, getConditionMark(key, keyValue), modifyData, modifyDescribe, clear, fillType);
+                        setFillKeyData(entityData, entityClass, getConditionMark(key, keyValue), modifyDataList, modifyClassModel, modifyDescribe, clear, fillType);
                     }
                 }
             }
 
             for (ModifyRelyDescribe modifyDescribe : fillOneKeyModel.getRelyDescribeKeyDataMap().keySet()) {
+                ClassModel modifyClassModel = configuration.getClassModel(modifyDescribe.getEntityClass());
                 Map<Object, List<Object>> keyValueData = fillOneKeyModel.getDescribeKeyData(modifyDescribe);
                 for (Object keyValue : keyValueData.keySet()) {
-                    List<Object> modifyData = keyValueData.get(keyValue);
-                    if (!modifyData.isEmpty()) {
+                    List<Object> modifyDataList = keyValueData.get(keyValue);
+                    if (!modifyDataList.isEmpty()) {
                         Object entityData = entityDataMap.get(keyValue);
-                        setFillKeyData(entityData, entityClass, getConditionMark(key, keyValue), modifyData, modifyDescribe, clear, fillType);
+                        setFillKeyData(entityData, entityClass, getConditionMark(key, keyValue), modifyDataList, modifyClassModel, modifyDescribe, clear, fillType);
+                    }
+                }
+            }
+
+            for (ModifyGroupDescribe modifyDescribe : fillOneKeyModel.getGroupDescribeKeyDataMap().keySet()) {
+                ClassModel modifyClassModel = configuration.getClassModel(modifyDescribe.getEntityClass());
+                Map<List<Object>, List<Object>> keyValueData = fillOneKeyModel.getDescribeKeyData(modifyDescribe);
+                for (List<Object> keyValueList : keyValueData.keySet()) {
+                    List<Object> modifyDataList = keyValueData.get(keyValueList);
+                    if (!modifyDataList.isEmpty()) {
+                        setFillKeyData(entityDataMap, entityClass, getConditionMark(key, keyValueList), keyValueList, modifyDataList, modifyClassModel, modifyDescribe, clear, fillType);
                     }
                 }
             }
@@ -70,7 +84,7 @@ public class RdtFillBuilder {
      * @return
      */
     public String getConditionMark(String key, Object value) {
-        return "[" + key + "=" + value + "]";
+        return rdtResolver.getConditionMark(Arrays.asList(key), Arrays.asList(value));
     }
 
 
@@ -81,27 +95,34 @@ public class RdtFillBuilder {
      * @return
      */
     public String getConditionMark(Collection<Column> conditionColumns, List<Object> values) {
-        StringBuilder sb = new StringBuilder("[");
-
+        List<String> columnPropertyList = new ArrayList<String>(16);
         if (!conditionColumns.isEmpty()) {
-            int index = 0;
             for (Column column : conditionColumns) {
-                sb.append(column.getProperty() + "=" + values.get(index ++) + "&");
+                columnPropertyList.add(column.getProperty());
             }
-            int length = sb.length();
-            sb.delete(length - 1, length);
         }
-
-        sb.append("]");
-        return sb.toString();
+        return rdtResolver.getConditionMark(columnPropertyList, values);
     }
 
-    public void setFillManyKeyData(Object entityData, Class entityClass, Collection<Object> waitFillData, ModifyDescribe describe, boolean clear, String conditionMark, FillType fillType) {
-        setFillKeyData(entityData, entityClass, conditionMark, waitFillData, describe, clear, fillType);
+    public void setFillManyKeyData(Object entityData, Class entityClass, Collection<Object> waitFillDatas, ClassModel waitClassFillModel, ModifyDescribe describe, boolean clear, String conditionMark, FillType fillType) {
+        setFillKeyData(entityData, entityClass, conditionMark, waitFillDatas, waitClassFillModel, describe, clear, fillType);
     }
 
 
-    private void setFillKeyData(Object entityData, Class entityClass, String conditionMark, Collection<Object> waitFillDatas, ModifyDescribe describe, boolean clear, FillType fillType) {
+
+
+    /**
+     * 根据实体数据及关系进行填充属性值
+     * @param entityData 实体数据
+     * @param entityClass
+     * @param conditionMark 标识
+     * @param waitFillDatas 要修改的数据集合
+     * @param waitFillClassModel 要修改数据的classModel
+     * @param describe
+     * @param clear
+     * @param fillType
+     */
+    protected void setFillKeyData(Object entityData, Class entityClass, String conditionMark, Collection<Object> waitFillDatas, ClassModel waitFillClassModel, ModifyDescribe describe, boolean clear, FillType fillType) {
         if (entityData != null || clear) {
             //当持久化数据存在或者clear时
             List<ModifyColumn> columnList = describe.getColumnList();
@@ -115,17 +136,14 @@ public class RdtFillBuilder {
             boolean hasRelyColumn = relyColumn != null;
             String relyProperty = hasRelyColumn ? relyColumn.getProperty() : null;
 
+            String primaryId = waitFillClassModel.getPrimaryId();
+
             //依据列信息进行赋值
             for (Object waitFillData : waitFillDatas) {
-                ClassModel waitClassModel = null;
                 String text = null;
-
                 if (logger.isDebugEnabled() || logger.isInfoEnabled()) {
-                    waitClassModel = configuration.getClassModel(waitFillData.getClass());
-                    String primaryId = waitClassModel.getPrimaryId();
                     text = StringUtils.isNotEmpty(primaryId) ? getConditionMark(primaryId, rdtResolver.getPropertyValue(waitFillData, primaryId)) : "";
                 }
-
                 Object relyPropertyValue = hasRelyColumn ? rdtResolver.getPropertyValue(waitFillData, relyProperty) : null;
                 boolean clearMark = entityData == null;
                 if (clearMark) {
@@ -149,15 +167,13 @@ public class RdtFillBuilder {
                             rdtResolver.setPropertyValue(waitFillData, property, value);
 
                             if (hasRelyColumn) {
-                                logger.info("rdt fill clear condition with rely property {}({}-[{}]) about {}{} set [{}({})={}] from [{}{}]", relyProperty, relyColumn.getPropertyClass().getName(), relyPropertyValue, waitClassModel.getClassName(), text, property, propertyClass.getName(), value, entityClass.getName(), conditionMark);
+                                logger.info("rdt fill clear condition with rely property {}({}-[{}]) about {}{} set [{}({})={}] from [{}{}]", relyProperty, relyColumn.getPropertyClass().getName(), relyPropertyValue, waitFillClassModel.getClassName(), text, property, propertyClass.getName(), value, entityClass.getName(), conditionMark);
                             } else {
-                                logger.info("rdt fill clear condition about {}{} set [{}({})={}] from [{}{}]", waitClassModel.getClassName(), text, property, propertyClass.getName(), value, entityClass.getName(), conditionMark);
+                                logger.info("rdt fill clear condition about {}{} set [{}({})={}] from [{}{}]", waitFillClassModel.getClassName(), text, property, propertyClass.getName(), value, entityClass.getName(), conditionMark);
                             }
                         }
                     }
                 }
-
-
 
 
                 for (ModifyColumn modifyColumn : columnList) {
@@ -208,25 +224,95 @@ public class RdtFillBuilder {
                         rdtResolver.setPropertyValue(waitFillData, property, value);
                         if (hasRelyColumn) {
                             if (clearMark) {
-                                logger.info("rdt fill clear column with rely property {}({}-[{}]) about {}{} set [{}({})->{}({})={}] from [{}{}]", relyProperty, relyColumn.getPropertyClass().getName(), relyPropertyValue, waitClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), conditionMark);
+                                logger.info("rdt fill clear column with rely property {}({}-[{}]) about {}{} set [{}({})->{}({})={}] from [{}{}]", relyProperty, relyColumn.getPropertyClass().getName(), relyPropertyValue, waitFillClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), conditionMark);
                             } else {
-                                logger.debug("rdt fill column with rely property {}({}-[{}]) about {}{} set [{}({})->{}({})={}] from [{}{}]", relyProperty, relyColumn.getPropertyClass().getName(), relyPropertyValue, waitClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), conditionMark);
+                                logger.debug("rdt fill column with rely property {}({}-[{}]) about {}{} set [{}({})->{}({})={}] from [{}{}]", relyProperty, relyColumn.getPropertyClass().getName(), relyPropertyValue, waitFillClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), conditionMark);
                             }
                         } else {
                             if (clearMark) {
-                                logger.info("rdt fill clear column about {}{} set [{}({})->{}({})={}] from [{}{}]", waitClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), conditionMark);
+                                logger.info("rdt fill clear column about {}{} set [{}({})->{}({})={}] from [{}{}]", waitFillClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), conditionMark);
                             } else {
-                                logger.debug("rdt fill column about {}{} set [{}({})->{}({})={}] from [{}{}]", waitClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), conditionMark);
+                                logger.debug("rdt fill column about {}{} set [{}({})->{}({})={}] from [{}{}]", waitFillClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), conditionMark);
                             }
                         }
                     } else {
-                        logger.debug("rdt ignore fill column with rely property {}({}-[{}]) adn ignore types-{} about {}{} set [{}({})->{}({})={}] from [{}{}]", relyProperty, relyColumn.getPropertyClass().getName(), relyPropertyValue, fillIgnoresType, waitClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), conditionMark);
-
+                        logger.debug("rdt ignore fill column with rely property {}({}-[{}]) adn ignore types-{} about {}{} set [{}({})->{}({})={}] from [{}{}]", relyProperty, relyColumn.getPropertyClass().getName(), relyPropertyValue, fillIgnoresType, waitFillClassModel.getClassName(), text, property, propertyClass.getName(), targetProperty, targetPropertyClass.getName(), value, entityClass.getName(), conditionMark);
                     }
-
-
-
                 }
+            }
+        }
+    }
+
+    protected void setFillKeyData(Map<Object, Object> entityDataMap, Class entityClass, String conditionMark, List<Object> keyValueList, Collection<Object> waitFillDatas, ClassModel waitFillClassModel, ModifyGroupDescribe describe, boolean clear, FillType fillType) {
+        List<ModifyGroupConcatColumn> modifyGroupConcatColumnList = describe.getModifyGroupConcatColumnList();
+
+        List<Object> concatColumnValueList = new ArrayList<Object>();
+
+        List<String> concatColumnPropertyList = new ArrayList<String>();
+
+        for (ModifyGroupConcatColumn groupConcatColumn : modifyGroupConcatColumnList) {
+            String concatColumnProperty = groupConcatColumn.getColumn().getProperty();
+            String concatTargetColumnProperty = groupConcatColumn.getTargetColumn().getProperty();
+
+            Class columnBasicClass = groupConcatColumn.getColumnBasicClass();
+            Class columnClass = groupConcatColumn.getColumnClass();
+            Class targetColumnClass = groupConcatColumn.getTargetColumnClass();
+            String connector = groupConcatColumn.getConnector();
+
+            concatColumnPropertyList.add(concatColumnProperty);
+
+            List<Object> columnPropertyValueList = new ArrayList<Object>(16);
+            for (Object keyValue : keyValueList) {
+                Object entityData = entityDataMap.get(keyValue);
+                Object concatTargetColumnPropertyValue = null;
+                if (entityData != null) {
+                    concatTargetColumnPropertyValue = rdtResolver.getPropertyValue(entityData, concatTargetColumnProperty);
+                }
+                //默认添加转换为期望类型的值
+                columnPropertyValueList.add(rdtResolver.cast(concatTargetColumnPropertyValue, columnBasicClass));
+            }
+
+            Object columnPropertyValue = null;
+            ClassTypeEnum columnClassType = groupConcatColumn.getColumnClassType();
+            switch (columnClassType) {
+                case BASIC:
+                    boolean isColumnBasicStringClass = columnBasicClass == String.class;
+                    boolean isConnector = groupConcatColumn.isStartBasicConnector() && isColumnBasicStringClass;
+                    if (isConnector) {
+                        columnPropertyValue = rdtResolver.join(columnPropertyValueList, connector);
+                    } else {
+                        columnPropertyValue = columnPropertyValueList.get(groupConcatColumn.isBasicNotConnectorOptFirst() ? 0 : columnPropertyValueList.size() - 1);
+                    }
+                    break;
+                case ARRAY:
+                    columnPropertyValue = columnPropertyValueList.toArray(rdtResolver.newInstanceArray(columnBasicClass, columnPropertyValueList.size()));
+                    break;
+                case SET:
+                case LIST:
+                    Collection columnPropertyCollectionValue = null;
+                    if (columnClass == List.class || columnClass == ArrayList.class) {
+                        columnPropertyCollectionValue = columnPropertyValueList;
+                    } else if (columnClass == Set.class || columnClass == LinkedHashSet.class) {
+                        columnPropertyCollectionValue = new LinkedHashSet();
+                        columnPropertyCollectionValue.addAll(columnPropertyValueList);
+                    } else {
+                        try {
+                            //其他类型通过newInstance进行实例化
+                            columnPropertyCollectionValue = (Collection) targetColumnClass.newInstance();
+                            columnPropertyCollectionValue.addAll(columnPropertyValueList);
+                        } catch (Exception e) {
+                        }
+                    }
+                    columnPropertyValue = columnPropertyCollectionValue;
+                    break;
+            }
+            concatColumnValueList.add(columnPropertyValue);
+        }
+
+        for (Object waitFillData : waitFillDatas) {
+            int index = 0;
+            for (String concatColumnProperty : concatColumnPropertyList) {
+                rdtResolver.setPropertyValue(waitFillData, concatColumnProperty, concatColumnValueList.get(index ++));
             }
         }
     }
@@ -252,7 +338,7 @@ public class RdtFillBuilder {
 
     }
 
-    private void initManyKeyModelData(FillRSModel fillRSModel, ClassModel entityClassModel, ClassModel dataClassModel, ModifyDescribe describe, Object data, boolean allowedNullValue) {
+    protected void initManyKeyModelData(FillRSModel fillRSModel, ClassModel entityClassModel, ClassModel dataClassModel, ModifyDescribe describe, Object data, boolean allowedNullValue) {
         List<ModifyCondition> modifyConditionList = describe.getConditionList();
         List<ModifyColumn> modifyColumnList = describe.getColumnList();
 
@@ -370,7 +456,7 @@ public class RdtFillBuilder {
 
     }
 
-    private void initOneKeyModelData(FillRSModel fillRSModel, ClassModel entityClassModel, ClassModel dataClassModel, ModifyDescribe describe, Object data, boolean allowedNullValue) {
+    protected void initOneKeyModelData(FillRSModel fillRSModel, ClassModel entityClassModel, ClassModel dataClassModel, ModifyDescribe describe, Object data, boolean allowedNullValue) {
 
         ModifyCondition modifyCondition = describe.getConditionList().get(0);
         List<ModifyColumn> modifyColumnList = describe.getColumnList();
@@ -400,7 +486,7 @@ public class RdtFillBuilder {
 
 
 
-    private void initOneKeyModelData(FillRSModel fillRSModel, ClassModel entityClassModel, ClassModel dataClassModel, ModifyGroupDescribe describe, Object data, boolean allowedNullValue) {
+    protected void initOneKeyModelData(FillRSModel fillRSModel, ClassModel entityClassModel, ClassModel dataClassModel, ModifyGroupDescribe describe, Object data, boolean allowedNullValue) {
         ModifyGroupKeysColumn modifyGroupKeysColumn = describe.getModifyGroupKeysColumn();
         List<ModifyGroupConcatColumn> modifyGroupConcatColumnList = describe.getModifyGroupConcatColumnList();
 
@@ -408,6 +494,12 @@ public class RdtFillBuilder {
 
         //处理当前entityClass某单列作为key查询条件的数据
         FillOneKeyModel fillOneKeyModel = fillRSModel.getFillKeyModel(entityClassModel, modifyGroupKeysColumn, fillKeyModelListMap);
+
+        if (modifyGroupConcatColumnList.isEmpty()) {
+            logger.debug("rdt init one key model about {} group describe [{}] data continue, cause by: {}", dataClassModel.getClassName(), modifyGroupKeysColumn.getColumn().getProperty(), "has no group concat column.");
+            return;
+        }
+
         for (ModifyGroupConcatColumn groupConcatColumn : modifyGroupConcatColumnList) {
             //所使用的相关列
             fillOneKeyModel.addColumnValue(groupConcatColumn.getTargetColumn());
@@ -420,8 +512,9 @@ public class RdtFillBuilder {
         Class targetColumnClass = modifyGroupKeysColumn.getTargetColumnClass();
         String connector = modifyGroupKeysColumn.getConnector();
         boolean isBasicEqTargetColumnClass = columnBasicClass.equals(targetColumnClass);
-        List<Object> keyValList = null;
 
+        //获取当前key的所有值
+        List<Object> keyValList = null;
         if (keyVal != null) {
             ClassTypeEnum columnClassType = modifyGroupKeysColumn.getColumnClassType();
             switch (columnClassType) {
@@ -441,7 +534,7 @@ public class RdtFillBuilder {
                 case SET:
                 case LIST:
                     keyValList = new ArrayList<Object>(16);
-                    for (Object val : (Collection[])keyVal) {
+                    for (Object val : (Collection)keyVal) {
                         keyValList.add(isBasicEqTargetColumnClass ? val : rdtResolver.cast(val, targetColumnClass));
                     }
                     break;
@@ -453,13 +546,9 @@ public class RdtFillBuilder {
             throwExceptionHandler.throwFillNotAllowedValueException(dataClassModel, describe, modifyGroupKeysColumn, data, dataClassModel.getClassName() + " property " + property + " value not allowed null or empty.");
         }
 
-
-        /*
-        if (describe instanceof ModifyRelyDescribe) {
-            fillOneKeyModel.addDescribeKeyValueData((ModifyRelyDescribe) describe, keyVal, data);
-        } else {
-            fillOneKeyModel.addDescribeKeyValueData(describe, keyVal, data);
-        }*/
+        if (!isKeyValListEmpty) {
+            fillOneKeyModel.addDescribeKeyValueData(describe, keyValList, data);
+        }
     }
 
 
@@ -559,6 +648,7 @@ public class RdtFillBuilder {
                         configuration.doModifyGroupDescribeHandle(entityClassModel, dataClassModel, new RdtConfiguration.ModifyGroupDescribeCallBack() {
                             @Override
                             public void execute(ClassModel entityClassModel, ClassModel dataClassModel, ModifyGroupDescribe describe) {
+                                describe = configuration.getModifyGroupDescribeForFill(describe, fillType);
                                 initOneKeyModelData(fillRSModel, entityClassModel, dataClassModel, describe, data, allowedNullValue);
                             }
                         });
@@ -589,5 +679,9 @@ public class RdtFillBuilder {
         }
     }
 
+
+    public static void main(String[] args) throws Exception {
+        System.out.println(ArrayList.class.newInstance());
+    }
 
 }

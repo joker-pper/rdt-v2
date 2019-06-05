@@ -9,6 +9,10 @@ public class ModifyGroupConcatColumn extends ModifyGroupBaseColumn {
 
     private RdtFillType fillSaveType;
 
+    private boolean startBasicConnector;
+
+    private boolean basicNotConnectorOptFirst;
+
     public RdtFillType getFillShowType() {
         return fillShowType;
     }
@@ -25,4 +29,19 @@ public class ModifyGroupConcatColumn extends ModifyGroupBaseColumn {
         this.fillSaveType = fillSaveType;
     }
 
+    public boolean isStartBasicConnector() {
+        return startBasicConnector;
+    }
+
+    public void setStartBasicConnector(boolean startBasicConnector) {
+        this.startBasicConnector = startBasicConnector;
+    }
+
+    public boolean isBasicNotConnectorOptFirst() {
+        return basicNotConnectorOptFirst;
+    }
+
+    public void setBasicNotConnectorOptFirst(boolean basicNotConnectorOptFirst) {
+        this.basicNotConnectorOptFirst = basicNotConnectorOptFirst;
+    }
 }

@@ -533,7 +533,7 @@ public abstract class RdtResolver {
         if (keys != null && values != null) {
             int index = 0;
             for (String key : keys) {
-                sb.append(key + "=" + values.get(index ++) + "&");
+                sb.append(key).append("=").append(values.get(index ++)).append("&");
             }
             int length = sb.length();
             sb.delete(length - 1, length);

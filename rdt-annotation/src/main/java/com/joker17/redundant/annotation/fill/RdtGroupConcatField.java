@@ -33,4 +33,15 @@ public @interface RdtGroupConcatField {
     RdtFillType fillShow() default RdtFillType.DEFAULT;
 
     String connector() default ",";
+
+    /**
+     * basic是否开启connector
+     * @return
+     */
+    boolean startBasicConnector() default true;
+
+    /**
+     * 处于是basic未能connector时否取第一个值
+     */
+    boolean basicNotConnectorOptFirst() default false;
 }

@@ -35,15 +35,31 @@ public class FillTest extends ApplicationTests  {
 
     }
 
-    @Test
-    public void fillUserRoleVO() throws Exception {
+    private UserRoleVO getUserRoleVO() {
         UserRoleVO vo = new UserRoleVO();
         vo.setId(getUserRandomId());
         vo.setRoleId(getRoleRandomId());
         vo.setRoleId2(getRoleRandomId());
         vo.setUsername2(getUserRandomName());
+        vo.setRoleIds(getRoleRandomId() + "," + getRoleRandomId() + "," + getRoleRandomId());
+        vo.setRoleId2List(Arrays.asList(getRoleRandomId() + "", getRoleRandomId() + "", getRoleRandomId() + ""));
+        return vo;
 
-        List<UserRoleVO> results = Arrays.asList(vo);
+    }
+
+    @Test
+    public void fillUserRoleVO() throws Exception {
+        List<UserRoleVO> results = Arrays.asList(getUserRoleVO());
+        rdtOperation.fillForShow(results, false, FillType.ALL);
+        logger.info("results: {}", JsonUtils.toJson(results));
+    }
+
+    @Test
+    public void fillUserRoleVOList() throws Exception {
+        List<UserRoleVO> results = new ArrayList<>();
+        for (int i = 0; i < 10; i ++) {
+            results.add(getUserRoleVO());
+        }
         rdtOperation.fillForShow(results, false, FillType.ALL);
         logger.info("results: {}", JsonUtils.toJson(results));
     }

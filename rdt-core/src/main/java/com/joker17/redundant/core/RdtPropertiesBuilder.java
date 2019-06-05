@@ -832,6 +832,8 @@ public class RdtPropertiesBuilder {
         ModifyGroupConcatColumn groupConcatColumn = new ModifyGroupConcatColumn();
         groupConcatColumn.setFillSaveType(rdtAnnotation.fillSave());
         groupConcatColumn.setFillShowType(rdtAnnotation.fillShow());
+        groupConcatColumn.setStartBasicConnector(rdtAnnotation.startBasicConnector());
+        groupConcatColumn.setBasicNotConnectorOptFirst(rdtAnnotation.basicNotConnectorOptFirst());
         builderModifyGroupBaseColumnConfigData(groupConcatColumn, column, targetColumn, rdtAnnotation.connector());
         modifyDescribe.getModifyGroupConcatColumnList().add(groupConcatColumn);
     }
