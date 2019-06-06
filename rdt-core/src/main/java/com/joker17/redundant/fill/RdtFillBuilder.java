@@ -565,14 +565,23 @@ public class RdtFillBuilder {
                 if (data != null) {
                     //获取当前数据的类型
                     final Class dataClass = data.getClass();
+
+                    if (rdtResolver.isIgnoreModelClass(dataClass)) {
+                        continue;
+                    }
+
                     ClassModel dataClassModel = configuration.getClassModel(dataClass);
                     if (dataClassModel == null) {
                         logger.debug("rdt not contains class {}, so builder for fill now.", dataClass.getName());
                         configuration.builderClass(dataClass);
                         dataClassModel = configuration.getClassModel(dataClass);
                     }
-                    final Map<Class, List<ModifyDescribe>> targetClassModifyDescribeMap = dataClassModel.getTargetClassModifyDescribeMap();
 
+                    if (dataClassModel == null) {
+                        continue;
+                    }
+
+                    final Map<Class, List<ModifyDescribe>> targetClassModifyDescribeMap = dataClassModel.getTargetClassModifyDescribeMap();
                     for (final Class entityClass : targetClassModifyDescribeMap.keySet()) {
                         //当前的修改信息
                         ClassModel entityClassModel = configuration.getClassModel(entityClass);
