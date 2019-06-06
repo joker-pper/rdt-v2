@@ -648,6 +648,44 @@ public abstract class RdtResolver {
 
     }
 
+    public void revealModifyGroupDescribeLogs(ModifyGroupDescribe groupDescribe, boolean show) {
+        if (groupDescribe != null) {
+            List<Object> dataList = new ArrayList<Object>();
+            StringBuilder sb = new StringBuilder("{}");
+            dataList.add(groupDescribe.getEntityClass().getName());
+            sb.append("\nModifyGroupDescribe:");
+            resolveDescribeLogsKeyAndValue(sb, "\n\t", dataList,
+                    Arrays.asList(
+                            "target class", "index"
+                    ),
+                    Arrays.asList(
+                            new Object[] {
+                                    groupDescribe.getTargetClass().getName(),
+                                    groupDescribe.getIndex()
+                            }
+                    )
+            );
+
+            boolean hasWarn = getResolveDescribeLogsModifyGroupKeysColumnAndModifyGroupConcatColumnsHasWarn(sb, dataList, groupDescribe);
+            revealDescribeLogs(sb.toString(), hasWarn, show, dataList.toArray());
+        }
+
+    }
+
+
+    protected String getDescribeColumnWithTargetColumnMark(Column column, Column targetColumn) {
+        StringBuilder builder = new StringBuilder(column.getProperty());
+        builder.append((column.getIsTransient() ? getYellowText("[transient]") : ""));
+        builder.append("(");
+        builder.append(getFormatClassName(column.getPropertyClass()));
+        builder.append( ") ==> ");
+        builder.append(targetColumn.getProperty());
+        builder.append("(");
+        builder.append(getFormatClassName(targetColumn.getPropertyClass()));
+        builder.append( ")");
+        return builder.toString();
+    }
+
 
     protected boolean getResolveDescribeLogsModifyConditionsAndModifyColumnsHasWarn(StringBuilder logContentBuilder, List<Object> dataList, ModifyDescribe describe) {
         boolean warn = false;
@@ -664,10 +702,7 @@ public abstract class RdtResolver {
 
                     Column column = modifyCondition.getColumn();
                     Column targetColumn = modifyCondition.getTargetColumn();
-                    String mark = column.getProperty() + (column.getIsTransient() ? getYellowText("[transient]") : "") +"(" + column.getPropertyClass().getName() +
-                            ") ==> "+ targetColumn.getProperty()
-                            + "(" + targetColumn.getPropertyClass().getName()   + ")";
-
+                    String mark = getDescribeColumnWithTargetColumnMark(column, targetColumn);
                     resolveDescribeLogsKeyAndValue(logContentBuilder, "\n\t\t\t",
                             dataList,
                             Arrays.asList((String) null),
@@ -685,10 +720,7 @@ public abstract class RdtResolver {
 
                     Column column = modifyColumn.getColumn();
                     Column targetColumn = modifyColumn.getTargetColumn();
-                    String mark = column.getProperty() + (column.getIsTransient() ? getYellowText("[transient]") : "") +"(" + column.getPropertyClass().getName() +
-                            ") ==> "+ targetColumn.getProperty()
-                            + "(" + targetColumn.getPropertyClass().getName()   + ")";
-
+                    String mark = getDescribeColumnWithTargetColumnMark(column, targetColumn);
                     if (!column.getPropertyClass().equals(targetColumn.getPropertyClass())) {
                         warn = true;
                         mark = mark + getRedText("【please make sure can cast.】");
@@ -707,6 +739,79 @@ public abstract class RdtResolver {
         return warn;
     }
 
+    /**
+     * 检测值是否可以进行转换
+     * @param groupBaseColumn
+     * @return
+     */
+    protected boolean checkGroupColumnCanCast(ModifyGroupBaseColumn groupBaseColumn) {
+        Class columnBasicClass = groupBaseColumn.getColumnBasicClass();
+        Class targetColumnClass = groupBaseColumn.getTargetColumnClass();
+        return columnBasicClass == String.class || columnBasicClass == targetColumnClass;
+    }
+
+    protected boolean getResolveDescribeLogsModifyGroupKeysColumnAndModifyGroupConcatColumnsHasWarn(StringBuilder logContentBuilder, List<Object> dataList, ModifyGroupDescribe describe) {
+        boolean warn = false;
+        if (describe != null) {
+            logContentBuilder.append("\n\tModifyGroupKeysColumn:");
+            ModifyGroupKeysColumn modifyGroupKeysColumn = describe.getModifyGroupKeysColumn();
+            {
+                Column column = modifyGroupKeysColumn.getColumn();
+                Column targetColumn = modifyGroupKeysColumn.getTargetColumn();
+                String mark = getDescribeColumnWithTargetColumnMark(column, targetColumn);
+                if (!checkGroupColumnCanCast(modifyGroupKeysColumn)) {
+                    warn = true;
+                    mark = mark + getRedText("【please make sure can cast.】");
+                }
+                resolveDescribeLogsKeyAndValue(logContentBuilder, "\n\t\t",
+                        dataList,
+                        Arrays.asList(
+                                null, "connector", "columnBasicClass",
+                                "columnClassType"
+                        ),
+                        Arrays.asList(new Object[] {
+                                mark, modifyGroupKeysColumn.getConnector(), getFormatClassName(modifyGroupKeysColumn.getColumnBasicClass()),
+                                modifyGroupKeysColumn.getColumnClassType()
+                        })
+                );
+            }
+
+            logContentBuilder.append("\n\tModifyGroupConcatColumns:");
+            List<ModifyGroupConcatColumn> modifyGroupConcatColumnList = describe.getModifyGroupConcatColumnList();
+
+            if (!modifyGroupConcatColumnList.isEmpty()) {
+                for (ModifyGroupConcatColumn concatColumn : modifyGroupConcatColumnList) {
+                    logContentBuilder.append("\n\t\tModifyGroupConcatColumn:");
+
+                    Column column = concatColumn.getColumn();
+                    Column targetColumn = concatColumn.getTargetColumn();
+                    String mark = getDescribeColumnWithTargetColumnMark(column, targetColumn);
+                    if (!checkGroupColumnCanCast(concatColumn)) {
+                        warn = true;
+                        mark = mark + getRedText("【please make sure can cast.】");
+                    }
+
+                    resolveDescribeLogsKeyAndValue(logContentBuilder, "\n\t\t\t",
+                            dataList,
+                            Arrays.asList(
+                                    null, "connector", "columnBasicClass",
+                                    "columnClassType", "isStartBasicConnector", "isBasicNotConnectorOptFirst",
+                                    "fillShowType", "fillSaveType"
+                            ),
+                            Arrays.asList(new Object[] {
+                                    mark, concatColumn.getConnector(), getFormatClassName(concatColumn.getColumnBasicClass()),
+                                    concatColumn.getColumnClassType(), concatColumn.isStartBasicConnector(), concatColumn.isBasicNotConnectorOptFirst(),
+                                    concatColumn.getFillShowType(), concatColumn.getFillSaveType()
+                            })
+                    );
+                }
+            } else {
+                warn = true;
+                logContentBuilder.append("\n\t\t" + getRedText("【has no concat columns, please make sure no problem.】"));
+            }
+        }
+        return warn;
+    }
 
 
     protected void resolveDescribeLogsKeyAndValue(StringBuilder logContentBuilder, String connector, List<Object> dataList, Collection<String> keys, List<Object> values) {
@@ -853,4 +958,67 @@ public abstract class RdtResolver {
     public static <T> T[] newInstanceArray(Class<T> classType, int length) {
         return PojoUtils.newInstanceArray(classType, length);
     }
+
+    /**
+     * 获取格式化后的class名称
+     * @param type
+     * @return char[].class ==> char[]
+     */
+    public static String getFormatClassName(Class type) {
+        String className = type.getName();
+        if (className.contains("[")) {
+            //是数组时获取个数
+            int count = appearNumber(className, "[");
+            String simpleType = "";
+            if (!className.endsWith(";")) {
+                String temp = className.substring(count);
+
+                Map<Class, String> basicTypeMap = new HashMap<Class, String>();
+                basicTypeMap.put(int.class, "I");
+                basicTypeMap.put(long.class, "J");
+                basicTypeMap.put(short.class, "S");
+                basicTypeMap.put(boolean.class, "Z");
+                basicTypeMap.put(float.class, "F");
+                basicTypeMap.put(double.class, "D");
+                basicTypeMap.put(byte.class, "B");
+                basicTypeMap.put(char.class, "C");
+
+                for (Class key : basicTypeMap.keySet()) {
+                    String val = basicTypeMap.get(key);
+                    if (val.equals(temp)) {
+                        simpleType = key.getName();
+                        break;
+                    }
+                }
+            } else {
+                simpleType = className.substring(count + 1, className.length() - 1);
+            }
+
+            StringBuilder builder = new StringBuilder(simpleType);
+            for (int i = 0; i < count; i++) {
+                builder.append("[]");
+            }
+            return builder.toString();
+        }
+        return className;
+    }
+
+    /**
+     * 获取指定字符串出现的次数
+     *
+     * @param srcText
+     * @param findText
+     * @return
+     */
+    protected static int appearNumber(String srcText, String findText) {
+        int count = 0;
+        int index = 0;
+        while ((index = srcText.indexOf(findText, index)) != -1) {
+            index = index + findText.length();
+            count ++;
+        }
+        return count;
+    }
+
+
 }

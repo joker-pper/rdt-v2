@@ -7,6 +7,7 @@ import com.joker17.redundant.annotation.field.RdtField;
 import com.joker17.redundant.annotation.field.RdtFieldCondition;
 import com.joker17.redundant.annotation.fill.RdtGroupConcatField;
 import com.joker17.redundant.annotation.fill.RdtGroupKeys;
+import com.joker17.redundant.annotation.fill.RdtVO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,6 +18,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@RdtVO
 public class UserRoleVO {
     /**
      * 基于 user id的字段列
@@ -95,7 +97,7 @@ public class UserRoleVO {
     private List<Object> role2NameList;
 
     @RdtGroupConcatField(property = "createTime", target = Role.class, index = 1)
-    private String role2CreateTime;
+    private String role2CreateTimes;
 
     @RdtGroupConcatField(property = "name", target = Role.class, index = 1, startBasicConnector = false, basicNotConnectorOptFirst = true)
     private String role2FirstName;

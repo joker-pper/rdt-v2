@@ -256,7 +256,6 @@ public class RdtFillBuilder {
 
             Class columnBasicClass = groupConcatColumn.getColumnBasicClass();
             Class columnClass = groupConcatColumn.getColumnClass();
-            Class targetColumnClass = groupConcatColumn.getTargetColumnClass();
             String connector = groupConcatColumn.getConnector();
 
             concatColumnPropertyList.add(concatColumnProperty);
@@ -278,8 +277,7 @@ public class RdtFillBuilder {
             ClassTypeEnum columnClassType = groupConcatColumn.getColumnClassType();
             switch (columnClassType) {
                 case BASIC:
-                    boolean isColumnBasicStringClass = columnBasicClass == String.class;
-                    boolean isConnector = groupConcatColumn.isStartBasicConnector() && isColumnBasicStringClass;
+                    boolean isConnector = groupConcatColumn.isStartBasicConnector() && columnBasicClass == String.class;
                     if (isConnector) {
                         columnPropertyValue = rdtResolver.join(columnPropertyValueList, connector);
                     } else {

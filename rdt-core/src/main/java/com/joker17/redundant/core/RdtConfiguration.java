@@ -722,7 +722,7 @@ public class RdtConfiguration {
         if (FillType.ALL == type) {
             return describe;
         }
-
+        //获取当前describe关于其他两种FillType处理后的结果(column是否为非持久化字段不会改变,即对应结果是唯一的.)
         boolean isPersistentType = FillType.PERSISTENT == type;
         Map<ModifyDescribe, ModifyDescribe> describeMap = isPersistentType ? persistentModifyDescribeCacheMap : transientModifyDescribeCacheMap;
         ModifyDescribe result = describeMap.get(describe);

@@ -164,6 +164,7 @@ public class RdtPropertiesBuilder {
                 if (groupKeysColumn == null) {
                     throw new RuntimeException(String.format("%s builder about %s ModifyGroupDescribe index %s has error, cause by has no config @RdtGroupKeys.", classModel.getClassName(), describe.getTargetClass().getName(), describe.getIndex()));
                 }
+                rdtResolver.revealModifyGroupDescribeLogs(describe, properties.getShowDescribe());
             }
 
         }
@@ -852,11 +853,17 @@ public class RdtPropertiesBuilder {
         ModifyGroupDescribe modifyDescribe = getModifyGroupDescribe(classModel, targetClassModel, index);
 
         ModifyGroupConcatColumn groupConcatColumn = new ModifyGroupConcatColumn();
-        groupConcatColumn.setFillSaveType(rdtAnnotation.fillSave());
-        groupConcatColumn.setFillShowType(rdtAnnotation.fillShow());
-        groupConcatColumn.setStartBasicConnector(rdtAnnotation.startBasicConnector());
-        groupConcatColumn.setBasicNotConnectorOptFirst(rdtAnnotation.basicNotConnectorOptFirst());
+        groupConcatColumn.setFillSaveType(rdtResolver.getFillSaveType(classModel, column, rdtAnnotation.fillSave()));
+        groupConcatColumn.setFillShowType(rdtResolver.getFillShowType(classModel, column, rdtAnnotation.fillShow()));
         builderModifyGroupBaseColumnConfigData(groupConcatColumn, column, targetColumn, rdtAnnotation.connector());
+
+        boolean startBasicConnector = rdtAnnotation.startBasicConnector();
+        if (startBasicConnector && groupConcatColumn.getColumnClassType() == ClassTypeEnum.BASIC) {
+            startBasicConnector = groupConcatColumn.getColumnBasicClass() == String.class;
+        }
+
+        groupConcatColumn.setStartBasicConnector(startBasicConnector);
+        groupConcatColumn.setBasicNotConnectorOptFirst(rdtAnnotation.basicNotConnectorOptFirst());
         modifyDescribe.getModifyGroupConcatColumnList().add(groupConcatColumn);
     }
 
