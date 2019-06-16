@@ -128,7 +128,6 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
     }
 
 
-
     protected Predicate modelTypeCriteriaProcessing(ModifyRelyDescribe describe, final String relyProperty, final CriteriaPredicateBuilder builder, Root root) {
         final Path relyPropertyPath = root.get(relyProperty);
         final Predicate[] predicates = new Predicate[]{null};
@@ -156,103 +155,120 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
     @Override
     protected <T> List<T> findByFillKeyModelExecute(FillOneKeyModel fillOneKeyModel) {
         Class<T> entityClass = fillOneKeyModel.getEntityClass();
-        CriteriaPredicateBuilder criteriaBuilder = CriteriaPredicateBuilder.of(entityManager);
-        try {
-            CriteriaQuery criteriaQuery = criteriaBuilder.createQuery(entityClass);
-            Root root = criteriaQuery.from(entityClass);
+        List<String> conditionPropertys = Arrays.asList(fillOneKeyModel.getKey());
+        List<Object> conditionValues = Arrays.asList((Object) fillOneKeyModel.getKeyValues());
 
-            Set<Column> columnSet = fillOneKeyModel.getColumnValues();
-
-            List<Selection<?>> selectionList = new ArrayList<Selection<?>>(16);
-            selectionList.add(root.get(fillOneKeyModel.getKey()));
-
-            for (Column column : columnSet) {
-                selectionList.add(root.get(column.getProperty()));
-            }
-
-            criteriaQuery.select(criteriaBuilder.getCriteriaBuilder().construct(Object[].class, selectionList.toArray(new Selection[selectionList.size()])));
-
-            List<Predicate> predicateList = new ArrayList<Predicate>();
-            predicateList.add(criteriaBuilder.criteriaIn(root.get(fillOneKeyModel.getKey()), fillOneKeyModel.getKeyValues()));
-
-            criteriaQuery.where(predicateList.toArray(new Predicate[predicateList.size()]));
-            List<Object[]> list = entityManager.createQuery(criteriaQuery).getResultList();
-            return parseResults(entityClass, list, Arrays.asList(fillOneKeyModel.getKeyColumn()), columnSet);
-        } catch (Exception e) {
-            logger.warn("rdt fill get " + entityClass.getName() + " data list by used property has error, will use all property, \n cause by exception :", e);
+        List<String> selectPropertys = new ArrayList<String>(16);
+        Set<Column> columnSet = fillOneKeyModel.getColumnValues();
+        for (Column column : columnSet) {
+            selectPropertys.add(column.getProperty());
         }
-
-        CriteriaQuery criteriaQuery = criteriaBuilder.createQuery(entityClass);
-        Root root = criteriaQuery.from(entityClass);
-
-        List<Predicate> predicateList = new ArrayList<Predicate>(16);
-        predicateList.add(criteriaBuilder.criteriaIn(root.get(fillOneKeyModel.getKey()), fillOneKeyModel.getKeyValues()));
-
-        criteriaQuery.where(predicateList.toArray(new Predicate[predicateList.size()]));
-        return entityManager.createQuery(criteriaQuery).getResultList();
-    }
-
-    protected <T> List<T> parseResults(Class<T> entityClass, List<Object[]> list, Collection<Column> conditions, Collection<Column> columns) throws Exception {
-        List<T> results = new ArrayList<T>(16);
-        for (Object[] objects : list) {
-            T data = entityClass.newInstance();
-            int i = 0;
-
-            for (Column column : conditions) {
-                String property = column.getProperty();
-                rdtResolver.setPropertyValue(data, property, objects[i ++]);
-            }
-
-            for (Column column : columns) {
-                String property = column.getProperty();
-                rdtResolver.setPropertyValue(data, property, objects[i ++]);
-            }
-
-            results.add(data);
-        }
-        return results;
+        return findByConditions(entityClass, conditionPropertys, conditionValues, selectPropertys.toArray(new String[selectPropertys.size()]));
     }
 
 
     @Override
     protected <T> List<T> findByFillManyKeyExecute(Class<T> entityClass, List<Column> conditionColumnValues, Set<Column> columnValues, List<Object> conditionGroupValue) {
-        CriteriaPredicateBuilder criteriaBuilder = CriteriaPredicateBuilder.of(entityManager);
+        List<String> conditionPropertys = new ArrayList<String>(16);
+        for (Column column : conditionColumnValues) {
+            conditionPropertys.add(column.getProperty());
+        }
+        List<String> selectPropertys = new ArrayList<String>(16);
+        for (Column column : columnValues) {
+            selectPropertys.add(column.getProperty());
+        }
+        return findByConditions(entityClass, conditionPropertys, conditionGroupValue, selectPropertys.toArray(new String[selectPropertys.size()]));
+    }
+
+
+    @Override
+    public <T> List<T> findByConditions(Class<T> entityClass, List<String> conditionPropertys, List<Object> conditionValues, String... selectPropertys) {
         try {
-            CriteriaQuery criteriaQuery = criteriaBuilder.createQuery(entityClass);
-            Root root = criteriaQuery.from(entityClass);
-            List<Selection<?>> selectionList = new ArrayList<Selection<?>>(16);
-            List<Predicate> predicateList = new ArrayList<Predicate>();
-
-            int index = 0;
-            for (Column column : conditionColumnValues) {
-                Path path = root.get(column.getProperty());
-                selectionList.add(path);
-                predicateList.add(criteriaBuilder.eq(path, conditionGroupValue.get(index ++)));
-            }
-
-            for (Column column : columnValues) {
-                selectionList.add(root.get(column.getProperty()));
-            }
-
-            criteriaQuery.select(criteriaBuilder.getCriteriaBuilder().construct(Object[].class, selectionList.toArray(new Selection[selectionList.size()])));
-
-            criteriaQuery.where(predicateList.toArray(new Predicate[predicateList.size()]));
-            List<Object[]> list = entityManager.createQuery(criteriaQuery).getResultList();
-            return parseResults(entityClass, list, conditionColumnValues, columnValues);
+            return findByPropertyResults(entityClass, conditionPropertys, conditionValues, selectPropertys);
         } catch (Exception e) {
             logger.warn("rdt fill get " + entityClass.getName() + " data list by used property has error, will use all property, \n cause by exception :", e);
         }
+        return findByConditions(entityClass, conditionPropertys, conditionValues);
+    }
 
+
+    /**
+     * 通过条件值获取数据列表
+     * @param entityClass
+     * @param conditionPropertys
+     * @param conditionValues
+     * @param <T>
+     * @return
+     */
+    protected <T> List<T> findByConditions(Class<T> entityClass, List<String> conditionPropertys, List<Object> conditionValues) {
+        CriteriaPredicateBuilder criteriaBuilder = CriteriaPredicateBuilder.of(entityManager);
         CriteriaQuery criteriaQuery = criteriaBuilder.createQuery(entityClass);
-        Root root = criteriaQuery.from(entityClass);
-
-        List<Predicate> predicateList = new ArrayList<Predicate>(16);
-        int index = 0;
-        for (Column column : conditionColumnValues) {
-            Path path = root.get(column.getProperty());
-            predicateList.add(criteriaBuilder.eq(path, conditionGroupValue.get(index ++)));
+        if (conditionPropertys != null && !conditionPropertys.isEmpty()) {
+            Root root = criteriaQuery.from(entityClass);
+            List<Predicate> predicateList = new ArrayList<Predicate>(16);
+            int index = 0;
+            for (String property : conditionPropertys) {
+                Path path = root.get(property);
+                predicateList.add(criteriaBuilder.criteriaIn(path, conditionValues.get(index++)));
+            }
+            criteriaQuery.where(predicateList.toArray(new Predicate[predicateList.size()]));
         }
-        criteriaQuery.where(predicateList.toArray(new Predicate[predicateList.size()]));
         return entityManager.createQuery(criteriaQuery).getResultList();
     }
+
+
+    protected <T> List<T> findByPropertyResults(Class<T> entityClass, List<String> conditionPropertys, List<Object> conditionValues, String... selectPropertys) {
+        List<String> finalQueryPropertys = new ArrayList<String>(16);
+        List<Object[]> queryResults = findPropertyResultsByConditions(entityClass, finalQueryPropertys, conditionPropertys, conditionValues, selectPropertys);
+        return convertPropertyResults(entityClass, queryResults, finalQueryPropertys);
+    }
+
+    /**
+     * 通过查询指定列及条件获取结果列表
+     * @param entityClass
+     * @param finalQueryPropertys 空数组,用于访问最终查询列的数据
+     * @param selectPropertys
+     * @param conditionPropertys
+     * @param conditionValues
+     * @param <T>
+     * @return
+     */
+    protected <T> List<Object[]> findPropertyResultsByConditions(Class<T> entityClass, List<String> finalQueryPropertys, List<String> conditionPropertys, List<Object> conditionValues, String... selectPropertys) {
+        if (finalQueryPropertys == null || !finalQueryPropertys.isEmpty()) {
+            throw new IllegalArgumentException("finalQueryPropertys must be empty list");
+        }
+        CriteriaPredicateBuilder criteriaBuilder = CriteriaPredicateBuilder.of(entityManager);
+        CriteriaQuery criteriaQuery = criteriaBuilder.createQuery(entityClass);
+
+        List<Selection<?>> selectionList = new ArrayList<Selection<?>>(16);
+        Root root = criteriaQuery.from(entityClass);
+        if (conditionPropertys != null && !conditionPropertys.isEmpty()) {
+            //添加限定条件
+            List<Predicate> predicateList = new ArrayList<Predicate>(16);
+            int index = 0;
+            for (String property : conditionPropertys) {
+                Path path = root.get(property);
+                predicateList.add(criteriaBuilder.criteriaIn(path, conditionValues.get(index++)));
+
+                //已存在的属性不再添加
+                if (!finalQueryPropertys.contains(property)) {
+                    finalQueryPropertys.add(property);
+                    selectionList.add(path);
+                }
+            }
+            criteriaQuery.where(predicateList.toArray(new Predicate[predicateList.size()]));
+        }
+        if (selectPropertys != null) {
+            for (String property : selectPropertys) {
+                if (!finalQueryPropertys.contains(property)) {
+                    finalQueryPropertys.add(property);
+                    Path path = root.get(property);
+                    selectionList.add(path);
+                }
+            }
+        }
+        criteriaQuery.select(criteriaBuilder.getCriteriaBuilder().construct(Object[].class, selectionList.toArray(new Selection[selectionList.size()])));
+        return entityManager.createQuery(criteriaQuery).getResultList();
+    }
+
 }

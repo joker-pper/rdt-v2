@@ -612,6 +612,24 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
 
     }
 
+    @Override
+    public <T> List<T> convertPropertyResults(Class<T> entityClass, List<Object[]> queryResults, List<String> queryPropertys) {
+        List<T> results = new ArrayList<T>(16);
+        for (Object[] queryResult : queryResults) {
+            T data = null;
+            try {
+                data = entityClass.newInstance();
+            } catch (Exception e) {
+            }
+            int i = 0;
+            for (String property : queryPropertys) {
+                rdtResolver.setPropertyValue(data, property, queryResult[i++]);
+            }
+            results.add(data);
+        }
+        return results;
+    }
+
 
     protected <T> List<T> findByFillKeyModel(FillOneKeyModel fillOneKeyModel) {
         List<T> result = null;
@@ -659,6 +677,50 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
      */
     protected abstract <T> List<T> findByFillManyKeyExecute(Class<T> entityClass, List<Column> conditionColumnValues, Set<Column> columnValues, List<Object> conditionGroupValue);
 
+
+
+    @Override
+    public <T> Map<List<Object>, List<Object>> getGroupKeysMap(Class<T> entityClass, List<String> conditionPropertys, List<Object> conditionValues, String selectProperty) {
+        return (Map) getGroupKeysMapImpl(entityClass, conditionPropertys, conditionValues, selectProperty);
+    }
+
+
+    protected <T> Map<Object, List<Object>> getGroupKeysMapImpl(Class<T> entityClass, List<String> conditionPropertys, List<Object> conditionValues, String selectProperty) {
+        Map<Object, List<Object>> resultMap = new HashMap<Object, List<Object>>(16);
+        List<T> dataList = findByConditions(entityClass, conditionPropertys, conditionValues, selectProperty);
+        boolean isOneConditionProperty = conditionPropertys != null && conditionPropertys.size() == 1;
+        String uniqueConditionProperty = isOneConditionProperty ? conditionPropertys.get(0) : null;
+        if (dataList != null) {
+            for (T data : dataList) {
+                //条件列值作为key
+                Object key;
+                if (isOneConditionProperty) {
+                    key = rdtResolver.getPropertyValue(data, uniqueConditionProperty);
+                } else {
+                    List<Object> keyList = new ArrayList<Object>(16);
+                    for (String conditionProperty : conditionPropertys) {
+                        keyList.add(rdtResolver.getPropertyValue(data, conditionProperty));
+                    }
+                    key = keyList;
+                }
+
+                List<Object> valueList = resultMap.get(key);
+                if (valueList == null) {
+                    valueList = new ArrayList<Object>(16);
+                }
+
+                //未进行处理null值,默认均为合法值
+                Object selectPropertyValue = rdtResolver.getPropertyValue(data, selectProperty);
+                valueList.add(selectPropertyValue);
+            }
+        }
+        return resultMap;
+    }
+
+    @Override
+    public <T> Map<Object, List<Object>> getGroupKeysMap(Class<T> entityClass, String conditionProperty, Object conditionValue, String selectProperty) {
+        return (Map) getGroupKeysMapImpl(entityClass, Arrays.asList(conditionProperty), Arrays.asList(conditionValue), selectProperty);
+    }
 
     @Override
     public void fillForShow(Collection<?> collection) {

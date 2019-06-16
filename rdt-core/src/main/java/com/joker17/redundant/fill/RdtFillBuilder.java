@@ -461,10 +461,9 @@ public class RdtFillBuilder {
         ModifyCondition modifyCondition = describe.getConditionList().get(0);
         List<ModifyColumn> modifyColumnList = describe.getColumnList();
 
-        Map<Class, List<FillOneKeyModel>> fillKeyModelListMap = fillRSModel.getFillKeyModelListMap();
 
         //处理当前entityClass某单列作为key查询条件的数据
-        FillOneKeyModel fillOneKeyModel = fillRSModel.getFillKeyModel(entityClassModel, modifyCondition, fillKeyModelListMap);
+        FillOneKeyModel fillOneKeyModel = fillRSModel.getFillKeyModel(entityClassModel, modifyCondition);
         for (ModifyColumn modifyColumn : modifyColumnList) {
             //所使用的相关列
             fillOneKeyModel.addColumnValue(modifyColumn.getTargetColumn());
@@ -492,10 +491,9 @@ public class RdtFillBuilder {
             return;
         }
 
-        Map<Class, List<FillOneKeyModel>> fillKeyModelListMap = fillRSModel.getFillKeyModelListMap();
         ModifyGroupKeysColumn modifyGroupKeysColumn = describe.getModifyGroupKeysColumn();
         //处理当前entityClass某单列作为key查询条件的数据
-        FillOneKeyModel fillOneKeyModel = fillRSModel.getFillKeyModel(entityClassModel, modifyGroupKeysColumn, fillKeyModelListMap);
+        FillOneKeyModel fillOneKeyModel = fillRSModel.getFillKeyModel(entityClassModel, modifyGroupKeysColumn);
         for (ModifyGroupConcatColumn groupConcatColumn : modifyGroupConcatColumnList) {
             //所使用的相关列
             fillOneKeyModel.addColumnValue(groupConcatColumn.getTargetColumn());
@@ -546,6 +544,7 @@ public class RdtFillBuilder {
             fillOneKeyModel.addDescribeKeyValueData(describe, keyValList, data);
         }
     }
+
 
 
 

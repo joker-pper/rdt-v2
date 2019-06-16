@@ -38,25 +38,24 @@ public class FillRSModel implements Serializable {
      * 获取关于当前modifyCondition对应entityClass的FillKeyVO对象
      * @param entityClassModel
      * @param modifyCondition
-     * @param entityFillKeyVoListMap
      * @return
      */
-    public FillOneKeyModel getFillKeyModel(ClassModel entityClassModel, ModifyCondition modifyCondition, Map<Class, List<FillOneKeyModel>> entityFillKeyVoListMap) {
+    public FillOneKeyModel getFillKeyModel(ClassModel entityClassModel, ModifyCondition modifyCondition) {
         Column targetColumn = modifyCondition.getTargetColumn();
-        return getFillKeyModel(entityClassModel, targetColumn, entityFillKeyVoListMap);
+        return getFillKeyModel(entityClassModel, targetColumn);
     }
 
-    public FillOneKeyModel getFillKeyModel(ClassModel entityClassModel, ModifyGroupKeysColumn modifyGroupKeysColumn, Map<Class, List<FillOneKeyModel>> entityFillKeyVoListMap) {
+    public FillOneKeyModel getFillKeyModel(ClassModel entityClassModel, ModifyGroupKeysColumn modifyGroupKeysColumn) {
         Column targetColumn = modifyGroupKeysColumn.getTargetColumn();
-        return getFillKeyModel(entityClassModel, targetColumn, entityFillKeyVoListMap);
+        return getFillKeyModel(entityClassModel, targetColumn);
     }
 
-    protected FillOneKeyModel getFillKeyModel(ClassModel entityClassModel, Column targetColumn, Map<Class, List<FillOneKeyModel>> entityFillKeyVoListMap) {
+    protected FillOneKeyModel getFillKeyModel(ClassModel entityClassModel, Column targetColumn) {
         Class entityClass = entityClassModel.getCurrentClass();
-        List<FillOneKeyModel> fillOneKeyModelList = entityFillKeyVoListMap.get(entityClass);
+        List<FillOneKeyModel> fillOneKeyModelList = fillKeyModelListMap.get(entityClass);
         if (fillOneKeyModelList == null) {
             fillOneKeyModelList = new ArrayList<FillOneKeyModel>(16);
-            entityFillKeyVoListMap.put(entityClass, fillOneKeyModelList);
+            fillKeyModelListMap.put(entityClass, fillOneKeyModelList);
         }
 
         FillOneKeyModel fillOneKeyModel = null;
