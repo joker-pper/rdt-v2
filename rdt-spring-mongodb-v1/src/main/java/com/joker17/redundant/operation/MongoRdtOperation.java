@@ -1,7 +1,6 @@
 package com.joker17.redundant.operation;
 
 import com.joker17.redundant.core.RdtConfiguration;
-import com.joker17.redundant.fill.FillOneKeyModel;
 import com.joker17.redundant.model.*;
 import com.joker17.redundant.support.DataSupport;
 import com.joker17.redundant.utils.StringUtils;
@@ -43,36 +42,10 @@ public class MongoRdtOperation extends AbstractMongoOperation {
         return mongoTemplate.findById(id, entityClass);
     }
 
-    //单条件的数据
-    @Override
-    protected <T> List<T> findByFillKeyModelExecute(FillOneKeyModel fillOneKeyModel) {
-        Class<T> entityClass = fillOneKeyModel.getEntityClass();
-        List<String> conditionPropertys = Arrays.asList(fillOneKeyModel.getKey());
-        List<Object> conditionValues = Arrays.asList((Object) fillOneKeyModel.getKeyValues());
-        List<String> selectPropertys = new ArrayList<String>(16);
-        Set<Column> columnSet = fillOneKeyModel.getColumnValues();
-        for (Column column : columnSet) {
-            selectPropertys.add(column.getProperty());
-        }
-        return findByConditions(entityClass, conditionPropertys, conditionValues, selectPropertys.toArray(new String[selectPropertys.size()]));
-    }
 
-    //多条件时的数据
-    @Override
-    protected <T> List<T> findByFillManyKeyExecute(Class<T> entityClass, List<Column> conditionColumnValues, Set<Column> columnValues, List<Object> conditionGroupValue) {
-        List<String> conditionPropertys = new ArrayList<String>(16);
-        for (Column column : conditionColumnValues) {
-            conditionPropertys.add(column.getProperty());
-        }
-        List<String> selectPropertys = new ArrayList<String>(16);
-        for (Column column : columnValues) {
-            selectPropertys.add(column.getProperty());
-        }
-        return findByConditions(entityClass, conditionPropertys, conditionGroupValue, selectPropertys.toArray(new String[selectPropertys.size()]));
-    }
 
     @Override
-    public <T> List<T> findByConditions(Class<T> entityClass, List<String> conditionPropertys, List<Object> conditionValues, String... selectPropertys) {
+    protected <T> List<T> findByConditionsExecute(Class<T> entityClass, List<String> conditionPropertys, List<Object> conditionValues, String... selectPropertys) {
         Criteria criteria = new Criteria();
         Query query = new Query();
         int index = 0;

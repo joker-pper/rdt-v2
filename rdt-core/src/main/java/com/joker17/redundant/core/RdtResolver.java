@@ -374,7 +374,7 @@ public abstract class RdtResolver {
     }
 
     //获取该注解对象的属性值
-    public static Object getAnnotationValue(Annotation annotation, String property) {
+    public Object getAnnotationValue(Annotation annotation, String property) {
         return AnnotationUtils.getAnnotationValue(annotation, property);
     }
 
@@ -511,7 +511,7 @@ public abstract class RdtResolver {
      * @param <T>
      * @return
      */
-    public static <T> T cast(Object obj, Class<T> clazz) {
+    public <T> T cast(Object obj, Class<T> clazz) {
         return TypeUtils.cast(obj, clazz);
     }
 
@@ -891,7 +891,7 @@ public abstract class RdtResolver {
     }
 
 
-    public static <T> List<T> split(String text, String symbol, Class<T> type, boolean containsNullOrBlank) {
+    public <T> List<T> split(String text, String symbol, Class<T> type, boolean containsNullOrBlank) {
         List<T> results = new ArrayList<T>();
         type = type == null ? (Class<T>)String.class : type;
         String[] splitArray = null;
@@ -916,19 +916,19 @@ public abstract class RdtResolver {
         return results;
     }
 
-    public static List<String> split(String text, String symbol, boolean containsNullOrBlank) {
+    public List<String> split(String text, String symbol, boolean containsNullOrBlank) {
         return split(text, symbol, String.class, containsNullOrBlank);
     }
 
-    public static List<String> split(String text, String symbol) {
+    public List<String> split(String text, String symbol) {
         return split(text, symbol, false);
     }
 
-    public static <T> List<T> split(String text, String symbol, Class<T> type) {
+    public <T> List<T> split(String text, String symbol, Class<T> type) {
         return split(text, symbol, type, false);
     }
 
-    public static String join(Iterable<?> iterable, String separator, boolean isToEmpty) {
+    public String join(Iterable<?> iterable, String separator, boolean isToEmpty) {
         if (separator == null) {
             separator = ",";
         }
@@ -947,15 +947,15 @@ public abstract class RdtResolver {
         return StringUtils.isNotEmpty(result) ? result : isToEmpty ? "" : null;
     }
 
-    public static String join(Iterable<?> iterable, String separator) {
+    public String join(Iterable<?> iterable, String separator) {
         return join(iterable, separator, false);
     }
 
-    public static Class getFieldClass(Field field) {
+    public Class getFieldClass(Field field) {
         return PojoUtils.getFieldClass(field);
     }
 
-    public static <T> T[] newInstanceArray(Class<T> classType, int length) {
+    public <T> T[] newInstanceArray(Class<T> classType, int length) {
         return PojoUtils.newInstanceArray(classType, length);
     }
 
@@ -964,7 +964,7 @@ public abstract class RdtResolver {
      * @param type
      * @return char[].class ==> char[]
      */
-    public static String getFormatClassName(Class type) {
+    public String getFormatClassName(Class type) {
         String className = type.getName();
         if (className.contains("[")) {
             //是数组时获取个数

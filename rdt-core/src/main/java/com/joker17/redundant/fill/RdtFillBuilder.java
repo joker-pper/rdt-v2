@@ -318,6 +318,46 @@ public class RdtFillBuilder {
     }
 
 
+    public static boolean equalsColumnElement(Collection<Column> collection1, Collection<Column> collection2) {
+        /*try {
+            boolean result = false;
+            if (collection1 != null && collection2 != null) {
+                if (collection1 == collection2 || collection1.equals(collection2)) {
+                    result = true;
+                } else {
+                    if (collection1.size() == collection2.size()) {
+                        result = true;
+                        for (Column column1 : collection1) {
+                            boolean hasFind = false;
+                            for (Column column2 : collection2) {
+                                if (column1.getProperty().equals(column2.getProperty())) {
+                                    hasFind = true;
+                                    break;
+                                }
+                            }
+                            if (!hasFind) {
+                                result = false;
+                                break;
+                            }
+                        }
+
+
+                    }
+                }
+            } else {
+                if (collection1 == null && collection2 == null) {
+                    result = true;
+                }
+            }
+            return result;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;*/
+        return equalsElement(collection1, collection2);
+    }
+
+
 
     public static boolean equalsElement(Collection collection1, Collection collection2) {
         boolean result = false;
@@ -371,7 +411,7 @@ public class RdtFillBuilder {
         List<FillManyKeyDetail> manyKeyDetails = fillManyKeyModel.getManyKeyDetails();
         for (FillManyKeyDetail detail : manyKeyDetails) {
             List<Column> conditionColumnValues = detail.getConditionColumnValues();
-            if (equalsElement(conditionColumnValues, currentConditionColumnValues)) {
+            if (equalsColumnElement(conditionColumnValues, currentConditionColumnValues)) {
                 //使用对应顺序列的数据
                 currentConditionColumnValues = conditionColumnValues;
                 currentKeyDetail = detail;
@@ -492,57 +532,86 @@ public class RdtFillBuilder {
         }
 
         ModifyGroupKeysColumn modifyGroupKeysColumn = describe.getModifyGroupKeysColumn();
-        //处理当前entityClass某单列作为key查询条件的数据
-        FillOneKeyModel fillOneKeyModel = fillRSModel.getFillKeyModel(entityClassModel, modifyGroupKeysColumn);
-        for (ModifyGroupConcatColumn groupConcatColumn : modifyGroupConcatColumnList) {
-            //所使用的相关列
-            fillOneKeyModel.addColumnValue(groupConcatColumn.getTargetColumn());
-        }
+        Class gainClass = modifyGroupKeysColumn.getGainClass();
 
-        String property = modifyGroupKeysColumn.getColumn().getProperty();
-        //获取当前对象的属性值
-        Object keyVal = rdtResolver.getPropertyValue(data, property);
-        Class columnBasicClass = modifyGroupKeysColumn.getColumnBasicClass();
-        Class targetColumnClass = modifyGroupKeysColumn.getTargetColumnClass();
-        String connector = modifyGroupKeysColumn.getConnector();
-        boolean isBasicEqTargetColumnClass = columnBasicClass.equals(targetColumnClass);
+        if (gainClass != null) {
+            //中间表
+            List<Object> gainConditionValueList = new ArrayList<Object>(3);
+            List<Column> gainConditionValueRelyColumnList = modifyGroupKeysColumn.getGainConditionValueRelyColumnList();
 
-        //获取当前key的所有值
-        List<Object> keyValList = null;
-        if (keyVal != null) {
-            ClassTypeEnum columnClassType = modifyGroupKeysColumn.getColumnClassType();
-            switch (columnClassType) {
-                case BASIC:
-                    if (columnBasicClass == String.class) {
-                        keyValList = rdtResolver.split((String)keyVal, connector, targetColumnClass);
-                    } else {
-                        keyValList = Arrays.asList(isBasicEqTargetColumnClass ? keyVal : rdtResolver.cast(keyVal, targetColumnClass));
-                    }
+            //获取条件值
+            boolean gainConditionValueRelyValueHasNull = false;
+            for (Column gainConditionValueRelyColumn : gainConditionValueRelyColumnList) {
+                Object gainConditionValueRelyValue = rdtResolver.getPropertyValue(data, gainConditionValueRelyColumn.getProperty());
+                gainConditionValueRelyValueHasNull = gainConditionValueRelyValue == null;
+                if (gainConditionValueRelyValueHasNull) {
                     break;
-                case ARRAY:
-                    keyValList = new ArrayList<Object>(16);
-                    for (Object val : (Object[])keyVal) {
-                        keyValList.add(isBasicEqTargetColumnClass ? val : rdtResolver.cast(val, targetColumnClass));
-                    }
-                    break;
-                case SET:
-                case LIST:
-                    keyValList = new ArrayList<Object>(16);
-                    for (Object val : (Collection)keyVal) {
-                        keyValList.add(isBasicEqTargetColumnClass ? val : rdtResolver.cast(val, targetColumnClass));
-                    }
-                    break;
+                }
+                gainConditionValueList.add(gainConditionValueRelyValue);
+            }
+
+            if (!gainConditionValueRelyValueHasNull) {
+                FillGroupKeyModel fillGroupKeyModel = fillRSModel.getFillGroupKeyModel(configuration.getClassModel(gainClass));
+                //加载相关数据
+                fillGroupKeyModel.initFillGroupKeyDetailData(describe, data, gainConditionValueList);
+            }
+
+        } else {
+            //处理当前entityClass某单列作为key查询条件的数据
+            FillOneKeyModel fillOneKeyModel = fillRSModel.getFillKeyModel(entityClassModel, modifyGroupKeysColumn);
+            for (ModifyGroupConcatColumn groupConcatColumn : modifyGroupConcatColumnList) {
+                //所使用的相关列
+                fillOneKeyModel.addColumnValue(groupConcatColumn.getTargetColumn());
+            }
+
+            String property = modifyGroupKeysColumn.getColumn().getProperty();
+            //获取当前对象的属性值
+            Object keyVal = rdtResolver.getPropertyValue(data, property);
+            Class columnBasicClass = modifyGroupKeysColumn.getColumnBasicClass();
+            Class targetColumnClass = modifyGroupKeysColumn.getTargetColumnClass();
+            String connector = modifyGroupKeysColumn.getConnector();
+            boolean isBasicEqTargetColumnClass = columnBasicClass.equals(targetColumnClass);
+
+            //获取当前key的所有值
+            List<Object> keyValList = null;
+            if (keyVal != null) {
+                ClassTypeEnum columnClassType = modifyGroupKeysColumn.getColumnClassType();
+                switch (columnClassType) {
+                    case BASIC:
+                        if (columnBasicClass == String.class) {
+                            keyValList = rdtResolver.split((String)keyVal, connector, targetColumnClass);
+                        } else {
+                            keyValList = Arrays.asList(isBasicEqTargetColumnClass ? keyVal : rdtResolver.cast(keyVal, targetColumnClass));
+                        }
+                        break;
+                    case ARRAY:
+                        keyValList = new ArrayList<Object>(16);
+                        for (Object val : (Object[])keyVal) {
+                            keyValList.add(isBasicEqTargetColumnClass ? val : rdtResolver.cast(val, targetColumnClass));
+                        }
+                        break;
+                    case SET:
+                    case LIST:
+                        keyValList = new ArrayList<Object>(16);
+                        for (Object val : (Collection)keyVal) {
+                            keyValList.add(isBasicEqTargetColumnClass ? val : rdtResolver.cast(val, targetColumnClass));
+                        }
+                        break;
+                }
+            }
+
+            boolean isKeyValListEmpty = keyValList == null || keyValList.isEmpty();
+            if (!allowedNullValue && isKeyValListEmpty) {
+                throwExceptionHandler.throwFillNotAllowedValueException(dataClassModel, describe, modifyGroupKeysColumn, data, dataClassModel.getClassName() + " property " + property + " value not allowed null or empty.");
+            }
+
+            if (!isKeyValListEmpty) {
+                fillOneKeyModel.addDescribeKeyValueData(describe, keyValList, data);
             }
         }
 
-        boolean isKeyValListEmpty = keyValList == null || keyValList.isEmpty();
-        if (!allowedNullValue && isKeyValListEmpty) {
-            throwExceptionHandler.throwFillNotAllowedValueException(dataClassModel, describe, modifyGroupKeysColumn, data, dataClassModel.getClassName() + " property " + property + " value not allowed null or empty.");
-        }
 
-        if (!isKeyValListEmpty) {
-            fillOneKeyModel.addDescribeKeyValueData(describe, keyValList, data);
-        }
+
     }
 
 
@@ -589,6 +658,7 @@ public class RdtFillBuilder {
                             @Override
                             public void execute(ClassModel entityClassModel, ClassModel dataClassModel, ModifyDescribe describe) {
                                 describe = configuration.getModifyDescribeForFill(describe, fillType);
+
                                 List<ModifyCondition> conditionList = describe.getConditionList();
                                 List<ModifyColumn> columnList = describe.getColumnList();
 

@@ -14,7 +14,11 @@ import java.util.Map;
 public class FillRSModel implements Serializable {
 
     private Map<Class, List<FillOneKeyModel>> fillKeyModelListMap = new HashMap<Class, List<FillOneKeyModel>>(16);
+
     private Map<Class, FillManyKeyModel> fillManyKeyModelMap = new HashMap<Class, FillManyKeyModel>(16);
+
+    private Map<Class, FillGroupKeyModel> fillGroupKeyModelMap = new HashMap<Class, FillGroupKeyModel>(16);
+
 
     public Map<Class, List<FillOneKeyModel>> getFillKeyModelListMap() {
         return fillKeyModelListMap;
@@ -31,7 +35,6 @@ public class FillRSModel implements Serializable {
     public void setFillManyKeyModelMap(Map<Class, FillManyKeyModel> fillManyKeyModelMap) {
         this.fillManyKeyModelMap = fillManyKeyModelMap;
     }
-
 
 
     /**
@@ -78,5 +81,16 @@ public class FillRSModel implements Serializable {
             fillOneKeyModelList.add(fillOneKeyModel);
         }
         return fillOneKeyModel;
+    }
+
+    public FillGroupKeyModel getFillGroupKeyModel(ClassModel gainClassModel) {
+        Class entityClass = gainClassModel.getCurrentClass();
+        FillGroupKeyModel fillGroupKeyModel = fillGroupKeyModelMap.get(entityClass);
+        if (fillGroupKeyModel == null) {
+            fillGroupKeyModel = new FillGroupKeyModel();
+            fillGroupKeyModel.setEntityClass(entityClass);
+            fillGroupKeyModel.setClassModel(gainClassModel);
+        }
+        return fillGroupKeyModel;
     }
 }

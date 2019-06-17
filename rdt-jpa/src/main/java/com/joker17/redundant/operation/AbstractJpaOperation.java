@@ -152,37 +152,9 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
         return predicates[0];
     }
 
-    @Override
-    protected <T> List<T> findByFillKeyModelExecute(FillOneKeyModel fillOneKeyModel) {
-        Class<T> entityClass = fillOneKeyModel.getEntityClass();
-        List<String> conditionPropertys = Arrays.asList(fillOneKeyModel.getKey());
-        List<Object> conditionValues = Arrays.asList((Object) fillOneKeyModel.getKeyValues());
-
-        List<String> selectPropertys = new ArrayList<String>(16);
-        Set<Column> columnSet = fillOneKeyModel.getColumnValues();
-        for (Column column : columnSet) {
-            selectPropertys.add(column.getProperty());
-        }
-        return findByConditions(entityClass, conditionPropertys, conditionValues, selectPropertys.toArray(new String[selectPropertys.size()]));
-    }
-
 
     @Override
-    protected <T> List<T> findByFillManyKeyExecute(Class<T> entityClass, List<Column> conditionColumnValues, Set<Column> columnValues, List<Object> conditionGroupValue) {
-        List<String> conditionPropertys = new ArrayList<String>(16);
-        for (Column column : conditionColumnValues) {
-            conditionPropertys.add(column.getProperty());
-        }
-        List<String> selectPropertys = new ArrayList<String>(16);
-        for (Column column : columnValues) {
-            selectPropertys.add(column.getProperty());
-        }
-        return findByConditions(entityClass, conditionPropertys, conditionGroupValue, selectPropertys.toArray(new String[selectPropertys.size()]));
-    }
-
-
-    @Override
-    public <T> List<T> findByConditions(Class<T> entityClass, List<String> conditionPropertys, List<Object> conditionValues, String... selectPropertys) {
+    protected <T> List<T> findByConditionsExecute(Class<T> entityClass, List<String> conditionPropertys, List<Object> conditionValues, String... selectPropertys) {
         try {
             return findByPropertyResults(entityClass, conditionPropertys, conditionValues, selectPropertys);
         } catch (Exception e) {
@@ -190,7 +162,6 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
         }
         return findByConditions(entityClass, conditionPropertys, conditionValues);
     }
-
 
     /**
      * 通过条件值获取数据列表

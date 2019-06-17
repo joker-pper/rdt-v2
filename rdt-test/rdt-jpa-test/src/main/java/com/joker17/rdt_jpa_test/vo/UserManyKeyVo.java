@@ -28,4 +28,16 @@ public class UserManyKeyVo {
     private String userRoleName;
 
 
+
+    @RdtFieldCondition(property = "id", target = User.class, nullTips = "userId不能为空", index = 1)
+    private Long userId2;
+
+    @RdtFieldCondition(target = User.class, property = "username", index = 1)
+    private String username2;
+
+    @RdtField(target = User.class, property = "createTime", index = 1)
+    private String createTime2;
+
+    @RdtField(property = "roleName", target = User.class, index = 1)
+    private String userRoleName2;
 }

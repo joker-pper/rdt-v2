@@ -45,6 +45,10 @@ public class UserManyKeyFillTest extends ApplicationTests  {
             }
             vo.setUserId(val);
             vo.setUsername("用户" + val);
+
+            vo.setUserId2(val);
+            vo.setUsername2("用户" + val);
+
             results.add(vo);
         }
         rdtOperation.fillForSave(results);

@@ -633,41 +633,41 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
 
     protected <T> List<T> findByFillKeyModel(FillOneKeyModel fillOneKeyModel) {
         List<T> result = null;
-        /*if (fillOneKeyModel.getIsPrimaryKey()) {
-            //均为id key时
-            result = findByIdIn(fillOneKeyModel.getEntityClass(), fillOneKeyModel.getKey(), fillOneKeyModel.getKeyValues());
-        }*/
-
         int keyValuesSize = fillOneKeyModel.getKeyValues().size();
         if (keyValuesSize > 0) {
             result = findByFillKeyModelExecute(fillOneKeyModel);
         }
-
-        if (result == null) {
-            result = Collections.emptyList();
-        }
-        return result;
+        return result == null ? Collections.<T>emptyList() : result;
     }
 
     /**
-     * 提供基于fillKeyModel查询相关数据的方法
+     * 提供基于fillKeyModel查询相关数据的方法  (单条件时的数据)
      * @param fillOneKeyModel
      * @param <T>
      * @return
      */
-    protected abstract <T> List<T> findByFillKeyModelExecute(FillOneKeyModel fillOneKeyModel);
+    protected <T> List<T> findByFillKeyModelExecute(FillOneKeyModel fillOneKeyModel) {
+        Class<T> entityClass = fillOneKeyModel.getEntityClass();
+        List<String> conditionPropertys = Arrays.asList(fillOneKeyModel.getKey());
+        List<Object> conditionValues = Arrays.asList((Object) fillOneKeyModel.getKeyValues());
+
+        List<String> selectPropertys = new ArrayList<String>(16);
+        Set<Column> columnSet = fillOneKeyModel.getColumnValues();
+        for (Column column : columnSet) {
+            selectPropertys.add(column.getProperty());
+        }
+        return findByConditions(entityClass, conditionPropertys, conditionValues, selectPropertys.toArray(new String[selectPropertys.size()]));
+    }
 
 
     protected <T> List<T> findByFillManyKey(Class<T> entityClass, List<Column> conditionColumnValues, Set<Column> columnValues, List<Object> conditionGroupValue) {
         List<T> result = findByFillManyKeyExecute(entityClass, conditionColumnValues, columnValues, conditionGroupValue);
-        if (result == null) {
-            result = Collections.emptyList();
-        }
-        return result;
+        return result == null ? Collections.<T>emptyList() : result;
     }
 
+
     /**
-     * 获取entity class当前条件组的数据
+     * 获取entity class当前条件组的数据  (多条件时的数据)
      * @param entityClass
      * @param conditionColumnValues 条件列
      * @param columnValues 需要加载的列字段
@@ -675,9 +675,27 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
      * @param <T>
      * @return
      */
-    protected abstract <T> List<T> findByFillManyKeyExecute(Class<T> entityClass, List<Column> conditionColumnValues, Set<Column> columnValues, List<Object> conditionGroupValue);
+    protected <T> List<T> findByFillManyKeyExecute(Class<T> entityClass, List<Column> conditionColumnValues, Set<Column> columnValues, List<Object> conditionGroupValue) {
+        List<String> conditionPropertys = new ArrayList<String>(16);
+        for (Column column : conditionColumnValues) {
+            conditionPropertys.add(column.getProperty());
+        }
+        List<String> selectPropertys = new ArrayList<String>(16);
+        for (Column column : columnValues) {
+            selectPropertys.add(column.getProperty());
+        }
+        return findByConditions(entityClass, conditionPropertys, conditionGroupValue, selectPropertys.toArray(new String[selectPropertys.size()]));
+    }
 
 
+    @Override
+    public <T> List<T> findByConditions(Class<T> entityClass, List<String> conditionPropertys, List<Object> conditionValues, String... selectPropertys) {
+        List<T> result = findByConditionsExecute(entityClass, conditionPropertys, conditionValues, selectPropertys);
+        return result == null ? Collections.<T>emptyList() : result;
+    }
+
+
+    protected abstract <T> List<T> findByConditionsExecute(Class<T> entityClass, List<String> conditionPropertys, List<Object> conditionValues, String... selectPropertys);
 
     @Override
     public <T> Map<List<Object>, List<Object>> getGroupKeysMap(Class<T> entityClass, List<String> conditionPropertys, List<Object> conditionValues, String selectProperty) {
@@ -719,7 +737,7 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
 
     @Override
     public <T> Map<Object, List<Object>> getGroupKeysMap(Class<T> entityClass, String conditionProperty, Object conditionValue, String selectProperty) {
-        return (Map) getGroupKeysMapImpl(entityClass, Arrays.asList(conditionProperty), Arrays.asList(conditionValue), selectProperty);
+        return getGroupKeysMapImpl(entityClass, Arrays.asList(conditionProperty), Arrays.asList(conditionValue), selectProperty);
     }
 
     @Override
