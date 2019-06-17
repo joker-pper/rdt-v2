@@ -630,6 +630,21 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
         return results;
     }
 
+    /**
+     * 通过column集合获取对应的property列表数据
+     * @param columnCollection
+     * @return
+     */
+    protected List<String> getPropertyList(Collection<Column> columnCollection) {
+        List<String> propertyList = new ArrayList<String>();
+        if (columnCollection != null) {
+            for (Column column : columnCollection) {
+                propertyList.add(column.getProperty());
+            }
+        }
+        return propertyList;
+    }
+
 
     protected <T> List<T> findByFillKeyModel(FillOneKeyModel fillOneKeyModel) {
         List<T> result = null;
@@ -651,11 +666,8 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
         List<String> conditionPropertys = Arrays.asList(fillOneKeyModel.getKey());
         List<Object> conditionValues = Arrays.asList((Object) fillOneKeyModel.getKeyValues());
 
-        List<String> selectPropertys = new ArrayList<String>(16);
         Set<Column> columnSet = fillOneKeyModel.getColumnValues();
-        for (Column column : columnSet) {
-            selectPropertys.add(column.getProperty());
-        }
+        List<String> selectPropertys = getPropertyList(columnSet);
         return findByConditions(entityClass, conditionPropertys, conditionValues, selectPropertys.toArray(new String[selectPropertys.size()]));
     }
 
@@ -676,14 +688,8 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
      * @return
      */
     protected <T> List<T> findByFillManyKeyExecute(Class<T> entityClass, List<Column> conditionColumnValues, Set<Column> columnValues, List<Object> conditionGroupValue) {
-        List<String> conditionPropertys = new ArrayList<String>(16);
-        for (Column column : conditionColumnValues) {
-            conditionPropertys.add(column.getProperty());
-        }
-        List<String> selectPropertys = new ArrayList<String>(16);
-        for (Column column : columnValues) {
-            selectPropertys.add(column.getProperty());
-        }
+        List<String> conditionPropertys = getPropertyList(conditionColumnValues);
+        List<String> selectPropertys = getPropertyList(columnValues);
         return findByConditions(entityClass, conditionPropertys, conditionGroupValue, selectPropertys.toArray(new String[selectPropertys.size()]));
     }
 
@@ -698,14 +704,14 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
     protected abstract <T> List<T> findByConditionsExecute(Class<T> entityClass, List<String> conditionPropertys, List<Object> conditionValues, String... selectPropertys);
 
     @Override
-    public <T> Map<List<Object>, List<Object>> getGroupKeysMap(Class<T> entityClass, List<String> conditionPropertys, List<Object> conditionValues, String selectProperty) {
+    public <T> Map<List<Object>, List<Object>> getGroupKeysMap(Class<T> entityClass, List<String> conditionPropertys, List<? extends Object> conditionValues, String selectProperty) {
         return (Map) getGroupKeysMapImpl(entityClass, conditionPropertys, conditionValues, selectProperty);
     }
 
 
-    protected <T> Map<Object, List<Object>> getGroupKeysMapImpl(Class<T> entityClass, List<String> conditionPropertys, List<Object> conditionValues, String selectProperty) {
+    protected <T> Map<Object, List<Object>> getGroupKeysMapImpl(Class<T> entityClass, List<String> conditionPropertys, List<? extends Object> conditionValues, String selectProperty) {
         Map<Object, List<Object>> resultMap = new HashMap<Object, List<Object>>(16);
-        List<T> dataList = findByConditions(entityClass, conditionPropertys, conditionValues, selectProperty);
+        List<T> dataList = findByConditions(entityClass, conditionPropertys, (List<Object>) conditionValues, selectProperty);
         boolean isOneConditionProperty = conditionPropertys != null && conditionPropertys.size() == 1;
         String uniqueConditionProperty = isOneConditionProperty ? conditionPropertys.get(0) : null;
         if (dataList != null) {
@@ -786,6 +792,53 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
         FillRSModel fillRSModel = new FillRSModel();
         //处理数据关系
         fillRelationshipHandle(fillRSModel, collection, allowedNullValue, checkValue, clear, fillType);
+
+        Map<Class, FillGroupKeyModel> fillGroupKeyModelMap = fillRSModel.getFillGroupKeyModelMap();
+
+        if (!fillGroupKeyModelMap.isEmpty()) {
+            for (Class gainClass : fillGroupKeyModelMap.keySet()) {
+                FillGroupKeyModel fillGroupKeyModel = fillGroupKeyModelMap.get(gainClass);
+                List<FillGroupKeyDetail> groupKeyDetails = fillGroupKeyModel.getGroupKeyDetails();
+                for (FillGroupKeyDetail fillGroupKeyDetail : groupKeyDetails) {
+                    List<String> conditionPropertys = getPropertyList(fillGroupKeyDetail.getConditionColumnValues());
+                    Column selectColumnValue = fillGroupKeyDetail.getSelectColumnValue();
+                    Map<List<Object>, List<Object>> groupKeysMap = getGroupKeysMap(gainClass, conditionPropertys, fillGroupKeyDetail.getConditionValueList(), selectColumnValue.getProperty());
+                    Map<List<Object>, Map<ModifyGroupDescribe, List<Object>>> conditionValueGroupDataMap = fillGroupKeyDetail.getConditionValueGroupDataMap();
+
+                    for (List<Object> conditionValue : conditionValueGroupDataMap.keySet()) {
+                        //获取当前条件所对应的groupKeys值列表
+                        List<Object> groupKeysValueList = groupKeysMap.get(conditionValue);
+
+                        if (groupKeysValueList != null) {
+                            Map<ModifyGroupDescribe, List<Object>> groupDataListMap = conditionValueGroupDataMap.get(conditionValue);
+
+                            for (ModifyGroupDescribe modifyGroupDescribe : groupDataListMap.keySet()) {
+                                List<Object> dataList = groupDataListMap.get(modifyGroupDescribe);
+
+                                ModifyGroupKeysColumn modifyGroupKeysColumn = modifyGroupDescribe.getModifyGroupKeysColumn();
+                                Column column = modifyGroupKeysColumn.getColumn();
+
+                                List<Object> columnPropertyValueList;
+
+                                //获取实际类型的数据列表
+                                if (selectColumnValue.getPropertyClass() == column.getPropertyClass()) {
+                                    columnPropertyValueList = groupKeysValueList;
+                                } else {
+                                    columnPropertyValueList = rdtResolver.getCastTypeList(groupKeysValueList, column.getPropertyClass());
+                                }
+
+                                Object groupKeysValue = rdtResolver.getGroupColumnPropertyValue(columnPropertyValueList, modifyGroupKeysColumn);
+
+                                for (Object data : dataList) {
+                                    rdtResolver.setPropertyValue(data, column.getProperty(), groupKeysValue);
+                                    //设置关系
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         //多条件时每组条件值都要进行查询,优先处理
         Map<Class, FillManyKeyModel> fillManyKeyModelMap = fillRSModel.getFillManyKeyModelMap();

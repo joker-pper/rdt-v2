@@ -36,6 +36,13 @@ public class FillRSModel implements Serializable {
         this.fillManyKeyModelMap = fillManyKeyModelMap;
     }
 
+    public Map<Class, FillGroupKeyModel> getFillGroupKeyModelMap() {
+        return fillGroupKeyModelMap;
+    }
+
+    public void setFillGroupKeyModelMap(Map<Class, FillGroupKeyModel> fillGroupKeyModelMap) {
+        this.fillGroupKeyModelMap = fillGroupKeyModelMap;
+    }
 
     /**
      * 获取关于当前modifyCondition对应entityClass的FillKeyVO对象

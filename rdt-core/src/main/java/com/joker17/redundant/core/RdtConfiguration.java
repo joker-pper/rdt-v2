@@ -357,37 +357,41 @@ public class RdtConfiguration {
         return getDeepCloneModifyRelyDescribe(temp);
     }
 
-    //将未被序列化的field进行处理
+    //进行处理column
     private void handleModifyColumnAndConditionDeepClone(List<ModifyColumn> clonedColumnList, List<ModifyColumn> columnList, List<ModifyCondition> clonedConditionList, List<ModifyCondition> conditionList) {
         for (int i = 0; i < clonedColumnList.size(); i++) {
             ModifyColumn column = columnList.get(i);
             ModifyColumn clonedColumn = clonedColumnList.get(i);
-
-            handleColumnFieldDeepClone(clonedColumn.getColumn(), column.getColumn());
-            handleColumnFieldDeepClone(clonedColumn.getTargetColumn(), column.getTargetColumn());
-        }
+            handleColumnDeepClone(clonedColumn, column);
+     }
 
         for (int i = 0; i < clonedConditionList.size(); i++) {
             ModifyCondition condition = conditionList.get(i);
             ModifyCondition clonedCondition = clonedConditionList.get(i);
-
-            handleColumnFieldDeepClone(clonedCondition.getColumn(), condition.getColumn());
-            handleColumnFieldDeepClone(clonedCondition.getTargetColumn(), condition.getTargetColumn());
+            handleColumnDeepClone(clonedCondition, condition);
         }
     }
 
-    private void handleColumnFieldDeepClone(Column clonedColumn, Column sourceColumn) {
+    /**
+     * 保持column地址不变
+     * @param clonedColumn
+     * @param sourceColumn
+     */
+    private void handleColumnDeepClone(ModifyColumn clonedColumn, ModifyColumn sourceColumn) {
         if (clonedColumn != null && sourceColumn != null) {
-            //clonedColumn设置sourceColumn的field属性值
-            clonedColumn.setField(sourceColumn.getField());
+            clonedColumn.setColumn(sourceColumn.getColumn());
+            clonedColumn.setTargetColumn(sourceColumn.getTargetColumn());
         }
     }
+
 
     public ModifyRelyDescribe getDeepCloneModifyRelyDescribe(ModifyRelyDescribe describe, boolean withConfig) {
         if (describe != null) {
             if (!withConfig || properties.getDeepCloneChangedModify()) {
                 ModifyRelyDescribe cloned = rdtResolver.deepClone(describe);
-                cloned.getRelyColumn().setField(describe.getRelyColumn().getField());
+
+                cloned.setRelyColumn(describe.getRelyColumn());
+
                 List<ModifyColumn> clonedColumnList = cloned.getColumnList();
                 List<ModifyColumn> columnList = describe.getColumnList();
 
@@ -411,12 +415,26 @@ public class RdtConfiguration {
         for (int i = 0; i < clonedColumnList.size(); i++) {
             ModifyGroupConcatColumn column = columnList.get(i);
             ModifyGroupConcatColumn clonedColumn = clonedColumnList.get(i);
-
-            clonedColumn.getColumn().setField(column.getColumn().getField());
-            clonedColumn.getTargetColumn().setField(column.getTargetColumn().getField());
+            handleColumnDeepClone(clonedColumn, column);
         }
-        clonedKeysColumn.getColumn().setField(keysColumn.getColumn().getField());
-        clonedKeysColumn.getTargetColumn().setField(keysColumn.getTargetColumn().getField());
+        handleColumnDeepClone(clonedKeysColumn, keysColumn);
+    }
+
+    private void handleColumnDeepClone(ModifyGroupKeysColumn clonedColumn, ModifyGroupKeysColumn sourceColumn) {
+        if (clonedColumn != null && sourceColumn != null) {
+            clonedColumn.setColumn(sourceColumn.getColumn());
+            clonedColumn.setTargetColumn(sourceColumn.getTargetColumn());
+            clonedColumn.setGainSelectColumn(sourceColumn.getGainSelectColumn());
+            clonedColumn.setGainConditionColumnList(sourceColumn.getGainConditionValueRelyColumnList());
+            clonedColumn.setGainConditionValueRelyColumnList(sourceColumn.getGainConditionValueRelyColumnList());
+        }
+    }
+
+    private void handleColumnDeepClone(ModifyGroupBaseColumn clonedColumn, ModifyGroupBaseColumn sourceColumn) {
+        if (clonedColumn != null && sourceColumn != null) {
+            clonedColumn.setColumn(sourceColumn.getColumn());
+            clonedColumn.setTargetColumn(sourceColumn.getTargetColumn());
+        }
     }
 
 

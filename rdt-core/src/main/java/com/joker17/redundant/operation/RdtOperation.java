@@ -43,7 +43,7 @@ public interface RdtOperation {
     <T> List<T> findByConditions(Class<T> entityClass, List<String> conditionPropertys, List<Object> conditionValues, String... selectPropertys);
 
 
-    <T> Map<List<Object>, List<Object>> getGroupKeysMap(Class<T> entityClass, List<String> conditionPropertys, List<Object> conditionValues, String selectProperty);
+    <T> Map<List<Object>, List<Object>> getGroupKeysMap(Class<T> entityClass, List<String> conditionPropertys, List<? extends Object> conditionValues, String selectProperty);
 
 
     <T> Map<Object, List<Object>> getGroupKeysMap(Class<T> entityClass, String conditionProperty, Object conditionValue, String selectProperty);

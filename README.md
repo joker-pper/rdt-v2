@@ -23,6 +23,7 @@ RdtResolver可配置提供外的注解,包含全局持久化类注解,id注解,t
 建议唯一性数据标识不存在重复
 class所在的包支持多组并以,分割,所要维持关系的类必须可被读取
 注解中属性值为String[]的null字符串将会被解析为null,并未做去重处理
+条件列类型必须一致
 rdt-core及rdt-annotation作为核心jar
 rdt-jpa及rdt-spring-mongodb为已提供的数据层操作实现,可作为具体使用框架实现的参考
 ````

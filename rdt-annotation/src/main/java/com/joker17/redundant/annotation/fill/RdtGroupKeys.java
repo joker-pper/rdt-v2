@@ -22,4 +22,12 @@ public @interface RdtGroupKeys {
     String connector() default ",";
 
     String nullTips() default "";
+
+    Class gain() default Void.class;
+
+    String gainProperty() default "";
+
+    String[] gainConditionPropertys() default {};
+
+    String[] gainConditionValueRelyPropertys() default {"id"};
 }

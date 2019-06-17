@@ -5,6 +5,7 @@ import com.joker17.redundant.annotation.RdtId;
 import com.joker17.redundant.annotation.base.RdtBaseEntity;
 import com.joker17.redundant.annotation.base.RdtBaseField;
 import com.joker17.redundant.model.*;
+import com.joker17.redundant.model.commons.ClassTypeEnum;
 import com.joker17.redundant.support.Prototype;
 import com.joker17.redundant.utils.*;
 import com.joker17.redundant.utils.StringUtils;
@@ -1020,5 +1021,116 @@ public abstract class RdtResolver {
         return count;
     }
 
+    /**
+     * 获取groupKeyValue所对应项的所有值列表
+     * @param groupKeyValue
+     * @param modifyGroupKeysColumn
+     * @return
+     */
+    public List<Object> getGroupKeysExpectValueList(Object groupKeyValue, ModifyGroupKeysColumn modifyGroupKeysColumn) {
+
+        Class columnBasicClass = modifyGroupKeysColumn.getColumnBasicClass();
+        Class targetColumnClass = modifyGroupKeysColumn.getTargetColumnClass();
+        String connector = modifyGroupKeysColumn.getConnector();
+        boolean isBasicEqTargetColumnClass = columnBasicClass.equals(targetColumnClass);
+
+        //获取当前key的所有值
+        List<Object> groupKeysExpectValueList = null;
+
+        if (groupKeyValue != null) {
+            ClassTypeEnum columnClassType = modifyGroupKeysColumn.getColumnClassType();
+            switch (columnClassType) {
+                case BASIC:
+                    if (columnBasicClass == String.class) {
+                        groupKeysExpectValueList = split((String)groupKeyValue, connector, targetColumnClass);
+                    } else {
+                        groupKeysExpectValueList = Arrays.asList(isBasicEqTargetColumnClass ? groupKeyValue : cast(groupKeyValue, targetColumnClass));
+                    }
+                    break;
+                case ARRAY:
+                    groupKeysExpectValueList = new ArrayList<Object>(16);
+                    for (Object val : (Object[])groupKeyValue) {
+                        groupKeysExpectValueList.add(isBasicEqTargetColumnClass ? val : cast(val, targetColumnClass));
+                    }
+                    break;
+                case SET:
+                case LIST:
+                    groupKeysExpectValueList = new ArrayList<Object>(16);
+                    for (Object val : (Collection)groupKeyValue) {
+                        groupKeysExpectValueList.add(isBasicEqTargetColumnClass ? val : cast(val, targetColumnClass));
+                    }
+                    break;
+            }
+        }
+        return groupKeysExpectValueList;
+    }
+
+    /**
+     * 通过columnPropertyValueList转换为GroupColumn的属性值
+     * @param columnPropertyValueList columnPropertyValue与实际类型一致
+     * @param groupColumn
+     * @return
+     */
+    public Object getGroupColumnPropertyValue(List<Object> columnPropertyValueList, ModifyGroupBaseColumn groupColumn) {
+        Class columnBasicClass = groupColumn.getColumnBasicClass();
+        Class columnClass = groupColumn.getColumnClass();
+        String connector = groupColumn.getConnector();
+
+        //转换为对应属性值
+        Object columnPropertyValue = null;
+        ClassTypeEnum columnClassType = groupColumn.getColumnClassType();
+        switch (columnClassType) {
+            case BASIC:
+
+                boolean isStartBasicConnector = true;
+                boolean isBasicNotConnectorOptFirst = true;
+
+                if (groupColumn instanceof ModifyGroupConcatColumn) {
+                    ModifyGroupConcatColumn groupConcatColumn = (ModifyGroupConcatColumn) groupColumn;
+                    isStartBasicConnector = groupConcatColumn.isStartBasicConnector();
+                    isBasicNotConnectorOptFirst = groupConcatColumn.isBasicNotConnectorOptFirst();
+                }
+
+                boolean isConnector = isStartBasicConnector && columnBasicClass == String.class;
+                if (isConnector) {
+                    columnPropertyValue = join(columnPropertyValueList, connector);
+                } else {
+                    columnPropertyValue = columnPropertyValueList.get(isBasicNotConnectorOptFirst ? 0 : columnPropertyValueList.size() - 1);
+                }
+                break;
+            case ARRAY:
+                columnPropertyValue = columnPropertyValueList.toArray(newInstanceArray(columnBasicClass, columnPropertyValueList.size()));
+                break;
+            case SET:
+            case LIST:
+                Collection columnPropertyCollectionValue = null;
+                if (columnClass == List.class || columnClass == ArrayList.class) {
+                    columnPropertyCollectionValue = columnPropertyValueList;
+                } else if (columnClass == Set.class || columnClass == LinkedHashSet.class) {
+                    columnPropertyCollectionValue = new LinkedHashSet();
+                    columnPropertyCollectionValue.addAll(columnPropertyValueList);
+                } else {
+                    try {
+                        //其他类型通过newInstance进行实例化
+                        columnPropertyCollectionValue = (Collection) columnClass.newInstance();
+                        columnPropertyCollectionValue.addAll(columnPropertyValueList);
+                    } catch (Exception e) {
+                    }
+                }
+                columnPropertyValue = columnPropertyCollectionValue;
+                break;
+        }
+        return columnPropertyValue;
+    }
+
+    public List<Object> getCastTypeList(Collection<Object> source, Class typeClass) {
+        List<Object> resultList = new ArrayList<Object>(16);
+        if (source != null) {
+            for (Object current : source) {
+                resultList.add(cast(current, typeClass));
+            }
+        }
+        return resultList;
+    }
 
 }
