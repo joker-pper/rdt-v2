@@ -97,6 +97,7 @@ public class FillRSModel implements Serializable {
             fillGroupKeyModel = new FillGroupKeyModel();
             fillGroupKeyModel.setEntityClass(entityClass);
             fillGroupKeyModel.setClassModel(gainClassModel);
+            fillGroupKeyModelMap.put(entityClass, fillGroupKeyModel);
         }
         return fillGroupKeyModel;
     }

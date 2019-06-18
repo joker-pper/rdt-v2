@@ -705,20 +705,23 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
 
     @Override
     public <T> Map<List<Object>, List<Object>> getGroupKeysMap(Class<T> entityClass, List<String> conditionPropertys, List<? extends Object> conditionValues, String selectProperty) {
-        return (Map) getGroupKeysMapImpl(entityClass, conditionPropertys, conditionValues, selectProperty);
+        return (Map) getGroupKeysMapImpl(entityClass, conditionPropertys, conditionValues, selectProperty, true);
     }
 
 
-    protected <T> Map<Object, List<Object>> getGroupKeysMapImpl(Class<T> entityClass, List<String> conditionPropertys, List<? extends Object> conditionValues, String selectProperty) {
+    protected <T> Map<Object, List<Object>> getGroupKeysMapImpl(Class<T> entityClass, List<String> conditionPropertys, List<? extends Object> conditionValues, String selectProperty, boolean isByListKey) {
         Map<Object, List<Object>> resultMap = new HashMap<Object, List<Object>>(16);
         List<T> dataList = findByConditions(entityClass, conditionPropertys, (List<Object>) conditionValues, selectProperty);
         boolean isOneConditionProperty = conditionPropertys != null && conditionPropertys.size() == 1;
+        if (!isByListKey && !isOneConditionProperty) {
+            throw new IllegalArgumentException("when not by list key, must be only one condition property.");
+        }
         String uniqueConditionProperty = isOneConditionProperty ? conditionPropertys.get(0) : null;
         if (dataList != null) {
             for (T data : dataList) {
                 //条件列值作为key
                 Object key;
-                if (isOneConditionProperty) {
+                if (!isByListKey && isOneConditionProperty) {
                     key = rdtResolver.getPropertyValue(data, uniqueConditionProperty);
                 } else {
                     List<Object> keyList = new ArrayList<Object>(16);
@@ -731,6 +734,7 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
                 List<Object> valueList = resultMap.get(key);
                 if (valueList == null) {
                     valueList = new ArrayList<Object>(16);
+                    resultMap.put(key, valueList);
                 }
 
                 //未进行处理null值,默认均为合法值
@@ -743,7 +747,7 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
 
     @Override
     public <T> Map<Object, List<Object>> getGroupKeysMap(Class<T> entityClass, String conditionProperty, Object conditionValue, String selectProperty) {
-        return getGroupKeysMapImpl(entityClass, Arrays.asList(conditionProperty), Arrays.asList(conditionValue), selectProperty);
+        return getGroupKeysMapImpl(entityClass, Arrays.asList(conditionProperty), Arrays.asList(conditionValue), selectProperty, false);
     }
 
     @Override
@@ -806,6 +810,7 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
                     Map<List<Object>, Map<ModifyGroupDescribe, List<Object>>> conditionValueGroupDataMap = fillGroupKeyDetail.getConditionValueGroupDataMap();
 
                     for (List<Object> conditionValue : conditionValueGroupDataMap.keySet()) {
+
                         //获取当前条件所对应的groupKeys值列表
                         List<Object> groupKeysValueList = groupKeysMap.get(conditionValue);
 
@@ -814,24 +819,38 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
 
                             for (ModifyGroupDescribe modifyGroupDescribe : groupDataListMap.keySet()) {
                                 List<Object> dataList = groupDataListMap.get(modifyGroupDescribe);
+                                ClassModel dataModel = getClassModel(modifyGroupDescribe.getEntityClass());
 
                                 ModifyGroupKeysColumn modifyGroupKeysColumn = modifyGroupDescribe.getModifyGroupKeysColumn();
                                 Column column = modifyGroupKeysColumn.getColumn();
 
+                                Class targetColumnClass = modifyGroupKeysColumn.getTargetColumnClass();
                                 List<Object> columnPropertyValueList;
 
-                                //获取实际类型的数据列表
-                                if (selectColumnValue.getPropertyClass() == column.getPropertyClass()) {
+                                //获取对应列的数据值列表
+                                List<Object> groupKeysExpectValueList;
+                                if (selectColumnValue.getPropertyClass() == targetColumnClass) {
+                                    groupKeysExpectValueList = groupKeysValueList;
+                                } else {
+                                    groupKeysExpectValueList = rdtResolver.getCastTypeList(groupKeysValueList, targetColumnClass);
+                                }
+
+                                //获取当前列实际类型的数据值列表
+                                if (selectColumnValue.getPropertyClass() == modifyGroupKeysColumn.getColumnBasicClass()) {
                                     columnPropertyValueList = groupKeysValueList;
+                                } else if (selectColumnValue.getPropertyClass() == targetColumnClass) {
+                                    columnPropertyValueList = groupKeysExpectValueList;
                                 } else {
                                     columnPropertyValueList = rdtResolver.getCastTypeList(groupKeysValueList, column.getPropertyClass());
                                 }
 
-                                Object groupKeysValue = rdtResolver.getGroupColumnPropertyValue(columnPropertyValueList, modifyGroupKeysColumn);
-
+                                //当前列最终的数据值
+                                Object groupKeysColumnValue = rdtResolver.getGroupColumnPropertyValue(columnPropertyValueList, modifyGroupKeysColumn);
+                                ClassModel targetClassModel = getClassModel(modifyGroupDescribe.getTargetClass());
                                 for (Object data : dataList) {
-                                    rdtResolver.setPropertyValue(data, column.getProperty(), groupKeysValue);
+                                    rdtResolver.setPropertyValue(data, column.getProperty(), groupKeysColumnValue);
                                     //设置关系
+                                    fillBuilder.initOneKeyModelData(fillRSModel, targetClassModel, dataModel, modifyGroupDescribe, data, groupKeysExpectValueList, allowedNullValue);
                                 }
                             }
                         }

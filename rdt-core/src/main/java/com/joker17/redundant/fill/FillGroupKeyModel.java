@@ -52,6 +52,7 @@ public class FillGroupKeyModel extends FillKeyModel {
             result = new FillGroupKeyDetail();
             result.setConditionColumnValues(modifyGroupKeysColumn.getGainConditionColumnList());
             result.setSelectColumnValue(modifyGroupKeysColumn.getGainSelectColumn());
+            groupKeyDetails.add(result);
         }
         result.initFillGroupKeyDetailData(gainConditionValueList, groupDescribe, data);
         return result;

@@ -110,4 +110,20 @@ public class UserRoleVO {
 
     @RdtGroupConcatField(property = "createTime", target = Role.class, index = 1)
     private Date role2LastCreateTime;
+
+    /**
+     * 陪置中间表机制动态获取当前groupKeys值(即roleIds)
+     */
+    @RdtGroupKeys(property = "id", target = Role.class, index = 2, gain = User.class, gainConditionPropertys = "id", gainConditionValueRelyPropertys = "id", gainProperty = "roleId")
+    private String roleIdsByGainStrategy;
+
+    @RdtGroupConcatField(property = "name", target = Role.class, index = 2)
+    private String roleNamesByGainStrategy;
+
+    @RdtGroupConcatField(property = "name", target = Role.class, index = 2)
+    private String[] roleNameArrayByGainStrategy;
+
+    @RdtGroupConcatField(property = "name", target = Role.class, index = 2)
+    private List<String> roleNameListByGainStrategy;
+
 }

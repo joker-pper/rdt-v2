@@ -69,6 +69,7 @@ public class FillGroupKeyDetail implements Serializable {
         List<Object> dataList = groupDescribeListMap.get(groupDescribe);
         if (dataList == null) {
             dataList = new ArrayList<Object>(16);
+            groupDescribeListMap.put(groupDescribe, dataList);
         }
         dataList.add(data);
 

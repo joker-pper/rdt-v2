@@ -497,7 +497,7 @@ public class RdtFillBuilder {
             List<Object> gainConditionValueList = new ArrayList<Object>(3);
             List<Column> gainConditionValueRelyColumnList = modifyGroupKeysColumn.getGainConditionValueRelyColumnList();
 
-            //获取条件值
+            //获取条件值(类型一致)
             boolean gainConditionValueRelyValueHasNull = false;
             for (Column gainConditionValueRelyColumn : gainConditionValueRelyColumnList) {
                 Object gainConditionValueRelyValue = rdtResolver.getPropertyValue(data, gainConditionValueRelyColumn.getProperty());
@@ -525,39 +525,55 @@ public class RdtFillBuilder {
             //获取当前key的所有对应值
             List<Object> groupKeysExpectValueList = rdtResolver.getGroupKeysExpectValueList(groupKeyValue, modifyGroupKeysColumn);
 
-            boolean isKeyValListEmpty = groupKeysExpectValueList == null || groupKeysExpectValueList.isEmpty();
-            if (!allowedNullValue && isKeyValListEmpty) {
-                throwExceptionHandler.throwFillNotAllowedValueException(dataClassModel, describe, modifyGroupKeysColumn, data, dataClassModel.getClassName() + " property " + property + " value not allowed null or empty.");
-            }
+            initOneKeyModelData(fillRSModel, entityClassModel, dataClassModel, describe, data, groupKeysExpectValueList, allowedNullValue);
+        }
+    }
 
-            FillOneKeyModel fillOneKeyModel = fillRSModel.getFillKeyModel(entityClassModel, modifyGroupKeysColumn);
-            for (ModifyGroupConcatColumn groupConcatColumn : modifyGroupConcatColumnList) {
-                //所使用的相关列
-                fillOneKeyModel.addColumnValue(groupConcatColumn.getTargetColumn());
-            }
 
-            if (!isKeyValListEmpty) {
-                fillOneKeyModel.addDescribeKeyValueData(describe, groupKeysExpectValueList, data);
-            }
+    /**
+     * 通过groupKeys所对应值进行设置对应的关系
+     * @param fillRSModel
+     * @param entityClassModel
+     * @param dataClassModel
+     * @param describe
+     * @param data
+     * @param groupKeysExpectValueList
+     * @param allowedNullValue
+     */
+    public void initOneKeyModelData(FillRSModel fillRSModel, ClassModel entityClassModel, ClassModel dataClassModel, ModifyGroupDescribe describe, Object data, List<Object> groupKeysExpectValueList, boolean allowedNullValue) {
+
+        ModifyGroupKeysColumn modifyGroupKeysColumn = describe.getModifyGroupKeysColumn();
+        String property = modifyGroupKeysColumn.getColumn().getProperty();
+
+        boolean isKeyValListEmpty = groupKeysExpectValueList == null || groupKeysExpectValueList.isEmpty();
+        if (!allowedNullValue && isKeyValListEmpty) {
+            throwExceptionHandler.throwFillNotAllowedValueException(dataClassModel, describe, modifyGroupKeysColumn, data, dataClassModel.getClassName() + " property " + property + " value not allowed null or empty.");
         }
 
+        List<ModifyGroupConcatColumn> modifyGroupConcatColumnList = describe.getModifyGroupConcatColumnList();
 
-
+        FillOneKeyModel fillOneKeyModel = fillRSModel.getFillKeyModel(entityClassModel, modifyGroupKeysColumn);
+        for (ModifyGroupConcatColumn groupConcatColumn : modifyGroupConcatColumnList) {
+            //所使用的相关列
+            fillOneKeyModel.addColumnValue(groupConcatColumn.getTargetColumn());
+        }
+        if (!isKeyValListEmpty) {
+            fillOneKeyModel.addDescribeKeyValueData(describe, groupKeysExpectValueList, data);
+        }
     }
 
 
 
-
-    /**
-     * 处理关系
-     *
-     * @param fillRSModel
-     * @param collection
-     * @param allowedNullValue 是否允许指定为对应持久化类的字段值为空
-     * @param checkValue
-     * @param clear
-     * @param fillType
-     */
+        /**
+         * 处理关系
+         *
+         * @param fillRSModel
+         * @param collection
+         * @param allowedNullValue 是否允许指定为对应持久化类的字段值为空
+         * @param checkValue
+         * @param clear
+         * @param fillType
+         */
     public void fillRelationshipHandle(final FillRSModel fillRSModel, Collection<?> collection, final boolean allowedNullValue, final boolean checkValue, final boolean clear, final FillType fillType) {
         if (collection != null && !collection.isEmpty()) {
             for (final Object data : collection) {

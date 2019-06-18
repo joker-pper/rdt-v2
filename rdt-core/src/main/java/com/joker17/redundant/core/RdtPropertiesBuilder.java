@@ -826,8 +826,8 @@ public class RdtPropertiesBuilder {
         ModifyGroupDescribe modifyDescribe = getModifyGroupDescribe(classModel, targetClassModel, index);
         ModifyGroupKeysColumn groupKeysColumn = modifyDescribe.getModifyGroupKeysColumn();
         //检查只有一个groupKeysColumn
+        String hint = classModel.getClassName() + " build " + column.getProperty() + " config has error with @RdtGroupKeys, cause by : ";
         if (groupKeysColumn != null) {
-            String hint = classModel.getClassName() + " build " + column.getProperty() + " config has error with @RdtGroupKeys, cause by : ";
             throw new IllegalArgumentException(String.format(hint + "%s has already exists for it.", groupKeysColumn.getColumn().getProperty()));
         }
 
@@ -835,6 +835,45 @@ public class RdtPropertiesBuilder {
         groupKeysColumn.setNotAllowedNullTips(rdtResolver.getTipsContent(rdtAnnotation.nullTips()));
         builderModifyGroupBaseColumnConfigData(groupKeysColumn, column, targetColumn, rdtAnnotation.connector());
         modifyDescribe.setModifyGroupKeysColumn(groupKeysColumn);
+
+        //设置动态加载groupKeys值的配置
+        Class gainClass = rdtAnnotation.gain();
+        if (gainClass != Void.class) {
+            loadClassWithAnnotation(gainClass);
+            ClassModel gainClassModel = getClassModel(gainClass);
+            //设置中间表class
+            groupKeysColumn.setGainClass(gainClass);
+            //设置作为groupKeys值的查询标识列
+            groupKeysColumn.setGainSelectColumn(getColumn(gainClassModel, rdtAnnotation.gainProperty()));
+            //设置中间表的条件查询列
+            List<Column> gainConditionColumnList = new ArrayList<Column>(3);
+            for (String gainConditionProperty : rdtAnnotation.gainConditionPropertys()) {
+                gainConditionColumnList.add(getColumn(gainClassModel, gainConditionProperty));
+            }
+            groupKeysColumn.setGainConditionColumnList(gainConditionColumnList);
+
+            //设置中间表的条件值所依赖的属性列
+            List<Column> gainConditionValueRelyColumnList = new ArrayList<Column>(3);
+            for (String gainConditionValueRelyProperty : rdtAnnotation.gainConditionValueRelyPropertys()) {
+                gainConditionValueRelyColumnList.add(getColumn(classModel, gainConditionValueRelyProperty));
+            }
+            int gainConditionColumnListSize = gainConditionColumnList.size();
+
+            if (gainConditionColumnListSize != gainConditionValueRelyColumnList.size()) {
+                throw new IllegalArgumentException(hint + "gain condition property size must be eq gain condition value rely property size.");
+            }
+
+            //检查类型一致
+            for (int i = 0; i < gainConditionColumnListSize; i++) {
+                Column gainConditionColumn = gainConditionColumnList.get(i);
+                Column gainConditionValueRelyColumn = gainConditionValueRelyColumnList.get(i);
+                if (gainConditionColumn.getPropertyClass() != gainConditionValueRelyColumn.getPropertyClass()) {
+                    throw new IllegalArgumentException(hint + String.format("gain condition property %s type must be condition value rely property %s type.", gainConditionColumn.getProperty(), gainConditionValueRelyColumn.getProperty()));
+                }
+            }
+
+            groupKeysColumn.setGainConditionValueRelyColumnList(gainConditionValueRelyColumnList);
+        }
 
     }
 
