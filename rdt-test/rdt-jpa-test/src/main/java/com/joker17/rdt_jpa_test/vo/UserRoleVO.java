@@ -32,6 +32,11 @@ public class UserRoleVO {
     @RdtField(target = User.class)
     private String createTime;
 
+
+    @RdtField(property = "roleId", target = User.class)
+    private String userRoleId;
+
+
     @RdtField(property = "roleName", target = User.class)
     private String userRoleName;
 
@@ -112,7 +117,7 @@ public class UserRoleVO {
     private Date role2LastCreateTime;
 
     /**
-     * 陪置中间表机制动态获取当前groupKeys值(即roleIds)
+     * 配置中间表机制动态获取当前groupKeys值(即roleIds)
      */
     @RdtGroupKeys(property = "id", target = Role.class, index = 2, gain = User.class, gainConditionPropertys = "id", gainConditionValueRelyPropertys = "id", gainProperty = "roleId")
     private String roleIdsByGainStrategy;
@@ -125,5 +130,14 @@ public class UserRoleVO {
 
     @RdtGroupConcatField(property = "name", target = Role.class, index = 2)
     private List<String> roleNameListByGainStrategy;
+
+    /**
+     * 仅动态加载groupKeys值
+     */
+    @RdtGroupKeys(property = "id", target = Role.class, index = 3, gain = User.class, gainConditionPropertys = "id", gainConditionValueRelyPropertys = "id", gainProperty = "roleId")
+    private String roleIdsByGainStrategyOnlyHasGroupKey;
+
+    @RdtGroupKeys(property = "id", target = Role.class, index = 4, gain = User.class, gainConditionPropertys = "id", gainConditionValueRelyPropertys = "id", gainProperty = "roleId")
+    private String[] roleIdsByGainStrategyOnlyHasGroupKeyArray;
 
 }

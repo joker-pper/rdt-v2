@@ -636,13 +636,7 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
      * @return
      */
     protected List<String> getPropertyList(Collection<Column> columnCollection) {
-        List<String> propertyList = new ArrayList<String>();
-        if (columnCollection != null) {
-            for (Column column : columnCollection) {
-                propertyList.add(column.getProperty());
-            }
-        }
-        return propertyList;
+        return rdtResolver.getPropertyList(columnCollection);
     }
 
 
@@ -797,67 +791,7 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
         //处理数据关系
         fillRelationshipHandle(fillRSModel, collection, allowedNullValue, checkValue, clear, fillType);
 
-        Map<Class, FillGroupKeyModel> fillGroupKeyModelMap = fillRSModel.getFillGroupKeyModelMap();
-
-        if (!fillGroupKeyModelMap.isEmpty()) {
-            for (Class gainClass : fillGroupKeyModelMap.keySet()) {
-                FillGroupKeyModel fillGroupKeyModel = fillGroupKeyModelMap.get(gainClass);
-                List<FillGroupKeyDetail> groupKeyDetails = fillGroupKeyModel.getGroupKeyDetails();
-                for (FillGroupKeyDetail fillGroupKeyDetail : groupKeyDetails) {
-                    List<String> conditionPropertys = getPropertyList(fillGroupKeyDetail.getConditionColumnValues());
-                    Column selectColumnValue = fillGroupKeyDetail.getSelectColumnValue();
-                    Map<List<Object>, List<Object>> groupKeysMap = getGroupKeysMap(gainClass, conditionPropertys, fillGroupKeyDetail.getConditionValueList(), selectColumnValue.getProperty());
-                    Map<List<Object>, Map<ModifyGroupDescribe, List<Object>>> conditionValueGroupDataMap = fillGroupKeyDetail.getConditionValueGroupDataMap();
-
-                    for (List<Object> conditionValue : conditionValueGroupDataMap.keySet()) {
-
-                        //获取当前条件所对应的groupKeys值列表
-                        List<Object> groupKeysValueList = groupKeysMap.get(conditionValue);
-
-                        if (groupKeysValueList != null) {
-                            Map<ModifyGroupDescribe, List<Object>> groupDataListMap = conditionValueGroupDataMap.get(conditionValue);
-
-                            for (ModifyGroupDescribe modifyGroupDescribe : groupDataListMap.keySet()) {
-                                List<Object> dataList = groupDataListMap.get(modifyGroupDescribe);
-                                ClassModel dataModel = getClassModel(modifyGroupDescribe.getEntityClass());
-
-                                ModifyGroupKeysColumn modifyGroupKeysColumn = modifyGroupDescribe.getModifyGroupKeysColumn();
-                                Column column = modifyGroupKeysColumn.getColumn();
-
-                                Class targetColumnClass = modifyGroupKeysColumn.getTargetColumnClass();
-                                List<Object> columnPropertyValueList;
-
-                                //获取对应列的数据值列表
-                                List<Object> groupKeysExpectValueList;
-                                if (selectColumnValue.getPropertyClass() == targetColumnClass) {
-                                    groupKeysExpectValueList = groupKeysValueList;
-                                } else {
-                                    groupKeysExpectValueList = rdtResolver.getCastTypeList(groupKeysValueList, targetColumnClass);
-                                }
-
-                                //获取当前列实际类型的数据值列表
-                                if (selectColumnValue.getPropertyClass() == modifyGroupKeysColumn.getColumnBasicClass()) {
-                                    columnPropertyValueList = groupKeysValueList;
-                                } else if (selectColumnValue.getPropertyClass() == targetColumnClass) {
-                                    columnPropertyValueList = groupKeysExpectValueList;
-                                } else {
-                                    columnPropertyValueList = rdtResolver.getCastTypeList(groupKeysValueList, column.getPropertyClass());
-                                }
-
-                                //当前列最终的数据值
-                                Object groupKeysColumnValue = rdtResolver.getGroupColumnPropertyValue(columnPropertyValueList, modifyGroupKeysColumn);
-                                ClassModel targetClassModel = getClassModel(modifyGroupDescribe.getTargetClass());
-                                for (Object data : dataList) {
-                                    rdtResolver.setPropertyValue(data, column.getProperty(), groupKeysColumnValue);
-                                    //设置关系
-                                    fillBuilder.initOneKeyModelData(fillRSModel, targetClassModel, dataModel, modifyGroupDescribe, data, groupKeysExpectValueList, allowedNullValue);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        fillGroupKeysRelationshipHandle(fillRSModel, collection, allowedNullValue, checkValue, clear, fillType);
 
         //多条件时每组条件值都要进行查询,优先处理
         Map<Class, FillManyKeyModel> fillManyKeyModelMap = fillRSModel.getFillManyKeyModelMap();
@@ -872,7 +806,7 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
                         List<Column> conditionColumnValues = detail.getConditionColumnValues();
                         Object entityData = null;
                         if (!isGroupValueNull) {
-                            //获取当前条件组的数据
+                            //获取当前条件组的数据(当前每组条件数据值都会进行一次查询操作)
                             List<Object> dataList = findByFillManyKey(entityClass, conditionColumnValues, detail.getColumnValues(), groupValue);
 
                             boolean isAllowed = false;
@@ -917,8 +851,6 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
                         }
                     }
                 }
-
-
             }
         }
 
@@ -943,6 +875,74 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
                 }
             }
         }
+    }
+
+
+    /**
+     * 根据FillGroupKeyModel数据进行填充对应数据的groupKeys值,并将对应的关系进行处理
+     * @param fillRSModel
+     * @param collection
+     * @param allowedNullValue
+     * @param checkValue
+     * @param clear
+     * @param fillType
+     */
+    protected void fillGroupKeysRelationshipHandle(final FillRSModel fillRSModel, Collection<?> collection, final boolean allowedNullValue, final boolean checkValue, final boolean clear, final FillType fillType) {
+        Map<Class, FillGroupKeyModel> fillGroupKeyModelMap = fillRSModel.getFillGroupKeyModelMap();
+        if (!fillGroupKeyModelMap.isEmpty()) {
+            for (Class gainClass : fillGroupKeyModelMap.keySet()) {
+                FillGroupKeyModel fillGroupKeyModel = fillGroupKeyModelMap.get(gainClass);
+                List<FillGroupKeyDetail> groupKeyDetails = fillGroupKeyModel.getGroupKeyDetails();
+                for (FillGroupKeyDetail fillGroupKeyDetail : groupKeyDetails) {
+                    List<String> conditionPropertys = getPropertyList(fillGroupKeyDetail.getConditionColumnValues());
+                    Column selectColumnValue = fillGroupKeyDetail.getSelectColumnValue();
+                    //获取条件数据值所对应的groupKeys列表值
+                    Map<List<Object>, List<Object>> groupKeysMap = getGroupKeysMap(gainClass, conditionPropertys, fillGroupKeyDetail.getConditionValueList(), selectColumnValue.getProperty());
+
+                    Map<List<Object>, Map<ModifyGroupDescribe, List<Object>>> conditionValueGroupDataMap = fillGroupKeyDetail.getConditionValueGroupDataMap();
+                    for (List<Object> conditionValue : conditionValueGroupDataMap.keySet()) {
+
+                        //获取当前条件所对应的groupKeys值列表
+                        List<Object> groupKeysValueList = groupKeysMap.get(conditionValue);
+
+                        if (groupKeysValueList != null) {
+                            Map<ModifyGroupDescribe, List<Object>> groupDataListMap = conditionValueGroupDataMap.get(conditionValue);
+
+                            for (ModifyGroupDescribe modifyGroupDescribe : groupDataListMap.keySet()) {
+                                List<Object> dataList = groupDataListMap.get(modifyGroupDescribe);
+                                ClassModel dataModel = getClassModel(modifyGroupDescribe.getEntityClass());
+
+                                ModifyGroupKeysColumn modifyGroupKeysColumn = modifyGroupDescribe.getModifyGroupKeysColumn();
+                                Column column = modifyGroupKeysColumn.getColumn();
+
+                                //获取当前列实际类型的数据值列表
+                                List<Object> columnPropertyValueList = rdtResolver.getColumnPropertyValueList(groupKeysValueList, modifyGroupKeysColumn, selectColumnValue);
+
+                                //获取groupKey所对应列的数据值列表
+                                List<Object> groupKeysExpectValueList = rdtResolver.getGroupKeysExpectValueList(groupKeysValueList, modifyGroupKeysColumn, selectColumnValue);
+
+                                List<ModifyGroupConcatColumn> modifyGroupConcatColumnList = modifyGroupDescribe.getModifyGroupConcatColumnList();
+                                boolean hasModifyGroupConcatColumnList = !modifyGroupConcatColumnList.isEmpty();
+
+                                //当前列最终的数据值
+                                Object groupKeysColumnValue = rdtResolver.getGroupColumnPropertyValue(columnPropertyValueList, modifyGroupKeysColumn);
+                                ClassModel targetClassModel = getClassModel(modifyGroupDescribe.getTargetClass());
+                                for (Object data : dataList) {
+                                    //设置groupKeys列属性值
+                                    rdtResolver.setPropertyValue(data, column.getProperty(), groupKeysColumnValue);
+
+                                    if (hasModifyGroupConcatColumnList) {
+                                        //设置关系
+                                        fillBuilder.initOneKeyModelData(fillRSModel, targetClassModel, dataModel, modifyGroupDescribe, data, groupKeysExpectValueList, allowedNullValue);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
     }
 
     /**

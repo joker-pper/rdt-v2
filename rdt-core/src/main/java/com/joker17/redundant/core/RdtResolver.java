@@ -592,6 +592,14 @@ public abstract class RdtResolver {
         return result;
     }
 
+    public final String getBrownText(String text) {
+        if (text == null) {
+            text = "";
+        }
+        String result = "\033[0;33;3m" + text +  "\033[0m";
+        return result;
+    }
+
     /**
      * 输出关系log
      * @param relyDescribe
@@ -687,6 +695,29 @@ public abstract class RdtResolver {
         return builder.toString();
     }
 
+    protected String getDescribeColumnWithTargetColumnMarks(List<Column> columnList, List<Column> targetColumnList) {
+        StringBuilder builder = new StringBuilder();
+
+        if (columnList != null && targetColumnList != null) {
+            int size = columnList.size();
+            boolean one = size == 1;
+            if (!one) {
+                builder.append("[");
+            }
+            String connector = ", ";
+            for (int i = 0; i < size; i++) {
+                builder.append(getDescribeColumnWithTargetColumnMark(columnList.get(i), targetColumnList.get(i)));
+                builder.append(connector);
+            }
+            int builderLength = builder.length();
+            builder.delete(builderLength - connector.length(), builderLength);
+            if (!one) {
+                builder.append("]");
+            }
+        }
+        return builder.toString();
+    }
+
 
     protected boolean getResolveDescribeLogsModifyConditionsAndModifyColumnsHasWarn(StringBuilder logContentBuilder, List<Object> dataList, ModifyDescribe describe) {
         boolean warn = false;
@@ -764,16 +795,33 @@ public abstract class RdtResolver {
                     warn = true;
                     mark = mark + getRedText("【please make sure can cast.】");
                 }
+
+                List<String> currentKeysList = new ArrayList<String>(Arrays.asList(
+                        null, "connector", "columnBasicClass",
+                        "columnClassType"
+                ));
+
+                List<Object> currentValuesList = new ArrayList<Object>(Arrays.asList(new Object[] {
+                        mark, modifyGroupKeysColumn.getConnector(), getFormatClassName(modifyGroupKeysColumn.getColumnBasicClass()),
+                        modifyGroupKeysColumn.getColumnClassType()
+                }));
+
+                Class gainClass = modifyGroupKeysColumn.getGainClass();
+
+                if (gainClass != null) {
+                    currentKeysList.addAll(Arrays.asList("gainClass", "gainSelectColumn", "gainConditionMark"));
+                    currentValuesList.addAll(Arrays.asList(
+                            getFormatClassName(gainClass),
+                            modifyGroupKeysColumn.getGainSelectColumn().getProperty(),
+                            getDescribeColumnWithTargetColumnMarks(modifyGroupKeysColumn.getGainConditionColumnList(), modifyGroupKeysColumn.getGainConditionValueRelyColumnList())
+                            )
+                    );
+                }
+
                 resolveDescribeLogsKeyAndValue(logContentBuilder, "\n\t\t",
                         dataList,
-                        Arrays.asList(
-                                null, "connector", "columnBasicClass",
-                                "columnClassType"
-                        ),
-                        Arrays.asList(new Object[] {
-                                mark, modifyGroupKeysColumn.getConnector(), getFormatClassName(modifyGroupKeysColumn.getColumnBasicClass()),
-                                modifyGroupKeysColumn.getColumnClassType()
-                        })
+                        currentKeysList,
+                        currentValuesList
                 );
             }
 
@@ -808,7 +856,7 @@ public abstract class RdtResolver {
                 }
             } else {
                 warn = true;
-                logContentBuilder.append("\n\t\t" + getRedText("【has no concat columns, please make sure no problem.】"));
+                logContentBuilder.append("\n\t\t" + getBrownText("【has no concat columns, please make sure no problem.】"));
             }
         }
         return warn;
@@ -1022,8 +1070,45 @@ public abstract class RdtResolver {
     }
 
     /**
+     * 获取groupKey所对应列的数据值列表
+     * @param groupKeysValueList 与selectColumnValue类型一致的数据列表
+     * @param modifyGroupKeysColumn
+     * @param selectColumnValue
+     * @return
+     */
+    public List<Object> getGroupKeysExpectValueList(List<Object> groupKeysValueList, ModifyGroupKeysColumn modifyGroupKeysColumn, Column selectColumnValue) {
+        Class targetColumnClass = modifyGroupKeysColumn.getTargetColumnClass();
+        List<Object> groupKeysExpectValueList;
+        if (selectColumnValue.getPropertyClass() == targetColumnClass) {
+            groupKeysExpectValueList = groupKeysValueList;
+        } else {
+            groupKeysExpectValueList = getCastTypeList(groupKeysValueList, targetColumnClass);
+        }
+        return groupKeysExpectValueList;
+    }
+
+    /**
+     * 获取当前列实际类型的数据值列表
+     * @param groupKeysValueList 与selectColumnValue类型一致的数据列表
+     * @param modifyGroupKeysColumn
+     * @param selectColumnValue
+     * @return
+     */
+    public List<Object> getColumnPropertyValueList(List<Object> groupKeysValueList, ModifyGroupKeysColumn modifyGroupKeysColumn, Column selectColumnValue) {
+        Class columnBasicClass = modifyGroupKeysColumn.getColumnBasicClass();
+        List<Object> columnPropertyValueList;
+
+        if (selectColumnValue.getPropertyClass() == columnBasicClass) {
+            columnPropertyValueList = groupKeysValueList;
+        } else {
+            columnPropertyValueList = getCastTypeList(groupKeysValueList, columnBasicClass);
+        }
+        return columnPropertyValueList;
+    }
+
+    /**
      * 获取groupKeyValue所对应项的所有值列表
-     * @param groupKeyValue
+     * @param groupKeyValue groupKey列的属性值
      * @param modifyGroupKeysColumn
      * @return
      */
@@ -1131,6 +1216,21 @@ public abstract class RdtResolver {
             }
         }
         return resultList;
+    }
+
+    /**
+     * 通过column集合获取对应的property列表数据
+     * @param columnCollection
+     * @return
+     */
+    public List<String> getPropertyList(Collection<Column> columnCollection) {
+        List<String> propertyList = new ArrayList<String>(16);
+        if (columnCollection != null) {
+            for (Column column : columnCollection) {
+                propertyList.add(column.getProperty());
+            }
+        }
+        return propertyList;
     }
 
 }

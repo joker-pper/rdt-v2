@@ -484,16 +484,12 @@ public class RdtFillBuilder {
 
 
     protected void initOneKeyModelData(FillRSModel fillRSModel, ClassModel entityClassModel, ClassModel dataClassModel, ModifyGroupDescribe describe, Object data, boolean allowedNullValue) {
-        List<ModifyGroupConcatColumn> modifyGroupConcatColumnList = describe.getModifyGroupConcatColumnList();
-        if (modifyGroupConcatColumnList.isEmpty()) {
-            return;
-        }
 
         ModifyGroupKeysColumn modifyGroupKeysColumn = describe.getModifyGroupKeysColumn();
         Class gainClass = modifyGroupKeysColumn.getGainClass();
 
         if (gainClass != null) {
-            //中间表
+            //中间表动态加载机制
             List<Object> gainConditionValueList = new ArrayList<Object>(3);
             List<Column> gainConditionValueRelyColumnList = modifyGroupKeysColumn.getGainConditionValueRelyColumnList();
 
@@ -515,9 +511,12 @@ public class RdtFillBuilder {
             }
 
         } else {
+            List<ModifyGroupConcatColumn> modifyGroupConcatColumnList = describe.getModifyGroupConcatColumnList();
+            if (modifyGroupConcatColumnList.isEmpty()) {
+                //不存在要填充的列时
+                return;
+            }
             //处理当前entityClass某单列作为key查询条件的数据
-
-
             String property = modifyGroupKeysColumn.getColumn().getProperty();
             //获取当前对象的属性值
             Object groupKeyValue = rdtResolver.getPropertyValue(data, property);
