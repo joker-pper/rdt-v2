@@ -4,6 +4,7 @@ package com.joker17.rdt_jpa_test.domain;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.joker17.redundant.annotation.field.RdtField;
 import com.joker17.redundant.annotation.field.RdtFieldCondition;
+import com.joker17.redundant.annotation.field.RdtLogicalField;
 import com.joker17.redundant.annotation.rely.KeyTarget;
 import com.joker17.redundant.annotation.rely.RdtFieldConditionRely;
 import com.joker17.redundant.annotation.rely.RdtFieldRely;
@@ -73,5 +74,9 @@ public class User {
 
     @RdtFieldRely(property = "accountType", targetPropertys = {"username", "name"})
     private String createByName2;
+
+
+    @RdtLogicalField
+    private int status;
 
 }

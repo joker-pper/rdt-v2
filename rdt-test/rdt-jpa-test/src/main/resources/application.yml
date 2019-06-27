@@ -23,6 +23,7 @@ rdt-config:
   is-modify-column-must-same-type: false #设置允许modify column类型不一致
   is-update-throw-exception: true
   show-describe: false #是否显示describe信息(debug级别默认显示)
+  fill-with-logical: true
 
 logging:
   level:

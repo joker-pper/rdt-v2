@@ -683,7 +683,7 @@ public class TypeUtils {
                 return (T) toLocale(strVal);
             }
         }
-        throw new IllegalArgumentException("can not cast to : " + clazz.getName());
+        throw new IllegalArgumentException("can not cast " + obj + " to : " + clazz.getName());
     }
 
     public static Locale toLocale(String strVal){

@@ -77,6 +77,11 @@ public class RdtProperties {
     private String[] defaultLogicalValue = new String[]{"1"};
 
     /**
+     * 填充时是否启用逻辑状态值
+     */
+    private Boolean fillWithLogical = false;
+
+    /**
      * 当前类的数据
      */
     private Map<Class, ClassModel> classModelMap = new LinkedHashMap<Class, ClassModel>(16);
@@ -220,6 +225,14 @@ public class RdtProperties {
 
     public void setDefaultLogicalValue(String[] defaultLogicalValue) {
         this.defaultLogicalValue = defaultLogicalValue;
+    }
+
+    public Boolean getFillWithLogical() {
+        return fillWithLogical;
+    }
+
+    public void setFillWithLogical(Boolean fillWithLogical) {
+        this.fillWithLogical = fillWithLogical;
     }
 
     public Map<Class, ClassModel> getClassModelMap() {

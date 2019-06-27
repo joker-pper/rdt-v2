@@ -437,10 +437,10 @@ public abstract class RdtResolver {
      * 非基本类型时为null字符串时直接返回null
      * @param value
      * @param valType
-     * @param whenEnumNotMatchError
+     * @param errorPrefix
      * @return
      */
-    public <T> T castValue(String value, Class<T> valType, String whenEnumNotMatchError) {
+    public <T> T castValue(String value, Class<T> valType, String errorPrefix) {
         if ("null".equals(value)) {
             if (!valType.isPrimitive()) {
                 return null;
@@ -448,6 +448,7 @@ public abstract class RdtResolver {
                 value = null;
             }
         }
+        errorPrefix = errorPrefix == null ? "" : errorPrefix.endsWith(" ") ? errorPrefix : errorPrefix + " ";
         Object result = null;
         if (valType.isEnum()) {
             if (value != null) {
@@ -467,17 +468,17 @@ public abstract class RdtResolver {
                     }
                 }
                 if (!hasMatch) {
-                    if (whenEnumNotMatchError != null) {
-                        whenEnumNotMatchError += value;
-                    } else {
-                        whenEnumNotMatchError = "value " + value + " cast to " + valType.getName() + " error";
-                    }
-
-                    throw new IllegalArgumentException(whenEnumNotMatchError);
+                    String enumCastError = "the enum " + valType.getName() + " type has no val: " + value;
+                    throw new IllegalArgumentException(errorPrefix + enumCastError);
                 }
             }
         } else {
-            result = cast(value, valType);
+            try {
+                result = cast(value, valType);
+            } catch (Exception e) {
+                String castError = "the value " + value + " can not cast to : " + valType.getName();
+                throw new IllegalArgumentException(errorPrefix + castError);
+            }
         }
         return (T) result;
     }
@@ -487,15 +488,15 @@ public abstract class RdtResolver {
      * 解析注解string数组的值(String类型时字符串null将会被转换成null)
      * @param values
      * @param valType
-     * @param whenEnumNotMatchError
+     * @param errorPrefix
      * @param <T>
      * @return
      */
-    public <T> List<T> parseAnnotationValues(String[] values, Class<T> valType, String whenEnumNotMatchError) {
+    public <T> List<T> parseAnnotationValues(String[] values, Class<T> valType, String errorPrefix) {
         List<T> results = new ArrayList<T>();
         if (values != null) {
             for (String value : values) {
-                results.add(castValue(value, valType, whenEnumNotMatchError));
+                results.add(castValue(value, valType, errorPrefix));
             }
         }
         return results;

@@ -30,6 +30,16 @@ public @interface RdtRely {
 
    /**
     * 该属性的第几组依赖配置描述,该属性可能被不同的字段所依赖,其值可能代表不同的含义,即可能存在多组
+    * 仅在该属性存在多组依赖值时进行配置
+    * e.g:
+    *    @RdtRelys({
+    *             @RdtRely(value = {@KeyTarget(value = {"0", "1", "null"}, target = User.class)
+    *             }, valType = Integer.class),
+    *             @RdtRely(value = @KeyTarget(value = {"66", "67", "null"}, target = User.class), valType = String.class, group = 66)
+    *     }
+    *     )
+    *     private Object type;
+    *
     * @return
     */
    int group() default 0;

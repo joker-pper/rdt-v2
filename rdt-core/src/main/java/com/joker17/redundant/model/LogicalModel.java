@@ -13,6 +13,9 @@ public class LogicalModel implements Serializable {
      */
     private List<Object> values = new ArrayList<Object>(16);
 
+    /**
+     * 值实际类型
+     */
     private Class type;
 
 

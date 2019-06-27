@@ -19,8 +19,8 @@ public class DataInitTest extends ApplicationTests {
         roleRepository.deleteAll();
         userRepository.deleteAll();
 
-        roleList.add(new Role(1L, "SA", new Date()));
-        roleList.add(new Role(2L, "ADMIN", new Date()));
+        roleList.add(new Role(1L, "SA", new Date(), 1));
+        roleList.add(new Role(2L, "ADMIN", new Date(), 1));
     }
 
 
@@ -68,7 +68,7 @@ public class DataInitTest extends ApplicationTests {
 
             userList.add(new User((long) i + 1, "用户" + (i + 1),
                     role.getId(), role.getName(), role.getCreateTime(),
-                    new Date(), userType, createById, createByName, accountType, createById2, createByName2));
+                    new Date(), userType, createById, createByName, accountType, createById2, createByName2, 1));
         }
 
 

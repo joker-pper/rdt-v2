@@ -690,6 +690,20 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
 
     @Override
     public <T> List<T> findByConditions(Class<T> entityClass, List<String> conditionPropertys, List<Object> conditionValues, String... selectPropertys) {
+        if (properties.getFillWithLogical()) {
+            ClassModel classModel = getClassModel(entityClass);
+            if (classModel != null) {
+                LogicalModel logicalMode = classModel.getLogicalModel();
+                if (logicalMode != null) {
+                    //避免影响到相关变量值
+                    conditionPropertys = new ArrayList<String>(conditionPropertys);
+                    conditionValues = new ArrayList<Object>(conditionValues);
+
+                    conditionPropertys.add(logicalMode.getColumn().getProperty());
+                    conditionValues.add(logicalMode.getValues());
+                }
+            }
+        }
         List<T> result = findByConditionsExecute(entityClass, conditionPropertys, conditionValues, selectPropertys);
         return result == null ? Collections.<T>emptyList() : result;
     }

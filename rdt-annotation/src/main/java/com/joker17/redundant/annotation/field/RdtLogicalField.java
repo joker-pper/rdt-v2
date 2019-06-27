@@ -17,7 +17,7 @@ public @interface RdtLogicalField {
     Class valType() default Void.class;
 
     /**
-     * 正常状态的逻辑值
+     * 正常状态的逻辑值(为空时将使用全局值)
      * @return
      */
     String[] value() default {};

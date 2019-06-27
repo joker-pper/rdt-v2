@@ -628,13 +628,21 @@ public class RdtPropertiesBuilder {
         }
     }
 
-    private Class getRdtValType(Class configType, Class propertyClass, String notAllowedEnumErrorPrefix) {
+    /**
+     * 获取注解中values的值类型,用于解析对应的数据
+     * @param configType
+     * @param propertyClass
+     * @param notAllowedEnumErrorPrefix
+     * @return
+     */
+    private Class getRdtActualValType(Class configType, Class propertyClass, String notAllowedEnumErrorPrefix) {
         Class valType = configType == Void.class ? propertyClass : configType;
         boolean propertyClassIsEnum = propertyClass.isEnum();
         if (propertyClassIsEnum) {
-            if (valType != int.class && valType != String.class && valType != propertyClass) {
+            //如果属性为枚举类型时,值类型必须与属性类型相同
+            if (valType != propertyClass) {
                 throw new IllegalArgumentException(notAllowedEnumErrorPrefix +
-                        " type belong to enum, should by default or designate use ordinal type - int.class or name type - String.class");
+                        " type belong to enum, should by default or designate use actual type to cast values, when value is number will by ordinal, otherwise by name.");
             }
         }
         return valType;
@@ -669,7 +677,7 @@ public class RdtPropertiesBuilder {
 
         //获取@RdtRely的值类型
         Class propertyClass = column.getPropertyClass();
-        Class valType = getRdtValType(rdtRely.valType(), propertyClass, hintPrefix);
+        Class valType = getRdtActualValType(rdtRely.valType(), propertyClass, hintPrefix);
         if (ClassUtils.familyClass(valType, Collection.class)) {
             throw  new IllegalArgumentException(hintPrefix +
                     " type not support collection type");
@@ -694,7 +702,7 @@ public class RdtPropertiesBuilder {
             targetClassValueMap.put(target, keyTargetModel);
 
             //解析处理当前target class的val值
-            List<Object> targetValueList = rdtResolver.parseAnnotationValues(keyTarget.value(), valType, hintPrefix + " @KeyTarget target type " + target.getName() + " has no enum " + valType.getName() + " type val: ");
+            List<Object> targetValueList = rdtResolver.parseAnnotationValues(keyTarget.value(), valType, hintPrefix + " @KeyTarget target type " + target.getName());
 
             for (Object value : targetValueList) {
                 if (isUniqueValue) {
@@ -719,7 +727,7 @@ public class RdtPropertiesBuilder {
             if (ignoreUpdateValueArray != null && ignoreUpdateValueArray.length == 1 && StringUtils.equals("$value", ignoreUpdateValueArray[0])) {
                 updateIgnoresValueList = new ArrayList<Object>(targetValueList);
             } else {
-                updateIgnoresValueList = rdtResolver.parseAnnotationValues(ignoreUpdateValueArray, valType, hintPrefix + " @KeyTarget target type " + target.getName() + " has no enum " + valType.getName() + " type val: ");
+                updateIgnoresValueList = rdtResolver.parseAnnotationValues(ignoreUpdateValueArray, valType, hintPrefix + " @KeyTarget target type " + target.getName());
                 if (!updateIgnoresValueList.isEmpty()) {
                     for (Object value : updateIgnoresValueList) {
                         if (!targetValueList.contains(value)) {
@@ -773,7 +781,7 @@ public class RdtPropertiesBuilder {
         }
 
 
-        List<Object> allowValueList = rdtResolver.parseAnnotationValues(rdtRely.allowValues(), valType, hintPrefix + " has no enum " + valType.getName() + " type val: " );
+        List<Object> allowValueList = rdtResolver.parseAnnotationValues(rdtRely.allowValues(), valType, hintPrefix);
         rdtRelyModel.getAllowValues().addAll(allowValueList);
 
         rdtRelyModel.setValType(valType);
@@ -787,17 +795,22 @@ public class RdtPropertiesBuilder {
 
     private void builderRdtLogicalFieldConfigData(ClassModel classModel, Column column, RdtLogicalField rdtAnnotation) {
         String hint = classModel.getClassName() + " build " + column.getProperty() + " config has error with @RdtLogicalField, cause by : ";
-        LogicalModel logicalModel = classModel.getLogicalModel();
+        LogicalModel logicalModel = new LogicalModel();
+
+        if (column.getIsTransient()) {
+            throw new IllegalArgumentException(hint + "column must be not transient.");
+        }
+
         logicalModel.setColumn(column);
-        Class valType = getRdtValType(rdtAnnotation.valType(), column.getPropertyClass(), hint);
+        Class valType = getRdtActualValType(rdtAnnotation.valType(), column.getPropertyClass(), hint);
         logicalModel.setType(valType);
 
         List<Object> values = logicalModel.getValues();
 
-        List<Object> parsedValues = rdtResolver.parseAnnotationValues(rdtAnnotation.value(), valType, hint + "the enum " + valType.getName() + " type has no val: ");
+        List<Object> parsedValues = rdtResolver.parseAnnotationValues(rdtAnnotation.value(), valType, hint);
 
         if (parsedValues.isEmpty()) {
-            parsedValues = rdtResolver.parseAnnotationValues(properties.getDefaultLogicalValue(), valType, hint + "the enum " + valType.getName() + " type has no val: ");
+            parsedValues = rdtResolver.parseAnnotationValues(properties.getDefaultLogicalValue(), valType, hint);
         }
 
         if (parsedValues.isEmpty()) {
@@ -805,6 +818,8 @@ public class RdtPropertiesBuilder {
         }
 
         values.addAll(parsedValues);
+
+        classModel.setLogicalModel(logicalModel);
     }
 
 
