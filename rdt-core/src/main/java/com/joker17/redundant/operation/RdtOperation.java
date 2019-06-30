@@ -12,8 +12,7 @@ import java.util.Map;
 
 public interface RdtOperation {
     /**
-     * 通过id列表查找对应数据
-     *
+     * 通过id列表查找对应数据(通过配置的findByIdWithLogical值加载数据)
      * @param entityClass
      * @param ids
      * @param <T>
@@ -22,8 +21,17 @@ public interface RdtOperation {
     <T> List<T> findByIdIn(Class<T> entityClass, Collection<Object> ids);
 
     /**
-     * 通过id查找对应数据
-     *
+     * 通过id列表查找对应数据
+     * @param entityClass
+     * @param ids
+     * @param logical 是否跟随逻辑状态值
+     * @param <T>
+     * @return
+     */
+    <T> List<T> findByIdIn(Class<T> entityClass, Collection<Object> ids, boolean logical);
+
+    /**
+     * 通过id查找对应数据(通过配置的findByIdWithLogical值加载数据)
      * @param entityClass
      * @param id
      * @param <T>
@@ -32,15 +40,37 @@ public interface RdtOperation {
     <T> T findById(Class<T> entityClass, Object id);
 
     /**
-     * 通过条件查找对应数据
+     * 通过id查找对应数据
+     * @param entityClass
+     * @param id
+     * @param logical 是否跟随逻辑值
+     * @param <T>
+     * @return
+     */
+    <T> T findById(Class<T> entityClass, Object id, boolean logical);
+
+    /**
+     * 通过条件查找对应数据(通过配置的fillWithLogical值加载数据)
      * @param entityClass
      * @param conditionPropertys   条件属性列表
      * @param conditionValues      条件值列表 (当单项值为数组时in,反之为eq)
-     * @param selectPropertys      查询属性列表(可选,当可以实现仅查询指定属性时才具有实际意义)
+     * @param selectPropertys      查询属性列表(可选,当存在时实现仅查询指定属性的功能时才具有实际意义,反之为全部属性数据)
      * @param <T>
      * @return
      */
     <T> List<T> findByConditions(Class<T> entityClass, List<String> conditionPropertys, List<Object> conditionValues, String... selectPropertys);
+
+    /**
+     * 通过条件查找对应数据
+     * @param entityClass
+     * @param conditionPropertys
+     * @param conditionValues
+     * @param logical 是否跟随逻辑值
+     * @param selectPropertys
+     * @param <T>
+     * @return
+     */
+    <T> List<T> findByConditions(Class<T> entityClass, List<String> conditionPropertys, List<Object> conditionValues, boolean logical, String... selectPropertys);
 
 
     <T> Map<List<Object>, List<Object>> getGroupKeysMap(Class<T> entityClass, List<String> conditionPropertys, List<? extends Object> conditionValues, String selectProperty);

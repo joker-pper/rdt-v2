@@ -565,6 +565,9 @@ public abstract class RdtResolver {
         return new ArrayList<T>(sourceList);
     }
 
+    public <T> List<T> getNotNullList(List<T> dataList) {
+        return dataList == null ? Collections.<T>emptyList() : dataList;
+    }
 
 
     /**

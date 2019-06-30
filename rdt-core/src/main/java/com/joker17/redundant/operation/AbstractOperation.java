@@ -38,23 +38,68 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
     }
 
 
-
     @Override
     public <T> List<T> findByIdIn(Class<T> entityClass, Collection<Object> ids) {
+        return findByIdIn(entityClass, ids, properties.getFindByIdWithLogical());
+    }
+
+    @Override
+    public <T> List<T> findByIdIn(Class<T> entityClass, Collection<Object> ids, boolean logical) {
         if (ids == null || ids.size() == 0) {
             throw new IllegalArgumentException("ids must be not empty.");
         }
         if (ids.size() == 1) {
-            T result = findById(entityClass, ids.iterator().next());
+            T data = findById(entityClass, ids.iterator().next(), logical);
             List<T> dataList = new ArrayList<T>();
-            if (result != null) {
-                dataList.add(result);
+            if (data != null) {
+                dataList.add(data);
             }
             return dataList;
         }
-        return findByIdIn(entityClass, getPrimaryId(entityClass), ids);
+        final List<T> dataList = rdtResolver.getNotNullList(findByIdInExecute(entityClass, getPrimaryId(entityClass), ids));
+        if (logical && !dataList.isEmpty()) {
+            //逻辑值处理
+            configuration.doLogicalModelHandle(entityClass, new RdtConfiguration.LogicalModelCallBack() {
+                @Override
+                public void execute(ClassModel dataModel, LogicalModel logicalModel) {
+                    String logicalProperty = logicalModel.getColumn().getProperty();
+                    List<Object> logicalValues = logicalModel.getValues();
+                    Iterator<T> iterator = dataList.iterator();
+                    while (iterator.hasNext()) {
+                        T data = iterator.next();
+                        if (!logicalValues.contains(rdtResolver.getPropertyValue(data, logicalProperty))) {
+                            //当前数据未处于逻辑正常值时移除
+                            iterator.remove();
+                        }
+                    }
+                }
+            });
+        }
+        return dataList;
     }
 
+    @Override
+    public <T> T findById(Class<T> entityClass, Object id) {
+        return findById(entityClass, id, properties.getFindByIdWithLogical());
+    }
+
+    @Override
+    public <T> T findById(Class<T> entityClass, Object id, boolean logical) {
+        final T data = findByIdExecute(entityClass, id);
+        //默认为正常数据
+        final boolean[] allowed = new boolean[] {true};
+        if (logical && data != null) {
+            configuration.doLogicalModelHandle(entityClass, new RdtConfiguration.LogicalModelCallBack() {
+                @Override
+                public void execute(ClassModel dataModel, LogicalModel logicalModel) {
+                    String logicalProperty = logicalModel.getColumn().getProperty();
+                    List<Object> logicalValues = logicalModel.getValues();
+                    allowed[0] = logicalValues.contains(rdtResolver.getPropertyValue(data, logicalProperty));
+                }
+            });
+        }
+        return allowed[0] ? data : null;
+    }
 
 
     @Override
@@ -74,8 +119,29 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
         return saveAll(collection, (Class<T>) collection.iterator().next().getClass());
     }
 
+    /**
+     * findByIdIn查询具体实现逻辑(默认使用findByConditions实现)
+     * @param entityClass
+     * @param idKey
+     * @param ids
+     * @param <T>
+     * @return
+     */
+    protected <T> List<T> findByIdInExecute(Class<T> entityClass, String idKey, Collection<Object> ids) {
+        return findByConditions(entityClass, Arrays.asList(idKey), Arrays.asList((Object) ids), false);
+    }
 
-    protected abstract <T> List<T> findByIdIn(Class<T> entityClass, String idKey, Collection<Object> ids);
+    /**
+     * findById查询具体实现逻辑(默认使用findByConditions实现)
+     * @param entityClass
+     * @param id
+     * @param <T>
+     * @return
+     */
+    protected <T> T findByIdExecute(Class<T> entityClass, Object id) {
+        List<T> dataList = findByConditions(entityClass, Arrays.asList(getPrimaryId(entityClass)), Arrays.asList(id), false);
+        return dataList.isEmpty() ? null : dataList.get(0);
+    }
 
     protected abstract <T> T save(T entity, Class<T> entityClass);
 
@@ -152,7 +218,7 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
                     Set<Object> resultKeys = result.keySet();
                     if (!resultKeys.isEmpty()) {
                         if (resultKeys.size() > 1) {
-                            resultDataList = findByIdIn(entityClass, idKey, result.keySet());
+                            resultDataList = findByIdIn(entityClass, result.keySet());
                         } else {
                             resultDataList = new ArrayList<Object>();
                             Object modelData = findById(entityClass, resultKeys.iterator().next());
@@ -560,6 +626,13 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
                 }
             });
 
+            configuration.doLogicalModelHandle(modifyClassModel, properties.getUpdateMultiWithLogical(), new RdtConfiguration.LogicalModelCallBack() {
+                @Override
+                public void execute(ClassModel dataModel, LogicalModel logicalModel) {
+                    conditionLogMap.put(logicalModel.getColumn().getProperty(), logicalModel.getValues());
+                }
+            });
+
             configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
                 @Override
                 public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
@@ -591,6 +664,14 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
                     conditionLogMap.put(getPropertyMark(modifyCondition.getColumn().getProperty(), targetProperty), targetPropertyVal);
                 }
             });
+
+            configuration.doLogicalModelHandle(modifyClassModel, properties.getUpdateMultiWithLogical(), new RdtConfiguration.LogicalModelCallBack() {
+                @Override
+                public void execute(ClassModel dataModel, LogicalModel logicalModel) {
+                    conditionLogMap.put(logicalModel.getColumn().getProperty(), logicalModel.getValues());
+                }
+            });
+
             configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
                 @Override
                 public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
@@ -615,17 +696,25 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
     @Override
     public <T> List<T> convertPropertyResults(Class<T> entityClass, List<Object[]> queryResults, List<String> queryPropertys) {
         List<T> results = new ArrayList<T>(16);
-        for (Object[] queryResult : queryResults) {
-            T data = null;
-            try {
-                data = entityClass.newInstance();
-            } catch (Exception e) {
+        queryPropertys = rdtResolver.getNotNullList(queryPropertys);
+        if (queryResults != null && !queryResults.isEmpty()) {
+            if (queryPropertys.isEmpty()) {
+                //指定查询属性为空时,默认查询结果即为实体对象数据
+                results = (List<T>) queryResults;
+            } else {
+                for (Object[] queryResult : queryResults) {
+                    T data = null;
+                    try {
+                        data = entityClass.newInstance();
+                    } catch (Exception e) {
+                    }
+                    int i = 0;
+                    for (String property : queryPropertys) {
+                        rdtResolver.setPropertyValue(data, property, queryResult[i++]);
+                    }
+                    results.add(data);
+                }
             }
-            int i = 0;
-            for (String property : queryPropertys) {
-                rdtResolver.setPropertyValue(data, property, queryResult[i++]);
-            }
-            results.add(data);
         }
         return results;
     }
@@ -689,8 +778,9 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
 
 
     @Override
-    public <T> List<T> findByConditions(Class<T> entityClass, List<String> conditionPropertys, List<Object> conditionValues, String... selectPropertys) {
-        if (properties.getFillWithLogical()) {
+    public <T> List<T> findByConditions(Class<T> entityClass, List<String> conditionPropertys, List<Object> conditionValues, boolean logical, String... selectPropertys) {
+        if (logical) {
+            //跟随逻辑值时
             ClassModel classModel = getClassModel(entityClass);
             if (classModel != null) {
                 LogicalModel logicalMode = classModel.getLogicalModel();
@@ -706,6 +796,12 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
         }
         List<T> result = findByConditionsExecute(entityClass, conditionPropertys, conditionValues, selectPropertys);
         return result == null ? Collections.<T>emptyList() : result;
+
+    }
+
+    @Override
+    public <T> List<T> findByConditions(Class<T> entityClass, List<String> conditionPropertys, List<Object> conditionValues, String... selectPropertys) {
+        return findByConditions(entityClass, conditionPropertys, conditionValues, properties.getFillWithLogical(), selectPropertys);
     }
 
 

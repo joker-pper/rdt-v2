@@ -31,18 +31,16 @@ public class MongoRdtOperation extends AbstractMongoOperation {
     }
 
     @Override
-    public <T> List<T> findByIdIn(Class<T> entityClass, String idKey, Collection<Object> ids) {
+    protected <T> List<T> findByIdInExecute(Class<T> entityClass, String idKey, Collection<Object> ids) {
         Query query = new Query(criteriaIn(Criteria.where(idKey), ids));
         List<T> list = mongoTemplate.find(query, entityClass);
         return list;
     }
 
     @Override
-    public <T> T findById(Class<T> entityClass, Object id) {
+    protected <T> T findByIdExecute(Class<T> entityClass, Object id) {
         return mongoTemplate.findById(id, entityClass);
     }
-
-
 
     @Override
     protected <T> List<T> findByConditionsExecute(Class<T> entityClass, List<String> conditionPropertys, List<Object> conditionValues, String... selectPropertys) {
@@ -144,6 +142,15 @@ public class MongoRdtOperation extends AbstractMongoOperation {
             }
         });
 
+        configuration.doLogicalModelHandle(modifyClassModel, properties.getUpdateMultiWithLogical(), new RdtConfiguration.LogicalModelCallBack() {
+            @Override
+            public void execute(ClassModel dataModel, LogicalModel logicalModel) {
+                String property = logicalModel.getColumn().getProperty();
+                List<Object> values = logicalModel.getValues();
+                criteriaIn(criteria.and(property), values);
+            }
+        });
+
         //设置更新值
         configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
             @Override
@@ -173,6 +180,15 @@ public class MongoRdtOperation extends AbstractMongoOperation {
             }
         });
 
+        configuration.doLogicalModelHandle(modifyClassModel, properties.getUpdateMultiWithLogical(), new RdtConfiguration.LogicalModelCallBack() {
+            @Override
+            public void execute(ClassModel dataModel, LogicalModel logicalModel) {
+                String property = logicalModel.getColumn().getProperty();
+                List<Object> values = logicalModel.getValues();
+                criteriaIn(criteria.and(property), values);
+            }
+        });
+
         //设置更新值
         configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
             @Override
@@ -195,6 +211,15 @@ public class MongoRdtOperation extends AbstractMongoOperation {
             public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
                 String property = getModifyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, modifyCondition);
                 criteria.and(property).is(targetPropertyVal); //用作查询条件
+            }
+        });
+
+        configuration.doLogicalModelHandle(modifyClassModel, properties.getUpdateMultiWithLogical(), new RdtConfiguration.LogicalModelCallBack() {
+            @Override
+            public void execute(ClassModel dataModel, LogicalModel logicalModel) {
+                String property = logicalModel.getColumn().getProperty();
+                List<Object> values = logicalModel.getValues();
+                criteriaIn(criteria.and(property), values);
             }
         });
 
@@ -224,6 +249,15 @@ public class MongoRdtOperation extends AbstractMongoOperation {
             public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
                 String property = getModifyRelyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, modifyCondition);
                 criteria.and(property).is(targetPropertyVal); //用作查询条件
+            }
+        });
+
+        configuration.doLogicalModelHandle(modifyClassModel, properties.getUpdateMultiWithLogical(), new RdtConfiguration.LogicalModelCallBack() {
+            @Override
+            public void execute(ClassModel dataModel, LogicalModel logicalModel) {
+                String property = logicalModel.getColumn().getProperty();
+                List<Object> values = logicalModel.getValues();
+                criteriaIn(criteria.and(property), values);
             }
         });
 

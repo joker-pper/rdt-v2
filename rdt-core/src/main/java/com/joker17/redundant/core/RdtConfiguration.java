@@ -681,7 +681,34 @@ public class RdtConfiguration {
 
     }
 
+    public static abstract class LogicalModelCallBack {
+        public abstract void execute(ClassModel dataModel, LogicalModel logicalModel);
+    }
 
+    public void doLogicalModelHandle(Class dataClass, LogicalModelCallBack callBack) {
+        doLogicalModelHandle(getClassModel(dataClass), callBack);
+    }
+
+
+    public void doLogicalModelHandle(ClassModel dataModel, LogicalModelCallBack callBack) {
+        doLogicalModelHandle(dataModel, true, callBack);
+    }
+
+    /**
+     * 处理逻辑属性列
+     * @param dataModel
+     * @param logical 是否启用逻辑值
+     * @param callBack
+     */
+    public void doLogicalModelHandle(ClassModel dataModel, boolean logical, LogicalModelCallBack callBack) {
+        if (logical && dataModel != null) {
+            LogicalModel logicalMode = dataModel.getLogicalModel();
+            if (logicalMode != null) {
+                //逻辑值对象存在时进行处理
+                callBack.execute(dataModel, logicalMode);
+            }
+        }
+    }
 
 
     /**

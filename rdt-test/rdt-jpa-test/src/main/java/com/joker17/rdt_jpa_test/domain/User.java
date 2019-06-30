@@ -76,7 +76,7 @@ public class User {
     private String createByName2;
 
 
-    @RdtLogicalField
+    @RdtLogicalField(value = {"1", "2"})
     private int status;
 
 }

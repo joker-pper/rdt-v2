@@ -82,6 +82,16 @@ public class RdtProperties {
     private Boolean fillWithLogical = false;
 
     /**
+     * 通过findById(s)查询时是否启用逻辑状态值
+     */
+    private Boolean findByIdWithLogical = false;
+
+    /**
+     * 冗余字段更新相关数据时是否跟随逻辑状态值
+     */
+    private Boolean updateMultiWithLogical = false;
+
+    /**
      * 当前类的数据
      */
     private Map<Class, ClassModel> classModelMap = new LinkedHashMap<Class, ClassModel>(16);
@@ -233,6 +243,22 @@ public class RdtProperties {
 
     public void setFillWithLogical(Boolean fillWithLogical) {
         this.fillWithLogical = fillWithLogical;
+    }
+
+    public Boolean getFindByIdWithLogical() {
+        return findByIdWithLogical;
+    }
+
+    public void setFindByIdWithLogical(Boolean findByIdWithLogical) {
+        this.findByIdWithLogical = findByIdWithLogical;
+    }
+
+    public Boolean getUpdateMultiWithLogical() {
+        return updateMultiWithLogical;
+    }
+
+    public void setUpdateMultiWithLogical(Boolean updateMultiWithLogical) {
+        this.updateMultiWithLogical = updateMultiWithLogical;
     }
 
     public Map<Class, ClassModel> getClassModelMap() {

@@ -70,6 +70,22 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
             }
         });
 
+        configuration.doLogicalModelHandle(modifyClassModel, properties.getUpdateMultiWithLogical(), new RdtConfiguration.LogicalModelCallBack() {
+            @Override
+            public void execute(ClassModel dataModel, LogicalModel logicalModel) {
+                String property = logicalModel.getColumn().getProperty();
+                List<Object> values = logicalModel.getValues();
+                boolean notOnly = values.size() != 1;
+                sb.append(property);
+                if (notOnly) {
+                    sb.append(" IN(:").append(property).append(")");
+                } else {
+                    sb.append(" =:").append(property);
+                }
+                sb.append(andText);
+                conditionDataMap.put(property, values);
+            }
+        });
 
         index = sb.lastIndexOf(andText);
         length = sb.length();
@@ -116,6 +132,15 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
             }
         });
 
+        configuration.doLogicalModelHandle(modifyClassModel, properties.getUpdateMultiWithLogical(), new RdtConfiguration.LogicalModelCallBack() {
+            @Override
+            public void execute(ClassModel dataModel, LogicalModel logicalModel) {
+                String property = logicalModel.getColumn().getProperty();
+                predicateList.add(builder.criteriaIn(root.get(property), logicalModel.getValues()));
+            }
+        });
+
+
         String relyProperty = relyColumn.getProperty();
         Predicate processingPredicate = modelTypeCriteriaProcessing(describe, relyProperty, builder, root);
         if (processingPredicate != null) {
@@ -155,10 +180,13 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
 
     @Override
     protected <T> List<T> findByConditionsExecute(Class<T> entityClass, List<String> conditionPropertys, List<Object> conditionValues, String... selectPropertys) {
-        try {
-            return findByPropertyResults(entityClass, conditionPropertys, conditionValues, selectPropertys);
-        } catch (Exception e) {
-            logger.warn("rdt fill get " + entityClass.getName() + " data list by used property has error, will use all property, \n cause by exception :", e);
+        boolean hasSelectPropertys = selectPropertys != null && selectPropertys.length > 0;
+        if (hasSelectPropertys) {
+            try {
+                return findByPropertyResults(entityClass, conditionPropertys, conditionValues, selectPropertys);
+            } catch (Exception e) {
+                logger.warn("rdt fill get " + entityClass.getName() + " data list by used property has error, will use all property, \n cause by exception :", e);
+            }
         }
         return findByConditions(entityClass, conditionPropertys, conditionValues);
     }
@@ -197,7 +225,7 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
     /**
      * 通过查询指定列及条件获取结果列表
      * @param entityClass
-     * @param finalQueryPropertys 空数组,用于访问最终查询列的数据
+     * @param finalQueryPropertys 空数组,用于访问最终查询列的数据(仅当存在selectPropertys处理)
      * @param selectPropertys
      * @param conditionPropertys
      * @param conditionValues
@@ -208,10 +236,14 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
         if (finalQueryPropertys == null || !finalQueryPropertys.isEmpty()) {
             throw new IllegalArgumentException("finalQueryPropertys must be empty list");
         }
+        boolean hasSelectPropertys = selectPropertys != null && selectPropertys.length > 0;
+
         CriteriaPredicateBuilder criteriaBuilder = CriteriaPredicateBuilder.of(entityManager);
         CriteriaQuery criteriaQuery = criteriaBuilder.createQuery(entityClass);
 
+        List<String> selectionPropertys = new ArrayList<String>(16);
         List<Selection<?>> selectionList = new ArrayList<Selection<?>>(16);
+
         Root root = criteriaQuery.from(entityClass);
         if (conditionPropertys != null && !conditionPropertys.isEmpty()) {
             //添加限定条件
@@ -222,23 +254,27 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
                 predicateList.add(criteriaBuilder.criteriaIn(path, conditionValues.get(index++)));
 
                 //已存在的属性不再添加
-                if (!finalQueryPropertys.contains(property)) {
-                    finalQueryPropertys.add(property);
+                if (hasSelectPropertys && !selectionPropertys.contains(property)) {
+                    selectionPropertys.add(property);
                     selectionList.add(path);
                 }
             }
             criteriaQuery.where(predicateList.toArray(new Predicate[predicateList.size()]));
         }
-        if (selectPropertys != null) {
+
+        if (hasSelectPropertys) {
             for (String property : selectPropertys) {
-                if (!finalQueryPropertys.contains(property)) {
-                    finalQueryPropertys.add(property);
+                if (!selectionPropertys.contains(property)) {
+                    selectionPropertys.add(property);
                     Path path = root.get(property);
                     selectionList.add(path);
                 }
             }
         }
-        criteriaQuery.select(criteriaBuilder.getCriteriaBuilder().construct(Object[].class, selectionList.toArray(new Selection[selectionList.size()])));
+        if (!selectionList.isEmpty()) {
+            criteriaQuery.select(criteriaBuilder.getCriteriaBuilder().construct(Object[].class, selectionList.toArray(new Selection[selectionList.size()])));
+            finalQueryPropertys.addAll(selectionPropertys);
+        }
         return entityManager.createQuery(criteriaQuery).getResultList();
     }
 

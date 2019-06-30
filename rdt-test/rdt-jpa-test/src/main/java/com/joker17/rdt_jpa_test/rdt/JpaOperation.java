@@ -35,12 +35,12 @@ public class JpaOperation extends AbstractJpaOperation {
     }
 
     @Override
-    protected <T> List<T> findByIdIn(Class<T> entityClass, String idKey, Collection<Object> ids) {
+    protected <T> List<T> findByIdInExecute(Class<T> entityClass, String idKey, Collection<Object> ids) {
         return new ArrayList<T>((Collection) getCrudRepository(entityClass).findAllById(ids));
     }
 
     @Override
-    public <T> T findById(Class<T> entityClass, Object id) {
+    public <T> T findByIdExecute(Class<T> entityClass, Object id) {
         Optional optional = getCrudRepository(entityClass).findById(id);
         if (optional.isPresent()) {
             return (T) optional.get();
