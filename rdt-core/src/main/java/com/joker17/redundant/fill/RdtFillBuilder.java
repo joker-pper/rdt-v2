@@ -587,8 +587,7 @@ public class RdtFillBuilder {
                     ClassModel dataClassModel = configuration.getClassModel(dataClass);
                     if (dataClassModel == null) {
                         logger.debug("rdt not contains class {}, so builder for fill now.", dataClass.getName());
-                        configuration.builderClass(dataClass);
-                        dataClassModel = configuration.getClassModel(dataClass);
+                        dataClassModel = configuration.builderClass(dataClass);
                     }
 
                     if (dataClassModel == null) {

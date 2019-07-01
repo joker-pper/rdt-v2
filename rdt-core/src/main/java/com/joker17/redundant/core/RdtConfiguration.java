@@ -60,8 +60,8 @@ public class RdtConfiguration {
         this.rdtResolver = rdtResolver;
     }
 
-    public void builderClass(Class currentClass) {
-        propertiesBuilder.builderClass(currentClass);
+    public ClassModel builderClass(Class currentClass) {
+        return propertiesBuilder.builderClass(currentClass);
     }
 
 

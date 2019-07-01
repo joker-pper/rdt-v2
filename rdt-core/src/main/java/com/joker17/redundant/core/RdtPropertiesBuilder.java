@@ -24,31 +24,36 @@ public class RdtPropertiesBuilder {
     private RdtResolver rdtResolver;
     private RdtProperties properties;
 
+    private String defaultLogicalProperty;
+    private List<Class> disabledLogicalPropertyClassList;
+
     public RdtPropertiesBuilder(RdtResolver rdtResolver, RdtProperties properties) {
         this.rdtResolver = rdtResolver;
         this.properties = properties;
+        this.defaultLogicalProperty = properties.getDefaultLogicalProperty();
+        this.disabledLogicalPropertyClassList = new ArrayList<Class>(16);
     }
 
 
-    public void builderClass(Class currentClass) {
+    public ClassModel builderClass(Class currentClass) {
         if (rdtResolver.isIgnoreModelClass(currentClass)) {
             if (currentClass != null) {
                 logger.debug("ignore builder class : {}", currentClass.getName());
             }
-            return;
+            return null;
         }
 
         ClassModel classModel = getClassModel(currentClass);
 
         if (classModel.getBuilderMark() != 0) {
-            return;
+            return classModel;
         }
         classModel.setBuilderMark(1);
 
         Boolean isBaseClass = classModel.getBaseClass();
 
         List<Field> fieldList = classModel.getFieldList();
-        List<Class<? extends Annotation>> sortAnnotationClassList = Arrays.asList(
+        List<Class<? extends Annotation>> sortFieldAnnotationClassList = Arrays.asList(
                 RdtLogicalField.class, RdtRelys.class, RdtRely.class,
                 RdtFieldConditionRelys.class, RdtFieldConditionRely.class, RdtFieldRely.class,
                 RdtFieldConditions.class, RdtFields.class,
@@ -57,7 +62,7 @@ public class RdtPropertiesBuilder {
                 RdtOne.class, RdtMany.class
         );
 
-        Map<Class, Map<Field, Annotation>> sortAnnotationClassMap = new LinkedHashMap<Class, Map<Field, Annotation>>(16);
+        Map<Class, Map<Field, Annotation>> sortFieldAnnotationClassMap = new LinkedHashMap<Class, Map<Field, Annotation>>(16);
 
         for (Field field : fieldList) {
             if (StringUtils.isEmpty(classModel.getPrimaryId())) {
@@ -70,11 +75,11 @@ public class RdtPropertiesBuilder {
             List<Annotation> annotationList = rdtResolver.getAnnotations(field);
             if (!annotationList.isEmpty()) {
                 //存放annotationClass对应的数据
-                for (Class annotationClass : sortAnnotationClassList) {
-                    Map<Field, Annotation> fieldAnnotationMap = sortAnnotationClassMap.get(annotationClass);
+                for (Class annotationClass : sortFieldAnnotationClassList) {
+                    Map<Field, Annotation> fieldAnnotationMap = sortFieldAnnotationClassMap.get(annotationClass);
                     if (fieldAnnotationMap == null) {
                         fieldAnnotationMap = new LinkedHashMap<Field, Annotation>();
-                        sortAnnotationClassMap.put(annotationClass, fieldAnnotationMap);
+                        sortFieldAnnotationClassMap.put(annotationClass, fieldAnnotationMap);
                     }
 
                     Iterator<Annotation> iterator = annotationList.iterator();
@@ -91,7 +96,6 @@ public class RdtPropertiesBuilder {
         }
 
         if (StringUtils.isEmpty(classModel.getPrimaryId())) {
-
             String defaultIdKey = properties.getDefaultIdKey();
             if (classModel.getPropertyFieldMap().keySet().contains(defaultIdKey)) {
                 classModel.setPrimaryId(defaultIdKey);
@@ -107,19 +111,42 @@ public class RdtPropertiesBuilder {
             throw new IllegalArgumentException(classModel.getClassName() + " is base class, but has no primary id");
         }
 
-
-        for (Class annotationClass : sortAnnotationClassMap.keySet()) {
-            Map<Field, Annotation> fieldAnnotationMap = sortAnnotationClassMap.get(annotationClass);
+        for (Class annotationClass : sortFieldAnnotationClassMap.keySet()) {
+            Map<Field, Annotation> fieldAnnotationMap = sortFieldAnnotationClassMap.get(annotationClass);
 
             for (Field field : fieldAnnotationMap.keySet()) {
                 Annotation annotation = fieldAnnotationMap.get(field);
                 builderConfig(classModel, field, annotation);
             }
         }
+
+        List<Class<? extends Annotation>> nonSpecialTypeAnnotationClassList = Arrays.asList(RdtEntityTips.class, RdtLogicalField.class);
+        for (Class annotationClass : nonSpecialTypeAnnotationClassList) {
+            Annotation annotation = rdtResolver.getAnnotation(currentClass, annotationClass);
+            builderConfig(classModel, annotation);
+        }
+
         builderClassAfter(classModel);
+
+        return classModel;
     }
 
     private void builderClassAfter(ClassModel classModel) {
+        //通过全局逻辑属性名称及逻辑值进行加载逻辑状态值配置
+        if (StringUtils.isNotBlank(defaultLogicalProperty)) {
+            if (!classModel.getIsVoClass()) {
+                LogicalModel logicalModel = classModel.getLogicalModel();
+                if (logicalModel == null && !disabledLogicalPropertyClassList.contains(classModel.getCurrentClass())) {
+                    try {
+                        Column logicalPropertyColumn = getColumn(classModel, defaultLogicalProperty);
+                        String hint = classModel.getClassName() + " build " + logicalPropertyColumn.getProperty() + " logical config has error with default logical property " + defaultLogicalProperty + ", cause by : ";
+                        builderRdtLogicalFieldConfigData(classModel, logicalPropertyColumn, hint, false, new String[0], Void.class);
+                    } catch (Exception e) {
+                        //不存在时忽略
+                    }
+                }
+            }
+        }
 
         Map<String, Map<Integer, RdtRelyModel>> propertyRelyDataMap = classModel.getPropertyRelyDataMap();
         if (!propertyRelyDataMap.isEmpty()) {
@@ -285,6 +312,41 @@ public class RdtPropertiesBuilder {
             }
         }
     }
+
+    /**
+     * classModel类注解处理
+     * @param classModel
+     * @param annotation
+     */
+    private void builderConfig(ClassModel classModel, Annotation annotation) {
+        if (annotation != null) {
+            Class annotationType = annotation.annotationType();
+            if (annotationType == RdtEntityTips.class) {
+                //fill未找到期望数据个数时的提示
+                RdtEntityTips rdtAnnotation = (RdtEntityTips) annotation;
+                classModel.setNotFoundTips(rdtResolver.getTipsContent(rdtAnnotation.notFound()));
+                classModel.setNotFoundMoreTips(rdtResolver.getTipsContent(rdtAnnotation.notFoundMore()));
+            } else if (annotationType == RdtLogicalField.class) {
+                RdtLogicalField rdtAnnotation = (RdtLogicalField) annotation;
+                boolean disabled = rdtAnnotation.disabled();
+                if (disabled) {
+                    //当禁用时
+                    LogicalModel logicalModel = classModel.getLogicalModel();
+                    if (logicalModel != null) {
+                        throw new IllegalArgumentException(String.format("%s has disabled logical field, but has logical field %s.", classModel.getClassName(), logicalModel.getColumn().getProperty()));
+                    }
+                    this.disabledLogicalPropertyClassList.add(classModel.getCurrentClass());
+                } else {
+                    String property = rdtAnnotation.property();
+                    if (StringUtils.isNotBlank(property)) {
+                        //通过类上的逻辑注解加载配置
+                        builderRdtLogicalFieldConfigData(classModel, getColumn(classModel, property), (RdtLogicalField) annotation);
+                    }
+                }
+            }
+        }
+    }
+
 
     private void builderRdtFieldConfigData(ClassModel classModel, Column column, RdtField rdtAnnotation) {
         Class targetClass = rdtAnnotation.target();  //当前属性要修改所对应的class
@@ -795,19 +857,36 @@ public class RdtPropertiesBuilder {
 
     private void builderRdtLogicalFieldConfigData(ClassModel classModel, Column column, RdtLogicalField rdtAnnotation) {
         String hint = classModel.getClassName() + " build " + column.getProperty() + " config has error with @RdtLogicalField, cause by : ";
-        LogicalModel logicalModel = new LogicalModel();
+        builderRdtLogicalFieldConfigData(classModel, column, hint, rdtAnnotation.disabled(), rdtAnnotation.value(), rdtAnnotation.valType());
+    }
 
+
+    private void builderRdtLogicalFieldConfigData(ClassModel classModel, Column column, String hint, boolean configDisabled, String[] configValues, Class configValType) {
         if (column.getIsTransient()) {
             throw new IllegalArgumentException(hint + "column must be not transient.");
         }
 
+        if (configDisabled) {
+            return;
+        }
+        String columnProperty = column.getProperty();
+        LogicalModel logicalModel = classModel.getLogicalModel();
+        if (logicalModel != null) {
+            String logicalProperty = logicalModel.getColumn().getProperty();
+            boolean isEq = logicalProperty.equals(columnProperty);
+            throw new IllegalArgumentException(hint + String.format("has already exists logical field %s, you also want to use logical field %s,%s it's funny..",
+                    logicalProperty, columnProperty, isEq ? " even though same but" : ""));
+        } else {
+            logicalModel = new LogicalModel();
+        }
+
         logicalModel.setColumn(column);
-        Class valType = getRdtActualValType(rdtAnnotation.valType(), column.getPropertyClass(), hint);
+        Class valType = getRdtActualValType(configValType, column.getPropertyClass(), hint);
         logicalModel.setType(valType);
 
         List<Object> values = logicalModel.getValues();
 
-        List<Object> parsedValues = rdtResolver.parseAnnotationValues(rdtAnnotation.value(), valType, hint);
+        List<Object> parsedValues = rdtResolver.parseAnnotationValues(configValues, valType, hint);
 
         if (parsedValues.isEmpty()) {
             parsedValues = rdtResolver.parseAnnotationValues(properties.getDefaultLogicalValue(), valType, hint);
@@ -818,10 +897,9 @@ public class RdtPropertiesBuilder {
         }
 
         values.addAll(parsedValues);
-
         classModel.setLogicalModel(logicalModel);
+        logger.debug("{} build logical field config success, and logical property is {}.", classModel.getClassName(), columnProperty);
     }
-
 
 
 
@@ -991,8 +1069,6 @@ public class RdtPropertiesBuilder {
                 try {
                     currentClass.newInstance();
                 } catch (Exception e) {
-                    /*if (e instanceof InstantiationException || e instanceof IllegalAccessException) {
-                    }*/
                     throw new IllegalArgumentException(classModel.getClassName() + " is base class, but unable to create instance by newInstance()");
                 }
 
@@ -1001,13 +1077,6 @@ public class RdtPropertiesBuilder {
                 }
             }
             classModel.setFieldList(rdtResolver.getFields(currentClass));
-
-            //fill未找到期望数据个数时的提示
-            RdtEntityTips rdtEntityTips = rdtResolver.getAnnotation(currentClass, RdtEntityTips.class);
-            if (rdtEntityTips != null) {
-                classModel.setNotFoundTips(rdtResolver.getTipsContent(rdtEntityTips.notFound()));
-                classModel.setNotFoundMoreTips(rdtResolver.getTipsContent(rdtEntityTips.notFoundMore()));
-            }
 
             classModelMap.put(currentClass, classModel);
         }

@@ -77,6 +77,11 @@ public class RdtProperties {
     private String[] defaultLogicalValue = new String[]{"1"};
 
     /**
+     * 默认全局逻辑状态值列,不为空时启用(@RdtLogicalField可指定对应列及禁用)
+     */
+    private String defaultLogicalProperty = "";
+
+    /**
      * 填充时是否启用逻辑状态值
      */
     private Boolean fillWithLogical = false;
@@ -235,6 +240,14 @@ public class RdtProperties {
 
     public void setDefaultLogicalValue(String[] defaultLogicalValue) {
         this.defaultLogicalValue = defaultLogicalValue;
+    }
+
+    public String getDefaultLogicalProperty() {
+        return defaultLogicalProperty;
+    }
+
+    public void setDefaultLogicalProperty(String defaultLogicalProperty) {
+        this.defaultLogicalProperty = defaultLogicalProperty;
     }
 
     public Boolean getFillWithLogical() {

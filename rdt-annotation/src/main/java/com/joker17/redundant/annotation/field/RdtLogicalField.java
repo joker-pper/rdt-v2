@@ -7,8 +7,20 @@ import java.lang.annotation.Target;
 
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD})
+@Target({ElementType.FIELD, ElementType.TYPE})
 public @interface RdtLogicalField {
+
+    /**
+     * 作用于类时,若禁用将不支持逻辑值状态
+     * @return
+     */
+    boolean disabled() default false;
+
+    /**
+     * 默认为指定列,作用于类时生效
+     * @return
+     */
+    String property() default "";
 
     /**
      * 值类型

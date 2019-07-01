@@ -26,6 +26,7 @@ rdt-config:
   fill-with-logical: true
   find-by-id-with-logical: true
   update-multi-with-logical: true
+  default-logical-property: status
 
 logging:
   level:
