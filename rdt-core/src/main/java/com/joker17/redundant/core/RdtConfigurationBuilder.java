@@ -19,7 +19,7 @@ public class RdtConfigurationBuilder {
         }
 
         RdtPropertiesBuilder propertiesBuilder = new RdtPropertiesBuilder(resolver, properties);
-
+        long start = System.currentTimeMillis();
         String basePackage = properties.getBasePackage();
         //获取该包下的所有类文件
         List<Class> classList = resolver.getClasses(basePackage);
@@ -31,8 +31,8 @@ public class RdtConfigurationBuilder {
         for (Class currentClass : packageClassList) {
             propertiesBuilder.builderClass(currentClass);
         }
-
-        logger.debug("rdt load package class complete, package class size {}, extra class size {}.", packageClassList.size(), properties.getExtraClassSet().size());
+        long end = System.currentTimeMillis();
+        logger.info("rdt load base package {} class complete in {} ms, package class size {}, extra class size {}.", basePackage, end - start, packageClassList.size(), properties.getExtraClassSet().size());
         return new RdtConfiguration(properties, propertiesBuilder, resolver);
     }
 }

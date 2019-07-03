@@ -696,12 +696,12 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
     @Override
     public <T> List<T> convertPropertyResults(Class<T> entityClass, List<Object[]> queryResults, List<String> queryPropertys) {
         List<T> results = new ArrayList<T>(16);
-        queryPropertys = rdtResolver.getNotNullList(queryPropertys);
         if (queryResults != null && !queryResults.isEmpty()) {
-            if (queryPropertys.isEmpty()) {
+            if (queryPropertys == null || queryPropertys.isEmpty()) {
                 //指定查询属性为空时,默认查询结果即为实体对象数据
                 results = (List<T>) queryResults;
             } else {
+                //根据结果数组和查询属性进行转换
                 for (Object[] queryResult : queryResults) {
                     T data = null;
                     try {

@@ -15,8 +15,8 @@ import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
 import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.util.StringUtils;
-
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -86,6 +86,36 @@ public abstract class RdtSpringResolver extends RdtResolver implements BeanDefin
             this.metadataReaderFactory = new CachingMetadataReaderFactory();
         }
         return this.metadataReaderFactory;
+    }
+
+    @Override
+    public Field getField(Class currentClass, String fieldName) throws NoSuchFieldException {
+        return PojoUtils.getField(currentClass, fieldName);
+    }
+
+    @Override
+    public List<Field> getFields(Class currentClass) {
+        return PojoUtils.getDeclaredFieldList(currentClass);
+    }
+
+    @Override
+    public Object getPropertyValue(Field field, Object obj) {
+        return PojoUtils.getPropertyValue(obj, field);
+    }
+
+    @Override
+    public Object getPropertyValue(Object obj, String property) {
+        return PojoUtils.getPropertyValue(obj, property);
+    }
+
+    @Override
+    public void setPropertyValue(Field field, Object obj, Object value) {
+        PojoUtils.setPropertyValue(obj, field, value);
+    }
+
+    @Override
+    public void setPropertyValue(Object obj, String property, Object value) {
+        PojoUtils.setPropertyValue(obj, property, value);
     }
 
 }
