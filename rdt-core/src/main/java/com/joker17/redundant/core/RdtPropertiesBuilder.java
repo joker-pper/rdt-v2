@@ -898,7 +898,7 @@ public class RdtPropertiesBuilder {
 
         values.addAll(parsedValues);
         classModel.setLogicalModel(logicalModel);
-        logger.debug("{} build logical field config success, and logical property is {}.", classModel.getClassName(), columnProperty);
+        logger.debug("{} build logical field config success, and logical property is {}, values in {}.", classModel.getClassName(), columnProperty, parsedValues);
     }
 
 

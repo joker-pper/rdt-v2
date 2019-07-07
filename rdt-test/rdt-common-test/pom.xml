@@ -61,6 +61,12 @@
                 <version>${rdt-jpa.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>com.github.joker-pper</groupId>
+                <artifactId>rdt-hibernate</artifactId>
+                <version>${rdt-hibernate.version}</version>
+            </dependency>
+
 
             <dependency>
                 <groupId>com.alibaba</groupId>

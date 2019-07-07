@@ -17,6 +17,7 @@
         <module>rdt-jpa</module>
         <module>rdt-test</module>
         <module>rdt-spring</module>
+        <module>rdt-hibernate</module>
     </modules>
 
     <properties>
@@ -30,12 +31,14 @@
         <rdt-spring-mongodb-v1.version>1.0.1-SNAPSHOT</rdt-spring-mongodb-v1.version>
         <rdt-spring-mongodb-v2.version>1.0.1-SNAPSHOT</rdt-spring-mongodb-v2.version>
         <rdt-jpa.version>1.0.1-SNAPSHOT</rdt-jpa.version>
+        <rdt-hibernate.version>1.0.1-SNAPSHOT</rdt-hibernate.version>
         <slf4j.version>1.7.25</slf4j.version>
         <log4j.version>2.11.0</log4j.version>
         <spring.version>5.0.9.RELEASE</spring.version>
         <spring-boot.version>2.0.5.RELEASE</spring-boot.version>
         <spring-data-mongodb.version>2.0.5.RELEASE</spring-data-mongodb.version>
         <spring-data-jpa.version>2.0.5.RELEASE</spring-data-jpa.version>
+        <hibernate.version>4.1.8.Final</hibernate.version>
     </properties>
 
     <repositories>

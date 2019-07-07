@@ -145,7 +145,7 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
 
     protected abstract <T> T save(T entity, Class<T> entityClass);
 
-    protected abstract <T> Collection<T> saveAll(Collection<T> data, Class<T> entityClass);
+    protected abstract <T> Collection<T> saveAll(Collection<T> collection, Class<T> entityClass);
 
 
     @Override
@@ -241,40 +241,49 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
      * @return
      */
     public Collection<Object> parseEntityData(Object entity) {
-        if (entity != null) {
-            if (entity instanceof Collection) {
-                Iterator<Object> iterator = ((Collection) entity).iterator();
-                while (iterator.hasNext()) {
-                    if (iterator.next() == null) iterator.remove();
-                }
-            } else {
-                if (entity.getClass().isArray()) {
-                    int size = Array.getLength(entity);
-                    List<Object> resultTemp = new ArrayList(size);
+        return resolveDataToCollection(entity, true);
+    }
 
-                    for (int i = 0; i < size; ++i) {
-                        Object data = Array.get(entity, i);
-                        if (data != null) {
-                            if (size == 1) {
-                                if (data instanceof Collection) resultTemp.addAll((Collection) data);
-                            }
-
-                            if (!(data instanceof Collection)) {
-                                resultTemp.add(data);
-                            }
+    /**
+     * 转换数据为集合数据
+     * @param data
+     * @param removeNull 是否移除null
+     * @return
+     */
+    public Collection<Object> resolveDataToCollection(Object data, boolean removeNull) {
+        Collection<Object> resultCollection = null;
+        if (data != null) {
+            if (data instanceof Collection) {
+                resultCollection = ((Collection) data);
+                Iterator<Object> iterator = resultCollection.iterator();
+                if (removeNull) {
+                    while (iterator.hasNext()) {
+                        if (iterator.next() == null) {
+                            iterator.remove();
                         }
                     }
-
-                    entity = resultTemp;
+                }
+            } else {
+                if (data.getClass().isArray()) {
+                    int size = Array.getLength(data);
+                    List<Object> resultTempList = new ArrayList(size);
+                    for (int i = 0; i < size; i++) {
+                        Object resultTemp = Array.get(data, i);
+                        resultTempList.addAll(resolveDataToCollection(resultTemp, removeNull));
+                    }
+                    resultCollection = resultTempList;
                 } else {
-                    List<Object> dataList = new ArrayList<Object>();
-                    dataList.add(entity);
-                    entity = dataList;
+                    resultCollection = new ArrayList<Object>();
+                    if (data != null || !removeNull) {
+                        resultCollection.add(data);
+                    }
                 }
             }
-        } else entity = new ArrayList<Object>();
-        return (Collection<Object>) entity;
+        }
+        resultCollection = resultCollection == null ? new ArrayList<Object>() : resultCollection;
+        return resultCollection;
     }
+
 
     public RdtResolver getRdtResolver() {
         return rdtResolver;
@@ -694,23 +703,24 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
     }
 
     @Override
-    public <T> List<T> convertPropertyResults(Class<T> entityClass, List<Object[]> queryResults, List<String> queryPropertys) {
+    public <T> List<T> convertPropertyResults(Class<T> entityClass, List<?> queryResults, List<String> queryPropertys) {
         List<T> results = new ArrayList<T>(16);
         if (queryResults != null && !queryResults.isEmpty()) {
             if (queryPropertys == null || queryPropertys.isEmpty()) {
                 //指定查询属性为空时,默认查询结果即为实体对象数据
                 results = (List<T>) queryResults;
             } else {
-                //根据结果数组和查询属性进行转换
-                for (Object[] queryResult : queryResults) {
+                for (Object queryResult : queryResults) {
                     T data = null;
                     try {
                         data = entityClass.newInstance();
                     } catch (Exception e) {
                     }
                     int i = 0;
-                    for (String property : queryPropertys) {
-                        rdtResolver.setPropertyValue(data, property, queryResult[i++]);
+                    //将结果数据转换成集合数据,并同时根据查询属性进行转换
+                    Collection<Object> queryResultCollection = resolveDataToCollection(queryResult, false);
+                    for (Object result : queryResultCollection) {
+                        rdtResolver.setPropertyValue(data, queryPropertys.get(i++), result);
                     }
                     results.add(data);
                 }

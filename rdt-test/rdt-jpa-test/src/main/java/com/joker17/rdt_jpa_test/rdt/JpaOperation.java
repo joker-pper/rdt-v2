@@ -3,6 +3,7 @@ package com.joker17.rdt_jpa_test.rdt;
 import com.joker17.rdt_jpa_test.core.RepositoryUtils;
 import com.joker17.redundant.core.RdtConfiguration;
 import com.joker17.redundant.operation.AbstractJpaOperation;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +12,7 @@ import javax.persistence.PersistenceContext;
 import java.util.*;
 
 @Component
+@ConditionalOnProperty(name = "config.hibernate-or-jpa", havingValue = "jpa")
 public class JpaOperation extends AbstractJpaOperation {
 
     public JpaOperation(RdtConfiguration configuration) {

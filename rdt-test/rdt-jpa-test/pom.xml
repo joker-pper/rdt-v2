@@ -58,8 +58,15 @@
 
 		<dependency>
 			<groupId>com.github.joker-pper</groupId>
+			<artifactId>rdt-hibernate</artifactId>
+		</dependency>
+
+
+		<dependency>
+			<groupId>com.github.joker-pper</groupId>
 			<artifactId>rdt-jpa</artifactId>
 		</dependency>
+
 
 		<dependency>
 			<groupId>com.alibaba</groupId>

@@ -10,6 +10,7 @@ import com.joker17.redundant.fill.FillType;
 import org.junit.Assert;
 import org.junit.Test;
 
+import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -55,6 +56,7 @@ public class FillTest extends ApplicationTests  {
     }
 
     @Test
+    //@Transactional
     public void fillUserRoleVOList() throws Exception {
         List<UserRoleVO> results = new ArrayList<>();
         for (int i = 0; i < 10; i ++) {

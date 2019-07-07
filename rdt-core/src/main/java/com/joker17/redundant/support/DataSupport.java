@@ -7,7 +7,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 
-
+/**
+ * @author joker-pper
+ */
 public class DataSupport {
     public interface Callback {
         void execute(String property, Object data);
@@ -85,7 +87,7 @@ public class DataSupport {
                 position = Long.parseLong(positionText);
             }
 
-            if (result != null && result.getClass().isArray()) {
+            if (result.getClass().isArray()) {
                 int size = Array.getLength(result);
                 List<Object> resultTemp = new ArrayList<Object>(size);
                 for (int i = 0; i < size; i ++) {

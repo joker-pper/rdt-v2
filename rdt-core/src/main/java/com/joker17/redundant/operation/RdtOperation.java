@@ -86,7 +86,7 @@ public interface RdtOperation {
      * @param <T>
      * @return
      */
-    <T> List<T> convertPropertyResults(Class<T> entityClass, List<Object[]> queryResults, List<String> queryPropertys);
+    <T> List<T> convertPropertyResults(Class<T> entityClass, List<?> queryResults, List<String> queryPropertys);
 
 
     /**

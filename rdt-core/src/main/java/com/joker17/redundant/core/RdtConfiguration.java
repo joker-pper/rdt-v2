@@ -240,6 +240,21 @@ public class RdtConfiguration {
         return false;
     }
 
+    public boolean isMatchedContainsValue(Object data, Object target) {
+        if (data == null && target == null) {
+            return true;
+        }
+        if (data != null) {
+            if (data instanceof Collection) {
+                if (target instanceof Collection) {
+                    return data.equals(target) || ((Collection) data).containsAll((Collection<?>) target);
+                }
+                return ((Collection) data).contains(target);
+            }
+            return data.equals(target);
+        }
+        return false;
+    }
 
 
     /**
@@ -269,14 +284,14 @@ public class RdtConfiguration {
     /**
      * 根据发生改变的属性列表返回当前的修改条件,如果返回为空时则无需修改
      *
-     * @param modifyDescribe
+     * @param describe
      * @param changedPropertys 发生改变的属性列表
      * @return
      */
-    public ModifyDescribe getModifyDescribe(ModifyDescribe modifyDescribe, List<String> changedPropertys) {
+    public ModifyDescribe getModifyDescribe(ModifyDescribe describe, List<String> changedPropertys) {
         ModifyDescribe temp = null;
         List<ModifyColumn> columnList = new ArrayList<ModifyColumn>();  //当前值发生变化所要修改的列
-        for (ModifyColumn modifyColumn : modifyDescribe.getColumnList()) {
+        for (ModifyColumn modifyColumn : describe.getColumnList()) {
             //如果包含列时加入
             if (!modifyColumn.getColumn().getIsTransient() && changedPropertys.contains(modifyColumn.getTargetColumn().getProperty())) {
                 columnList.add(modifyColumn);
@@ -284,8 +299,10 @@ public class RdtConfiguration {
         }
         if (!columnList.isEmpty()) {
             temp = new ModifyDescribe();
-            temp.setIndex(modifyDescribe.getIndex());
-            temp.setConditionList(modifyDescribe.getConditionList());
+            temp.setEntityClass(describe.getEntityClass());
+            temp.setTargetClass(describe.getTargetClass());
+            temp.setIndex(describe.getIndex());
+            temp.setConditionList(describe.getConditionList());
             temp.setColumnList(columnList);
         }
         return getDeepCloneModifyDescribe(temp);
@@ -342,6 +359,9 @@ public class RdtConfiguration {
 
         if (!columnList.isEmpty()) {
             temp = new ModifyRelyDescribe();
+            temp.setEntityClass(describe.getEntityClass());
+            temp.setTargetClass(describe.getTargetClass());
+
             temp.setIndex(describe.getIndex());
             temp.setConditionList(describe.getConditionList());
             temp.setColumnList(columnList);
@@ -353,6 +373,7 @@ public class RdtConfiguration {
             temp.setValList(describe.getValList());
             temp.setNotInValList(describe.getNotInValList());
             temp.setUpdateIgnoresValList(describe.getUpdateIgnoresValList());
+            temp.setNotAllowedTypeTips(describe.getNotAllowedTypeTips());
         }
         return getDeepCloneModifyRelyDescribe(temp);
     }
@@ -707,6 +728,8 @@ public class RdtConfiguration {
                 //逻辑值对象存在时进行处理
                 callBack.execute(dataModel, logicalMode);
             }
+        } else {
+            callBack = null;
         }
     }
 

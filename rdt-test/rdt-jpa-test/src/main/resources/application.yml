@@ -12,6 +12,7 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.MySQL5InnoDBDialect
 
+
   datasource:
     url: jdbc:mysql://localhost:3306/rdt_v2_jpa?serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8&useSSL=false
     username: root
@@ -27,6 +28,10 @@ rdt-config:
   find-by-id-with-logical: true
   update-multi-with-logical: true
   default-logical-property: status
+
+config:
+  hibernate-or-jpa: hibernate #当前实例化rdt操作对象 hibernate/jpa
+
 
 logging:
   level:

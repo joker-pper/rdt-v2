@@ -25,7 +25,7 @@ public abstract class AbstractJpaOperation extends AbstractOperation {
     @Override
     protected void updateModifyDescribeSimpleImpl(ClassModel classModel, ClassModel modifyClassModel, ModifyDescribe describe, ChangedVo vo) {
         final StringBuilder sb = new StringBuilder();
-        sb.append("UPDATE " + modifyClassModel.getClassName());
+        sb.append("UPDATE ").append(modifyClassModel.getClassName());
 
         final Map<String, Object> conditionDataMap = new LinkedHashMap<String, Object>(16);
         final Map<String, Object> updateDataMap = new LinkedHashMap<String, Object>(16);
