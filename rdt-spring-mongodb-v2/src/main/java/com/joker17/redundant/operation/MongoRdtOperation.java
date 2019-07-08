@@ -2,7 +2,9 @@ package com.joker17.redundant.operation;
 
 import com.joker17.redundant.core.RdtConfiguration;
 import com.joker17.redundant.model.*;
+import com.joker17.redundant.support.DataSuperSupport;
 import com.joker17.redundant.support.DataSupport;
+import com.joker17.redundant.support.Expression;
 import com.joker17.redundant.utils.StringUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -57,17 +59,17 @@ public class MongoRdtOperation extends AbstractMongoOperation {
 
     /**
      * 用于批量保存子文档数据
-     * @param data
+     * @param collection
      * @param entityClass
      * @param <T>
      * @return
      */
     @Override
-    protected <T> Collection<T> saveAll(Collection<T> data, Class<T> entityClass) {
-        for (T entity : data) {
+    protected <T> Collection<T> saveAll(Collection<T> collection, Class<T> entityClass) {
+        for (T entity : collection) {
             mongoTemplate.save(entity);
         }
-        return data;
+        return collection;
     }
 
     public Map getCriteriaToMap(Criteria criteria) {
@@ -224,6 +226,13 @@ public class MongoRdtOperation extends AbstractMongoOperation {
             }
         });
 
+        doComplexClassLogicalConditionHandle(classModel, complexClassModel, modifyClassModel, complexAnalysis, properties.getUpdateMultiWithLogical(), new ComplexClassLogicalConditionCallBack() {
+            @Override
+                public void execute(String logicalProperty, Object logicalValue) {
+                criteriaIn(criteria.and(logicalProperty), logicalValue);
+            }
+        });
+
         configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
             @Override
             public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
@@ -259,6 +268,13 @@ public class MongoRdtOperation extends AbstractMongoOperation {
                 String property = logicalModel.getColumn().getProperty();
                 List<Object> values = logicalModel.getValues();
                 criteriaIn(criteria.and(property), values);
+            }
+        });
+
+        doComplexClassLogicalConditionHandle(classModel, complexClassModel, modifyClassModel, complexAnalysis, properties.getUpdateMultiWithLogical(), new ComplexClassLogicalConditionCallBack() {
+            @Override
+                public void execute(String logicalProperty, Object logicalValue) {
+                criteriaIn(criteria.and(logicalProperty), logicalValue);
             }
         });
 
@@ -356,7 +372,7 @@ public class MongoRdtOperation extends AbstractMongoOperation {
     /**
      * 统一处理为many时的查询条件
      */
-    protected void updateManyDataConditionRelationshipHandle(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ClassModel modifyClassModel, ModifyDescribe describe, final ChangedVo vo, Criteria criteria, final Map<String, String> conditionPropertyMap) {
+    protected void updateManyDataConditionRelationshipHandle(ClassModel classModel, ClassModel complexClassModel, ComplexAnalysis complexAnalysis, ClassModel modifyClassModel, ModifyDescribe describe, final ChangedVo vo, final Criteria criteria, final Map<String, String> conditionPropertyMap) {
         List<Boolean> oneList = complexAnalysis.getOneList();
         List<String> propertyList = complexAnalysis.getPropertyList();
 
@@ -364,7 +380,7 @@ public class MongoRdtOperation extends AbstractMongoOperation {
         Stack<Criteria> stack = new Stack<Criteria>();
         stack.push(criteria);
 
-        List<ElemMatchWait> elemMatchList = new ArrayList<ElemMatchWait>(); //存放需要设置关系的criteria数据
+        final List<ElemMatchWait> elemMatchList = new ArrayList<ElemMatchWait>(); //存放需要设置关系的criteria数据
         StringBuilder propertyBuilder = new StringBuilder();  //最终是列表时则长度为0
 
         for (int i = 0; i < propertyList.size(); i ++) {
@@ -395,15 +411,19 @@ public class MongoRdtOperation extends AbstractMongoOperation {
 
         final Criteria lastCriteria = stack.pop();
 
+
+        /* 更新都是基于complexClass的条件列进行,获取到lastCriteria处理 */
         configuration.doModifyConditionHandle(vo, describe, new RdtConfiguration.ModifyConditionCallBack() {
             @Override
             public void execute(ModifyCondition condition, int position, String targetProperty, Object targetPropertyVal) {
                 String property = condition.getColumn().getProperty();
 
                 String currentProperty;
-                if (lastIsOne) { //说明是以one结尾的对象
+                if (lastIsOne) {
+                    //说明是以one结尾的对象(单对象直接使用处理的属性字段)
                     currentProperty = lastProperty + "." + property;
-                } else { //以many结尾的对象
+                } else {
+                    //以many结尾的对象(多组条件时需要使用elemMatch查询条件)
                     currentProperty = property;
                 }
                 lastCriteria.and(currentProperty).is(targetPropertyVal);
@@ -412,6 +432,52 @@ public class MongoRdtOperation extends AbstractMongoOperation {
             }
         });
 
+        //添加文档的逻辑值条件
+        configuration.doLogicalModelHandle(modifyClassModel, properties.getUpdateMultiWithLogical(), new RdtConfiguration.LogicalModelCallBack() {
+            @Override
+            public void execute(ClassModel dataModel, LogicalModel logicalModel) {
+                String property = logicalModel.getColumn().getProperty();
+                List<Object> values = logicalModel.getValues();
+                criteriaIn(criteria.and(property), values);
+            }
+        });
+
+        final boolean hasElemMatchWait = !elemMatchList.isEmpty();
+
+        //加入所有相关逻辑状态值的条件
+        doComplexClassLogicalConditionHandle(classModel, complexClassModel, modifyClassModel, complexAnalysis, properties.getUpdateMultiWithLogical(), new ComplexClassLogicalConditionCallBack() {
+            @Override
+                public void execute(String logicalProperty, Object logicalValue) {
+                boolean isByChildCriteria = false;
+
+                if (hasElemMatchWait) {
+                    int index = logicalProperty.lastIndexOf(".");
+                    if (index != -1) {
+                        String prefix = logicalProperty.substring(0, index);
+                        //当前逻辑列的真实属性
+                        String actualProperty = logicalProperty.substring(index + 1);
+                        //如果最后一列为单对象时,此时所对应的逻辑值条件也要进行处理,e.g:  replyList.relyVo.status
+                        for (ElemMatchWait wait : elemMatchList) {
+                            String elemMatchName = wait.getName();
+                            boolean prefixEq = prefix.equals(elemMatchName);
+                            boolean isEqWithLastProperty = !prefixEq && prefix.equals(elemMatchName + "." + lastProperty);
+                            if (prefixEq || isEqWithLastProperty) {
+                                Criteria child = wait.getChild();
+                                String currentProperty = isEqWithLastProperty ? lastProperty + "." + actualProperty : actualProperty;
+                                criteriaIn(child.and(currentProperty), logicalValue);
+                                isByChildCriteria = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!isByChildCriteria) {
+                    criteriaIn(criteria.and(logicalProperty), logicalValue);
+                }
+            }
+        });
+
+
         if (describe instanceof ModifyRelyDescribe) {
            final Column relyColumn = ((ModifyRelyDescribe) describe).getRelyColumn();
             String relyProperty = relyColumn.getProperty();
@@ -419,7 +485,7 @@ public class MongoRdtOperation extends AbstractMongoOperation {
             modelTypeCriteriaProcessing((ModifyRelyDescribe)describe, lastCriteria, relyProperty);
         }
 
-        if (!elemMatchList.isEmpty()) {  //设置criteria关系
+        if (hasElemMatchWait) {  //设置criteria关系
             for (ElemMatchWait wait : elemMatchList) {
                 Criteria parent = wait.getParent();
                 String name = wait.getName();
@@ -430,12 +496,35 @@ public class MongoRdtOperation extends AbstractMongoOperation {
 
     }
 
+    /**
+     * 处理当前数据列表并进行更新操作
+     * @param criteria
+     * @param dataList
+     * @param complexClassModel
+     * @param classModel
+     * @param modifyClassModel
+     * @param complexAnalysis
+     * @param saveAll
+     * @param describe
+     * @param vo
+     */
     protected void updateManyData(final Criteria criteria, List<Object> dataList, final ClassModel complexClassModel, final ClassModel classModel, final ClassModel modifyClassModel, final ComplexAnalysis complexAnalysis,  final boolean saveAll, final ModifyDescribe describe, final ChangedVo vo) {
         Class modifyClass = modifyClassModel.getCurrentClass();
 
         if (dataList != null && !dataList.isEmpty()) {
             List<Boolean> oneList = complexAnalysis.getOneList();
             boolean lastIsOne = oneList.get(oneList.size() - 1);
+
+
+            //初始化要访问数据的逻辑条件(且包含当前complexClass的逻辑条件)
+            final List<Expression> expressionList = new ArrayList<Expression>();
+            doComplexClassLogicalConditionHandle(classModel, complexClassModel, modifyClassModel, complexAnalysis, properties.getUpdateMultiWithLogical(), new ComplexClassLogicalConditionCallBack() {
+                @Override
+                public void execute(String logicalProperty, Object logicalValue) {
+                expressionList.add(new Expression(logicalProperty, logicalValue, true));
+                }
+            });
+
 
             for (Object data : dataList) {
                 final Update currentUpdate = new Update();  //使用update语句更新
@@ -452,12 +541,93 @@ public class MongoRdtOperation extends AbstractMongoOperation {
 
                 if (!lastIsOne) accessProperty += ".*";  //用于访问many的子对象
 
+
+                DataSuperSupport.doDisposeHandle(data, accessProperty, expressionList, new DataSuperSupport.Callback() {
+                    @Override
+                    public void arrive(String sourceAccessProperty, Object source, String resultAccessProperty, final Object result) {
+                        if (result != null) {
+                            boolean flag = configuration.isMatchedType(describe, result, complexClassModel);
+
+                            if (flag) {
+                                final List<Boolean> flagList = new ArrayList<Boolean>();
+                                flagList.add(true);
+                                //验证条件
+                                configuration.doModifyConditionHandle(vo, describe, new RdtConfiguration.ModifyConditionCallBack() {
+                                    @Override
+                                    public void execute(ModifyCondition condition, int position, String targetProperty, Object targetPropertyVal) {
+                                        String property = condition.getColumn().getProperty();
+                                        if (flagList.get(0)) {
+                                            //获取当前值
+                                            Object currentVal = rdtResolver.getPropertyValue(result, property);
+                                            if (!configuration.isMatchedValue(targetPropertyVal, currentVal)) {
+                                                flagList.set(0, false);
+                                            }
+                                        }
+                                    }
+                                });
+
+                                /*if (flagList.get(0)) {
+                                    configuration.doLogicalModelHandle(complexClassModel, properties.getUpdateMultiWithLogical(), new RdtConfiguration.LogicalModelCallBack() {
+                                        @Override
+                                        public void execute(ClassModel dataModel, LogicalModel logicalModel) {
+                                            String property = logicalModel.getColumn().getProperty();
+                                            //获取当前值
+                                            Object currentVal = rdtResolver.getPropertyValue(result, property);
+                                            if (!configuration.isMatchedContainsValue(logicalModel.getValues(), currentVal)) {
+                                                flagList.set(0, false);
+                                            }
+                                        }
+                                    });
+                                }*/
+
+                                flag = flagList.get(0);
+                            }
+
+                            if (flag) {
+                                final String usePropertyPrefix = resultAccessProperty.replace("[", "").replace("]", "") + "."; //去除[]
+
+                                //设置对应的属性值
+                                configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
+                                    @Override
+                                    public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
+                                        String property = modifyColumn.getColumn().getProperty();
+
+                                        if (saveAll) {
+                                            rdtResolver.setPropertyValue(result, property, targetPropertyVal);
+                                        } else {
+                                            currentUpdate.set(usePropertyPrefix + property, targetPropertyVal);
+                                        }
+                                    }
+                                });
+
+                                if (!saveAll) {
+                                    //加入result类的id标识,避免更新出错
+                                    String primaryId = complexClassModel.getPrimaryId();
+                                    if (StringUtils.isNotEmpty(primaryId)) {
+                                        currentCriteria.and(usePropertyPrefix + primaryId).is(rdtResolver.getPropertyValue(result, primaryId));
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void check(String sourceAccessProperty, Object source, String resultAccessProperty, Object result, boolean status, Expression expression, String property, Object value) {
+                       /* if (!saveAll && status) {
+                            //增加约束
+                            String useProperty = resultAccessProperty.replace("[", "").replace("]", "");
+                            criteriaIn(currentCriteria.and(useProperty), value);
+                        }*/
+                    }
+                });
+/*
+
                 DataSupport.dispose(data, accessProperty, new DataSupport.Callback() {
                     @Override
                     public void execute(String resultProperty, final Object result) {
                         if (result != null) {
+                            //判断当前数据是否满足要更新的条件(只要满足当前complexClass的依赖条件即可)
                             boolean flag = configuration.isMatchedType(describe, result, complexClassModel);
-
                             if (flag) {
 
                                 final List<Boolean> flagList = new ArrayList<Boolean>();
@@ -476,6 +646,21 @@ public class MongoRdtOperation extends AbstractMongoOperation {
                                         }
                                     }
                                 });
+
+                                if (flagList.get(0)) {
+                                    configuration.doLogicalModelHandle(complexClassModel, properties.getUpdateMultiWithLogical(), new RdtConfiguration.LogicalModelCallBack() {
+                                        @Override
+                                        public void execute(ClassModel dataModel, LogicalModel logicalModel) {
+                                            String property = logicalModel.getColumn().getProperty();
+                                            //获取当前值
+                                            Object currentVal = rdtResolver.getPropertyValue(result, property);
+                                            if (!configuration.isMatchedContainsValue(logicalModel.getValues(), currentVal)) {
+                                                flagList.set(0, false);
+                                            }
+                                        }
+                                    });
+                                }
+
                                 flag = flagList.get(0);
                             }
 
@@ -507,6 +692,7 @@ public class MongoRdtOperation extends AbstractMongoOperation {
                         }
                     }
                 });
+*/
 
                 if (!saveAll) {
                     updateMulti(currentCriteria, currentUpdate, modifyClass);

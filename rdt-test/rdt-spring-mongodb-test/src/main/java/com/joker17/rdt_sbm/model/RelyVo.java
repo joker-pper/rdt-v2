@@ -1,8 +1,11 @@
 package com.joker17.rdt_sbm.model;
 
 import com.joker17.rdt_sbm.domain.User;
+import com.joker17.redundant.annotation.RdtMany;
+import com.joker17.redundant.annotation.RdtOne;
 import com.joker17.redundant.annotation.field.RdtField;
 import com.joker17.redundant.annotation.field.RdtFieldCondition;
+import com.joker17.redundant.annotation.field.RdtLogicalField;
 import com.joker17.redundant.annotation.rely.*;
 
 public class RelyVo {
@@ -26,6 +29,9 @@ public class RelyVo {
     }
     )
     private Object type;
+
+    @RdtLogicalField("null")
+    private Integer status;
 
     public String getId() {
         return id;
@@ -73,5 +79,13 @@ public class RelyVo {
 
     public void setType(Object type) {
         this.type = type;
+    }
+
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
     }
 }

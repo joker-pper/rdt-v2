@@ -7,6 +7,7 @@ import com.joker17.redundant.core.RdtProperties;
 import com.joker17.redundant.operation.MongoRdtOperation;
 import com.joker17.redundant.core.RdtResolver;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.annotation.Id;
@@ -22,8 +23,6 @@ public class RdtConfig {
     @Resource
     private MongoTemplate mongoTemplate;
 
-    @Value("${rdt.domain.basePackage}")
-    private String basePackage;
 
     @Bean
     public RdtResolver rdtResolver() {
@@ -73,13 +72,9 @@ public class RdtConfig {
     }
 
     @Bean
+    @ConfigurationProperties(prefix = "rdt")
     public RdtProperties rdtProperties() {
         RdtProperties properties = new RdtProperties();
-        properties.setBasePackage(basePackage);
-        //是否通过saveAll保存
-        properties.setComplexBySaveAll(false);
-        properties.setIsModifyColumnMustSameType(false);
-        properties.setDeepCloneChangedModify(Boolean.TRUE);
         return properties;
     }
 

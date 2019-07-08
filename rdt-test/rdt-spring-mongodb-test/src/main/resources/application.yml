@@ -7,8 +7,11 @@ logging:
 
 
 rdt:
-  domain:
-    basePackage: com.joker17.*.domain
+  base-package: com.joker17.*.domain
+  complex-by-save-all: false #是否通过saveAll保存
+  is-modify-column-must-same-type: false
+  deep-clone-changed-modify: false
+  update-multi-with-logical: true #更新携带逻辑状态值
 
 spring:
   data:

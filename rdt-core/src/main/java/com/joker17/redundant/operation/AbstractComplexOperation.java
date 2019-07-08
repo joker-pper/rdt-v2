@@ -7,6 +7,8 @@ import java.util.*;
 
 public abstract class AbstractComplexOperation extends AbstractOperation {
 
+    protected Map<ClassModel, Map<ComplexAnalysis, Map<String, Object>>> classModelLogicalConditionCacheMap = new HashMap<ClassModel, Map<ComplexAnalysis, Map<String, Object>>>(16);
+
     public AbstractComplexOperation(RdtConfiguration configuration) {
         super(configuration);
     }
@@ -152,6 +154,24 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
                     conditionLogMap.put(getPropertyMark(property, targetProperty), targetPropertyVal);
                 }
             });
+
+            configuration.doLogicalModelHandle(modifyClassModel, properties.getUpdateMultiWithLogical(), new RdtConfiguration.LogicalModelCallBack() {
+                @Override
+                public void execute(ClassModel dataModel, LogicalModel logicalModel) {
+                    String logicalProperty = logicalModel.getColumn().getProperty();
+                    List<Object> values = logicalModel.getValues();
+                    conditionLogMap.put(logicalProperty, values);
+                }
+            });
+
+            doComplexClassLogicalConditionHandle(classModel, complexClassModel, modifyClassModel, complexAnalysis, properties.getUpdateMultiWithLogical(), new ComplexClassLogicalConditionCallBack() {
+                @Override
+                public void execute(String logicalProperty, Object logicalValue) {
+                conditionLogMap.put(logicalProperty, logicalValue);
+                }
+            });
+
+
             configuration.doModifyColumnHandle(vo, describe, new RdtConfiguration.ModifyColumnCallBack() {
                 @Override
                 public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
@@ -184,6 +204,13 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
                 public void execute(ModifyCondition modifyCondition, int position, String targetProperty, Object targetPropertyVal) {
                     String property = getModifyRelyDescribeOneProperty(classModel, complexClassModel, complexAnalysis, modifyCondition);
                     conditionLogMap.put(getPropertyMark(property, targetProperty), targetPropertyVal);
+                }
+            });
+
+            doComplexClassLogicalConditionHandle(classModel, complexClassModel, modifyClassModel, complexAnalysis, properties.getUpdateMultiWithLogical(), new ComplexClassLogicalConditionCallBack() {
+                @Override
+                public void execute(String logicalProperty, Object logicalValue) {
+                conditionLogMap.put(logicalProperty, logicalValue);
                 }
             });
 
@@ -261,4 +288,126 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
     protected abstract ClassModel getModifyRelyDescribeManyModifyClassModel(ClassModel complexClassModel, ComplexAnalysis complexAnalysis);
 
     protected abstract void updateModifyRelyDescribeManyImpl(final ClassModel classModel, final ClassModel complexClassModel, final ComplexAnalysis complexAnalysis, final ClassModel modifyClassModel, final ModifyRelyDescribe describe, final ChangedVo vo, final Column relyColumn, final int group, RdtLog rdtLog);
+
+
+
+    protected Map<ComplexAnalysis, Map<String, Object>> getComplexAnalysisLogicalConditionMap(final ClassModel classModel) {
+        Map<ComplexAnalysis, Map<String, Object>> complexAnalysisLogicalConditionMap = classModelLogicalConditionCacheMap.get(classModel);
+        if (complexAnalysisLogicalConditionMap == null) {
+            synchronized (this) {
+                complexAnalysisLogicalConditionMap = classModelLogicalConditionCacheMap.get(classModel);
+                if (complexAnalysisLogicalConditionMap == null) {
+                    complexAnalysisLogicalConditionMap = new HashMap<ComplexAnalysis, Map<String, Object>>();
+                    classModelLogicalConditionCacheMap.put(classModel, complexAnalysisLogicalConditionMap);
+                }
+            }
+        }
+        return complexAnalysisLogicalConditionMap;
+    }
+
+    /**
+     * 获取当前参数所对应的逻辑状态值条件(不包含第一层modifyClassModel的数据)
+     * @param classModel
+     * @param complexClassModel
+     * @param modifyClassModel
+     * @param complexAnalysis
+     * @return
+     */
+    protected Map<String, Object> getComplexClassLogicalConditionMap(final ClassModel classModel, final ClassModel complexClassModel, final ClassModel modifyClassModel, final ComplexAnalysis complexAnalysis) {
+        Map<ComplexAnalysis, Map<String, Object>> complexAnalysisLogicalConditionMap = getComplexAnalysisLogicalConditionMap(classModel);
+        Map<String, Object> resultMap = complexAnalysisLogicalConditionMap.get(complexAnalysis);
+        if (resultMap == null) {
+            synchronized (this) {
+                resultMap = complexAnalysisLogicalConditionMap.get(complexAnalysis);
+                if (resultMap == null) {
+                    resultMap = new LinkedHashMap<String, Object>(16);
+                    final Map<String, Object> finalConditionMap = resultMap;
+                    doWithComplexClassLogicalModelHandle(classModel, complexClassModel, modifyClassModel, complexAnalysis, new doWithComplexClassLogicalModelCallBack() {
+                        @Override
+                        void run(ClassModel currentClassModel, LogicalModel logicalModel, int position, Object logicalValues) {
+                            String logicalProperty = getLogicalProperty(classModel, complexClassModel, modifyClassModel, currentClassModel, complexAnalysis, logicalModel, position);
+                            finalConditionMap.put(logicalProperty, logicalValues);
+                        }
+                    });
+                    complexAnalysisLogicalConditionMap.put(complexAnalysis, finalConditionMap);
+                }
+            }
+        }
+        return resultMap;
+    }
+
+
+
+    protected abstract class doWithComplexClassLogicalModelCallBack {
+        abstract void run(ClassModel currentClassModel, LogicalModel logicalModel, int position, Object logicalValues);
+    }
+
+    /**
+     * 处理当前classModel与complexAnalysis之间的多组逻辑条件关系
+     * @param classModel
+     * @param complexClassModel
+     * @param modifyClassModel
+     * @param complexAnalysis
+     * @param callback
+     */
+    protected void doWithComplexClassLogicalModelHandle(final ClassModel classModel, final ClassModel complexClassModel, final ClassModel modifyClassModel, final ComplexAnalysis complexAnalysis, final doWithComplexClassLogicalModelCallBack callback) {
+        List<Class> classList = complexAnalysis.getCurrentTypeList();
+        int size = classList.size();
+        for (int i = 0; i < size; i ++) {
+            ClassModel currentClassModel = getClassModel(classList.get(i));
+            final int position = i;
+            configuration.doLogicalModelHandle(currentClassModel, true, new RdtConfiguration.LogicalModelCallBack() {
+                @Override
+                public void execute(ClassModel dataModel, LogicalModel logicalModel) {
+                    if (callback != null) {
+                        List<Object> values = logicalModel.getValues();
+                        callback.run(dataModel, logicalModel, position, values);
+                    }
+                }
+            });
+        }
+
+    }
+
+
+    /**
+     * 根据当前参数获取逻辑条件的property(基于modifyClassModel的逻辑状态属性)
+     * @param classModel
+     * @param complexClassModel
+     * @param modifyClassModel
+     * @param currentClassModel
+     * @param complexAnalysis
+     * @param logicalModel
+     * @param position
+     * @return
+     */
+    protected  String getLogicalProperty(ClassModel classModel, ClassModel complexClassModel, ClassModel modifyClassModel, ClassModel currentClassModel, ComplexAnalysis complexAnalysis, LogicalModel logicalModel, int position) {
+        StringBuilder sb = new StringBuilder();
+        List<String> propertyList = complexAnalysis.getPropertyList();
+        for (int i = 0; i < position + 1; i ++) {
+            sb.append(propertyList.get(i));
+            sb.append(".");
+        }
+        sb.append(logicalModel.getColumn().getProperty());
+        return sb.toString();
+    }
+
+    protected abstract class ComplexClassLogicalConditionCallBack {
+        public abstract void execute(String logicalProperty, Object logicalValue);
+
+    }
+
+    protected void doComplexClassLogicalConditionHandle(final ClassModel classModel, final ClassModel complexClassModel, final ClassModel modifyClassModel, final ComplexAnalysis complexAnalysis, boolean logical, ComplexClassLogicalConditionCallBack callback) {
+        if (logical) {
+            Map<String, Object> resultMap = getComplexClassLogicalConditionMap(classModel, complexClassModel, modifyClassModel, complexAnalysis);
+            if (!resultMap.isEmpty()) {
+                for (String logicalProperty : resultMap.keySet()) {
+                    callback.execute(logicalProperty, resultMap.get(logicalProperty));
+                }
+            }
+        } else {
+            callback = null;
+        }
+    }
+
 }

@@ -194,7 +194,7 @@ public class DataInitTests extends ApplicationTests {
         relyVo.setUserAge(userAges[first] + "");
 
         reply.setRelyVo(relyVo);
-
+        reply.setStatus(new Random().nextBoolean() ? 1 : 0);
         return reply;
     }
 }

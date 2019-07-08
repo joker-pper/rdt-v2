@@ -4,6 +4,7 @@ import com.joker17.rdt_sbm.domain.User;
 import com.joker17.redundant.annotation.RdtOne;
 import com.joker17.redundant.annotation.field.RdtField;
 import com.joker17.redundant.annotation.field.RdtFieldCondition;
+import com.joker17.redundant.annotation.field.RdtLogicalField;
 
 public class Reply {
 
@@ -25,6 +26,9 @@ public class Reply {
 
     @RdtOne
     private RelyVo relyVo;
+
+    @RdtLogicalField("1")
+    private Integer status;
 
     public String getId() {
         return id;
@@ -80,5 +84,13 @@ public class Reply {
 
     public void setRelyVo(RelyVo relyVo) {
         this.relyVo = relyVo;
+    }
+
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
     }
 }

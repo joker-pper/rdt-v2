@@ -7,6 +7,7 @@ import com.joker17.redundant.annotation.RdtOne;
 import com.joker17.redundant.annotation.field.RdtField;
 import com.joker17.redundant.annotation.field.RdtFieldCondition;
 import com.joker17.redundant.annotation.field.RdtFields;
+import com.joker17.redundant.annotation.field.RdtLogicalField;
 import com.joker17.redundant.annotation.rely.*;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -63,6 +64,9 @@ public class Article {
 
     @RdtOne
     private ComplexVo complex;//复杂对象
+
+    @RdtLogicalField("null")
+    private Integer status;
 
     public Article() {
     }
@@ -181,5 +185,13 @@ public class Article {
 
     public void setComplex(ComplexVo complex) {
         this.complex = complex;
+    }
+
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
     }
 }

@@ -5,6 +5,7 @@ import com.joker17.redundant.annotation.RdtMany;
 import com.joker17.redundant.annotation.RdtOne;
 import com.joker17.redundant.annotation.field.RdtField;
 import com.joker17.redundant.annotation.field.RdtFieldCondition;
+import com.joker17.redundant.annotation.field.RdtLogicalField;
 
 import java.util.List;
 
@@ -21,6 +22,9 @@ public class ComplexVo {
 
     @RdtOne
     private Reply reply;
+
+    @RdtLogicalField("null")
+    private Integer status;
 
     public String getUserId() {
         return userId;
@@ -52,5 +56,13 @@ public class ComplexVo {
 
     public void setReply(Reply reply) {
         this.reply = reply;
+    }
+
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
     }
 }

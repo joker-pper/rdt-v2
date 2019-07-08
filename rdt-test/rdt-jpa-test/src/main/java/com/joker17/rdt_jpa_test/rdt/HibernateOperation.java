@@ -55,15 +55,15 @@ public class HibernateOperation extends AbstractHibernateOperation {
             try {
                 Method getSessionFactory = entityManagerFactory.getClass().getMethod("getSessionFactory");
                 this.sessionFactory = (SessionFactory) ReflectionUtils.invokeMethod(getSessionFactory, entityManagerFactory);
-            } catch (NoSuchMethodException var3) {
-                throw new IllegalStateException("No compatible Hibernate EntityManagerFactory found: " + var3);
+            } catch (NoSuchMethodException e) {
+                throw new IllegalStateException("No compatible Hibernate EntityManagerFactory found: " + e);
             }
         }
         return sessionFactory;
     }
 
-    @Override
+   /* @Override
     protected <T> List<T> findByConditionsExecute(Class<T> entityClass, List<String> conditionPropertys, List<Object> conditionValues, String... selectPropertys) {
         return super.findByConditionsExecute(entityClass, conditionPropertys, conditionValues, null);
-    }
+    }*/
 }
