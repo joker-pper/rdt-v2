@@ -3,7 +3,6 @@ package com.joker17.redundant.core;
 
 import com.joker17.redundant.annotation.RdtFillType;
 import com.joker17.redundant.fill.FillType;
-
 import com.joker17.redundant.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,10 +18,6 @@ public class RdtConfiguration {
     private RdtResolver rdtResolver;
 
     private RdtPropertiesBuilder propertiesBuilder;
-
-    private Map<Class, List<List<ComplexModel>>> complexResultListMap = new HashMap<Class, List<List<ComplexModel>>>(16);
-
-    private Map<Class, List<ComplexAnalysis>> complexAnalysisResultListMap = new HashMap<Class, List<ComplexAnalysis>>(16);
 
     /**
      * 储存当前describe只保留transient列的信息
@@ -476,105 +471,14 @@ public class RdtConfiguration {
         return describe;
     }
 
-
-    //获取当前复杂对象的组合,返回数组按照倒序的属性方式
-    public List<List<ComplexModel>> getComplexModelParseResult(Class complexClass) {
-        List<List<ComplexModel>> results = complexResultListMap.get(complexClass);
-        if (results == null) {
-            synchronized (RdtConfiguration.class) {
-                results = complexResultListMap.get(complexClass);
-                boolean flag = results == null;
-                if (flag) {
-                    results = new ArrayList<List<ComplexModel>>();
-                    complexResultListMap.put(complexClass, results);
-                    List<ComplexModel> complexObjects = properties.getClassComplexModelsMap().get(complexClass);
-                    if (complexObjects != null) {
-                        for (ComplexModel complexObject : complexObjects) {
-                            if (complexObject.getOwnerBase()) {
-                                List<ComplexModel> result = new ArrayList<ComplexModel>();
-                                result.add(complexObject);
-                                results.add(result);
-                            } else {
-                                List<List<ComplexModel>> currents = getComplexModelParseResult(complexObject.getOwnerType());
-                                for (List<ComplexModel> current : currents) {
-                                    List<ComplexModel> result = new ArrayList<ComplexModel>();
-                                    result.add(complexObject);
-                                    result.addAll(current);
-                                    results.add(result);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return results;
-    }
-
     /**
      * 获取当前非base类所对应的所有关联关系数据集合
      * @param complexClass
      * @return
      */
     public List<ComplexAnalysis> getComplexAnalysisList(Class complexClass) {
-        List<ComplexAnalysis> result = complexAnalysisResultListMap.get(complexClass);
-        if (result == null) {
-            synchronized (RdtConfiguration.class) {
-                result = complexAnalysisResultListMap.get(complexClass);
-                if (result == null) {
-                    result = new ArrayList<ComplexAnalysis>(16);
-                    complexAnalysisResultListMap.put(complexClass, result);
-                    List<List<ComplexModel>> complexResults = getComplexModelParseResult(complexClass);
-                    for (List<ComplexModel> complexResult : complexResults) {
-                        ComplexAnalysis complexAnalysis = getComplexAnalysis(complexResult);
-                        result.add(complexAnalysis);
-                    }
-                }
-            }
-        }
-        return result;
+       return rdtResolver.getComplexAnalysisList(complexClass);
     }
-
-    /**
-     * 解析当前关系列表的结果,即base类的关联关系
-     * @param complexModelList
-     * @return e.g
-     *  {"currentTypeList": ["com.joker17.rdt_sbm.model.Reply"],"hasMany":false,"oneList":[true],"prefix":"reply","propertyList":["reply"],"rootClass":"com.joker17.rdt_sbm.domain.Article"}
-     *
-     */
-    public ComplexAnalysis getComplexAnalysis(List<ComplexModel> complexModelList) {
-        ComplexAnalysis complexAnalysis = new ComplexAnalysis();
-        StringBuilder sb = new StringBuilder();
-        int size = complexModelList.size();
-        for (int i = size - 1; i >= 0; i--) {
-            ComplexModel complexModel = complexModelList.get(i);
-            if (i == size - 1) {
-                complexAnalysis.setRootClass(complexModel.getOwnerType());
-                complexAnalysis.setHasMany(false);
-            }
-            List<Boolean> oneList = complexAnalysis.getOneList();
-            List<String> propertyList = complexAnalysis.getPropertyList();
-            List<Class> currentTypeList = complexAnalysis.getCurrentTypeList();
-
-            String property = complexModel.getProperty();
-            Boolean isOne = complexModel.getIsOne();
-            if (!isOne) complexAnalysis.setHasMany(true);
-            sb.append(property);
-            sb.append(".");
-
-            currentTypeList.add(complexModel.getCurrentType());
-            propertyList.add(property);
-            oneList.add(isOne);
-        }
-
-        int length = sb.length();
-        if (length > 0) {
-            sb.delete(length - 1, length);
-            complexAnalysis.setPrefix(sb.toString());
-        }
-        return complexAnalysis;
-    }
-
 
     public static abstract class ModifyRelyDescribeCallBack {
         /**

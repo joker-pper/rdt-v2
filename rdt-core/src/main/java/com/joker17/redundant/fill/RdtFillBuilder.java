@@ -583,13 +583,11 @@ public class RdtFillBuilder {
                     if (rdtResolver.isIgnoreModelClass(dataClass)) {
                         continue;
                     }
-
                     ClassModel dataClassModel = configuration.getClassModel(dataClass);
-                    if (dataClassModel == null) {
+                    /*if (dataClassModel == null) {
                         logger.debug("rdt not contains class {}, so builder for fill now.", dataClass.getName());
                         dataClassModel = configuration.builderClass(dataClass);
-                    }
-
+                    }*/
                     if (dataClassModel == null) {
                         continue;
                     }

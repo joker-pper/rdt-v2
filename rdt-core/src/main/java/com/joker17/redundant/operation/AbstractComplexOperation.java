@@ -167,7 +167,7 @@ public abstract class AbstractComplexOperation extends AbstractOperation {
             doComplexClassLogicalConditionHandle(classModel, complexClassModel, modifyClassModel, complexAnalysis, properties.getUpdateMultiWithLogical(), new ComplexClassLogicalConditionCallBack() {
                 @Override
                 public void execute(String logicalProperty, Object logicalValue) {
-                conditionLogMap.put(logicalProperty, logicalValue);
+                    conditionLogMap.put(logicalProperty, logicalValue);
                 }
             });
 

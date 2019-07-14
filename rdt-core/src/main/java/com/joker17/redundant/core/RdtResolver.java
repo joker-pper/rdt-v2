@@ -25,6 +25,15 @@ public abstract class RdtResolver {
     private List<Class> primaryIdAnnotationClassList = null;
     private List<Class> columnTransientAnnotationClassList = null;
 
+    private RdtProperties properties;
+
+    private Map<Class, List<List<ComplexModel>>> complexResultListMap = new HashMap<Class, List<List<ComplexModel>>>(16);
+    private Map<Class, List<ComplexAnalysis>> complexAnalysisResultListMap = new HashMap<Class, List<ComplexAnalysis>>(16);
+
+    void setRdtProperties(RdtProperties properties) {
+        this.properties = properties;
+    }
+
     /**
      * 哪些作为修改基本类的注解
      * @return
@@ -1236,5 +1245,121 @@ public abstract class RdtResolver {
         }
         return propertyList;
     }
+
+    /**
+     * 解析复杂model之间的关系
+     */
+    protected void parseComplexModel() {
+        Map<Class, List<ComplexModel>> classComplexModelsMap = properties.getClassComplexModelsMap();
+        for (Class complexClass : classComplexModelsMap.keySet()) {
+            //当存在问题时直接抛出异常
+            getComplexAnalysisList(complexClass);
+        }
+    }
+
+
+    /**
+     * 获取当前复杂对象的组合,返回数组按照倒序的属性方式
+     * @param complexClass
+     * @return
+     */
+    protected List<List<ComplexModel>> getComplexModelParseResult(Class complexClass) {
+        List<List<ComplexModel>> results = complexResultListMap.get(complexClass);
+        if (results == null) {
+            synchronized (this) {
+                results = complexResultListMap.get(complexClass);
+                boolean flag = results == null;
+                if (flag) {
+                    results = new ArrayList<List<ComplexModel>>();
+                    complexResultListMap.put(complexClass, results);
+                    Map<Class, List<ComplexModel>> classComplexModelsMap = properties.getClassComplexModelsMap();
+                    List<ComplexModel> complexObjects = classComplexModelsMap.get(complexClass);
+                    if (complexObjects != null) {
+                        for (ComplexModel complexObject : complexObjects) {
+                            if (complexObject.getOwnerBase()) {
+                                List<ComplexModel> result = new ArrayList<ComplexModel>();
+                                result.add(complexObject);
+                                results.add(result);
+                            } else {
+                                List<List<ComplexModel>> currents = getComplexModelParseResult(complexObject.getOwnerType());
+                                for (List<ComplexModel> current : currents) {
+                                    List<ComplexModel> result = new ArrayList<ComplexModel>();
+                                    result.add(complexObject);
+                                    result.addAll(current);
+                                    results.add(result);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return results;
+    }
+
+    /**
+     * 获取当前非base类所对应的所有关联关系数据集合
+     * @param complexClass
+     * @return
+     */
+    public List<ComplexAnalysis> getComplexAnalysisList(Class complexClass) {
+        List<ComplexAnalysis> result = complexAnalysisResultListMap.get(complexClass);
+        if (result == null) {
+            synchronized (this) {
+                result = complexAnalysisResultListMap.get(complexClass);
+                if (result == null) {
+                    result = new ArrayList<ComplexAnalysis>(16);
+                    complexAnalysisResultListMap.put(complexClass, result);
+                    List<List<ComplexModel>> complexResults = getComplexModelParseResult(complexClass);
+                    for (List<ComplexModel> complexResult : complexResults) {
+                        ComplexAnalysis complexAnalysis = getComplexAnalysis(complexResult);
+                        result.add(complexAnalysis);
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 解析当前关系列表的结果,即base类的关联关系
+     * @param complexModelList
+     * @return e.g
+     *  {"currentTypeList": ["com.joker17.rdt_sbm.model.Reply"],"hasMany":false,"oneList":[true],"prefix":"reply","propertyList":["reply"],"rootClass":"com.joker17.rdt_sbm.domain.Article"}
+     *
+     */
+    protected ComplexAnalysis getComplexAnalysis(List<ComplexModel> complexModelList) {
+        ComplexAnalysis complexAnalysis = new ComplexAnalysis();
+        StringBuilder sb = new StringBuilder();
+        int size = complexModelList.size();
+        for (int i = size - 1; i >= 0; i--) {
+            ComplexModel complexModel = complexModelList.get(i);
+            if (i == size - 1) {
+                complexAnalysis.setRootClass(complexModel.getOwnerType());
+                complexAnalysis.setHasMany(false);
+            }
+            List<Boolean> oneList = complexAnalysis.getOneList();
+            List<String> propertyList = complexAnalysis.getPropertyList();
+            List<Class> currentTypeList = complexAnalysis.getCurrentTypeList();
+
+            String property = complexModel.getProperty();
+            Boolean isOne = complexModel.getIsOne();
+            if (!isOne) complexAnalysis.setHasMany(true);
+            sb.append(property);
+            sb.append(".");
+
+            currentTypeList.add(complexModel.getCurrentType());
+            propertyList.add(property);
+            oneList.add(isOne);
+        }
+
+        int length = sb.length();
+        if (length > 0) {
+            sb.delete(length - 1, length);
+            complexAnalysis.setPrefix(sb.toString());
+        }
+        return complexAnalysis;
+    }
+
 
 }
