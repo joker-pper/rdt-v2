@@ -61,7 +61,7 @@ public class RdtConfiguration {
 
 
     public ClassModel getClassModel(Class entityClass) {
-        return properties.getClassModel(entityClass);
+        return rdtResolver.getClassModel(entityClass);
     }
 
     public String getPrimaryId(Class entityClass) {

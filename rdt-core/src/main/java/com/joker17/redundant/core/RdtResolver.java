@@ -27,8 +27,12 @@ public abstract class RdtResolver {
 
     private RdtProperties properties;
 
-    private Map<Class, List<List<ComplexModel>>> complexResultListMap = new HashMap<Class, List<List<ComplexModel>>>(16);
-    private Map<Class, List<ComplexAnalysis>> complexAnalysisResultListMap = new HashMap<Class, List<ComplexAnalysis>>(16);
+    protected Map<Class, List<List<ComplexModel>>> complexResultListMap = new HashMap<Class, List<List<ComplexModel>>>(16);
+
+    /**
+     * 当前complexClass所对应的解析结果
+     */
+    protected Map<Class, List<ComplexAnalysis>> complexAnalysisResultListMap = new HashMap<Class, List<ComplexAnalysis>>(16);
 
     void setRdtProperties(RdtProperties properties) {
         this.properties = properties;
@@ -36,6 +40,7 @@ public abstract class RdtResolver {
 
     /**
      * 哪些作为修改基本类的注解
+     *
      * @return
      */
     public final List<Class> getBaseEntityAnnotationClassList() {
@@ -61,6 +66,7 @@ public abstract class RdtResolver {
 
     /**
      * 定义作为基本类的注解
+     *
      * @return
      */
     protected abstract Class<?>[] customBaseEntityAnnotations();
@@ -72,6 +78,7 @@ public abstract class RdtResolver {
 
     /**
      * 当前类是否为修改基本类
+     *
      * @param entityClass
      * @return
      */
@@ -157,6 +164,7 @@ public abstract class RdtResolver {
 
     /**
      * 获取entityClass的表名
+     *
      * @param entityClass
      * @return
      */
@@ -191,6 +199,7 @@ public abstract class RdtResolver {
 
     /**
      * 获取当前类的id字段
+     *
      * @param entityClass
      * @return
      */
@@ -222,6 +231,7 @@ public abstract class RdtResolver {
 
     /**
      * 数据库列字段是否存在
+     *
      * @param classModel
      * @param field
      * @return
@@ -255,6 +265,7 @@ public abstract class RdtResolver {
 
     /**
      * 获取当前列作为关联对象的class type
+     *
      * @param classModel
      * @param column
      * @param one
@@ -268,26 +279,30 @@ public abstract class RdtResolver {
             if (type.isArray()) {
                 type = type.getComponentType();
             } else if (ClassUtils.familyClass(type, Collection.class)) {
-                if (ClassUtils.familyClass(type, Map.class)) throw new IllegalArgumentException(hint + "the relation many type not support map");
+                if (ClassUtils.familyClass(type, Map.class))
+                    throw new IllegalArgumentException(hint + "the relation many type not support map");
                 if (ClassUtils.getActualTypeArgumentsLength(field.getGenericType()) == 0) {
                     throw new IllegalArgumentException(hint + "the relation many type not has actual class type");
                 }
                 type = ClassUtils.getActualTypeArgumentClass(field, 0);
             }
         }
-        if (type.isArray()) throw new IllegalArgumentException(hint + "the relation " + (one ? "one" : "many") +" actual class type must be not array");
-        else if (ClassUtils.familyClass(type, Collection.class)) throw new IllegalArgumentException(hint + "the relation " + (one ? "one" : "many") +" actual class type must be not collection");
+        if (type.isArray())
+            throw new IllegalArgumentException(hint + "the relation " + (one ? "one" : "many") + " actual class type must be not array");
+        else if (ClassUtils.familyClass(type, Collection.class))
+            throw new IllegalArgumentException(hint + "the relation " + (one ? "one" : "many") + " actual class type must be not collection");
         return type;
     }
 
 
     /**
      * 验证当前column与target column的格式,比较条件时类型必须一致
+     *
      * @param column
      * @param targetColumn
      * @param classModel
      * @param targetClassModel
-     * @param condition 是否为条件field
+     * @param condition                  是否为条件field
      * @param isTargetColumnNotTransient
      */
     public void columnCompareVerification(Column column, Column targetColumn, ClassModel classModel, ClassModel targetClassModel, boolean condition, boolean isTargetColumnNotTransient, boolean modifyColumnMustSameType) {
@@ -298,8 +313,8 @@ public abstract class RdtResolver {
                     column.getPropertyClass().getName();*/
 
         String hint = "rdt column --- " + currentEntityClass.getName() + " property " + column.getProperty() + "(" + column.getPropertyClass().getName() +
-                ") ==> [" +  targetEntityClass.getName() + " property " + targetColumn.getProperty()
-                + "(" + targetColumn.getPropertyClass().getName()   + ")]";
+                ") ==> [" + targetEntityClass.getName() + " property " + targetColumn.getProperty()
+                + "(" + targetColumn.getPropertyClass().getName() + ")]";
 
         if (isTargetColumnNotTransient && targetColumn.getIsTransient()) {
             throw new IllegalArgumentException(hint + " has error, cause by : target column must not transient.");
@@ -332,12 +347,13 @@ public abstract class RdtResolver {
     }
 
     protected String[] getOtherBasicClassStrArray() {
-        return new String[] {"java.time.LocalDateTime"};
+        return new String[]{"java.time.LocalDateTime"};
     }
 
 
     /**
      * 获取class是否为基础类型
+     *
      * @param current
      * @return
      */
@@ -345,11 +361,11 @@ public abstract class RdtResolver {
         boolean result =
                 (
                         current.isPrimitive()
-                        || Date.class.isAssignableFrom(current)
-                        || String.class.isAssignableFrom(current)
-                        || Number.class.isAssignableFrom(current)
-                        || Boolean.class.isAssignableFrom(current)
-                        || Character.class.isAssignableFrom(current)
+                                || Date.class.isAssignableFrom(current)
+                                || String.class.isAssignableFrom(current)
+                                || Number.class.isAssignableFrom(current)
+                                || Boolean.class.isAssignableFrom(current)
+                                || Character.class.isAssignableFrom(current)
                 );
         if (!result) {
             String[] otherClassStrArray = getOtherBasicClassStrArray();
@@ -369,9 +385,14 @@ public abstract class RdtResolver {
         return result;
     }
 
+    public ClassModel getClassModel(Class entityClass) {
+        return properties.getClassModel(entityClass);
+    }
+
 
     /**
      * 获取当前类的fields
+     *
      * @param currentClass
      * @return
      */
@@ -444,6 +465,7 @@ public abstract class RdtResolver {
     /**
      * 转换字符串为指定类型值
      * 非基本类型时为null字符串时直接返回null
+     *
      * @param value
      * @param valType
      * @param errorPrefix
@@ -495,6 +517,7 @@ public abstract class RdtResolver {
 
     /**
      * 解析注解string数组的值(String类型时字符串null将会被转换成null)
+     *
      * @param values
      * @param valType
      * @param errorPrefix
@@ -517,6 +540,7 @@ public abstract class RdtResolver {
 
     /**
      * 类型转换
+     *
      * @param obj
      * @param clazz
      * @param <T>
@@ -532,11 +556,11 @@ public abstract class RdtResolver {
 
     /**
      * 转换成json
+     *
      * @param o
      * @return
      */
     public abstract String toJson(Object o);
-
 
 
     public String getConditionMark(Collection<String> keys, List<Object> values) {
@@ -544,7 +568,7 @@ public abstract class RdtResolver {
         if (keys != null && values != null) {
             int index = 0;
             for (String key : keys) {
-                sb.append(key).append("=").append(values.get(index ++)).append("&");
+                sb.append(key).append("=").append(values.get(index++)).append("&");
             }
             int length = sb.length();
             sb.delete(length - 1, length);
@@ -556,6 +580,7 @@ public abstract class RdtResolver {
 
     /**
      * 返回new list
+     *
      * @param sourceList
      * @param otherList
      * @param isRemove
@@ -581,6 +606,7 @@ public abstract class RdtResolver {
 
     /**
      * 获取提示信息(可重写支持国际化)
+     *
      * @param tips
      * @return
      */
@@ -593,7 +619,7 @@ public abstract class RdtResolver {
         if (text == null) {
             text = "";
         }
-        String result = "\033[1;31m" + text +  "\033[0m";
+        String result = "\033[1;31m" + text + "\033[0m";
         return result;
     }
 
@@ -601,7 +627,7 @@ public abstract class RdtResolver {
         if (text == null) {
             text = "";
         }
-        String result = "\033[0;33;1m" + text +  "\033[0m";
+        String result = "\033[0;33;1m" + text + "\033[0m";
         return result;
     }
 
@@ -609,12 +635,13 @@ public abstract class RdtResolver {
         if (text == null) {
             text = "";
         }
-        String result = "\033[0;33;3m" + text +  "\033[0m";
+        String result = "\033[0;33;3m" + text + "\033[0m";
         return result;
     }
 
     /**
      * 输出关系log
+     *
      * @param relyDescribe
      * @param show
      */
@@ -622,14 +649,14 @@ public abstract class RdtResolver {
         if (relyDescribe != null) {
 
             List<Object> dataList = new ArrayList<Object>();
-            
+
             StringBuilder sb = new StringBuilder("{}");
 
             dataList.add(relyDescribe.getEntityClass().getName());
             sb.append("\nModifyDescribe:");
-            
+
             resolveDescribeLogsKeyAndValue(sb, "\n\t", dataList, Arrays.asList("target class", "index")
-            , Arrays.asList(new Object[] {relyDescribe.getTargetClass().getName(), relyDescribe.getIndex()}));
+                    , Arrays.asList(new Object[]{relyDescribe.getTargetClass().getName(), relyDescribe.getIndex()}));
 
             boolean hasWarn = getResolveDescribeLogsModifyConditionsAndModifyColumnsHasWarn(sb, dataList, relyDescribe);
             revealDescribeLogs(sb.toString(), hasWarn, show, dataList.toArray());
@@ -647,11 +674,11 @@ public abstract class RdtResolver {
             resolveDescribeLogsKeyAndValue(sb, "\n\t", dataList,
                     Arrays.asList(
                             "target class", "rely column", "group",
-                            "index","valType", "valList",
+                            "index", "valType", "valList",
                             "updateIgnoresValList", "notInValList"
                     ),
                     Arrays.asList(
-                            new Object[] {
+                            new Object[]{
                                     relyDescribe.getTargetClass().getName(),
                                     relyDescribe.getRelyColumn().getProperty(),
                                     relyDescribe.getGroup(),
@@ -681,7 +708,7 @@ public abstract class RdtResolver {
                             "target class", "index"
                     ),
                     Arrays.asList(
-                            new Object[] {
+                            new Object[]{
                                     groupDescribe.getTargetClass().getName(),
                                     groupDescribe.getIndex()
                             }
@@ -700,11 +727,11 @@ public abstract class RdtResolver {
         builder.append((column.getIsTransient() ? getYellowText("[transient]") : ""));
         builder.append("(");
         builder.append(getFormatClassName(column.getPropertyClass()));
-        builder.append( ") ==> ");
+        builder.append(") ==> ");
         builder.append(targetColumn.getProperty());
         builder.append("(");
         builder.append(getFormatClassName(targetColumn.getPropertyClass()));
-        builder.append( ")");
+        builder.append(")");
         return builder.toString();
     }
 
@@ -773,7 +800,7 @@ public abstract class RdtResolver {
 
                     resolveDescribeLogsKeyAndValue(logContentBuilder, "\n\t\t\t",
                             dataList,
-                            Arrays.asList(null,  "fillShowType",
+                            Arrays.asList(null, "fillShowType",
                                     "fillSaveType", "fillShowIgnoresType", "fillSaveIgnoresType"),
                             Arrays.asList(new Object[]{mark, modifyColumn.getFillShowType(),
                                     modifyColumn.getFillSaveType(), modifyColumn.getFillShowIgnoresType(), modifyColumn.getFillSaveIgnoresType()})
@@ -786,6 +813,7 @@ public abstract class RdtResolver {
 
     /**
      * 检测值是否可以进行转换
+     *
      * @param groupBaseColumn
      * @return
      */
@@ -814,7 +842,7 @@ public abstract class RdtResolver {
                         "columnClassType"
                 ));
 
-                List<Object> currentValuesList = new ArrayList<Object>(Arrays.asList(new Object[] {
+                List<Object> currentValuesList = new ArrayList<Object>(Arrays.asList(new Object[]{
                         mark, modifyGroupKeysColumn.getConnector(), getFormatClassName(modifyGroupKeysColumn.getColumnBasicClass()),
                         modifyGroupKeysColumn.getColumnClassType()
                 }));
@@ -860,7 +888,7 @@ public abstract class RdtResolver {
                                     "columnClassType", "isStartBasicConnector", "isBasicNotConnectorOptFirst",
                                     "fillShowType", "fillSaveType"
                             ),
-                            Arrays.asList(new Object[] {
+                            Arrays.asList(new Object[]{
                                     mark, concatColumn.getConnector(), getFormatClassName(concatColumn.getColumnBasicClass()),
                                     concatColumn.getColumnClassType(), concatColumn.isStartBasicConnector(), concatColumn.isBasicNotConnectorOptFirst(),
                                     concatColumn.getFillShowType(), concatColumn.getFillSaveType()
@@ -880,7 +908,7 @@ public abstract class RdtResolver {
         if (!keys.isEmpty()) {
             int index = 0;
             for (String key : keys) {
-                Object value = values.get(index ++);
+                Object value = values.get(index++);
                 if (value != null) {
                     if (value instanceof List && ((List) value).isEmpty()) {
                         continue;
@@ -906,7 +934,8 @@ public abstract class RdtResolver {
 
     /**
      * 当处于debug及warn级别时均显示,show控制info级别是否显示
-     * @param text e.g:  content: {}, date: {}
+     *
+     * @param text    e.g:  content: {}, date: {}
      * @param hasWarn
      * @param show
      * @param data
@@ -955,7 +984,7 @@ public abstract class RdtResolver {
 
     public <T> List<T> split(String text, String symbol, Class<T> type, boolean containsNullOrBlank) {
         List<T> results = new ArrayList<T>();
-        type = type == null ? (Class<T>)String.class : type;
+        type = type == null ? (Class<T>) String.class : type;
         String[] splitArray = null;
         if (text != null) {
             splitArray = text.split(symbol, -1);
@@ -965,7 +994,7 @@ public abstract class RdtResolver {
                 if (type == String.class) {
                     boolean add = containsNullOrBlank || StringUtils.isNotBlank(value);
                     if (add) {
-                        results.add((T)value);
+                        results.add((T) value);
                     }
                 } else {
                     T castValue = cast(value, type);
@@ -1023,6 +1052,7 @@ public abstract class RdtResolver {
 
     /**
      * 获取格式化后的class名称
+     *
      * @param type
      * @return char[].class ==> char[]
      */
@@ -1077,14 +1107,15 @@ public abstract class RdtResolver {
         int index = 0;
         while ((index = srcText.indexOf(findText, index)) != -1) {
             index = index + findText.length();
-            count ++;
+            count++;
         }
         return count;
     }
 
     /**
      * 获取groupKey所对应列的数据值列表
-     * @param groupKeysValueList 与selectColumnValue类型一致的数据列表
+     *
+     * @param groupKeysValueList    与selectColumnValue类型一致的数据列表
      * @param modifyGroupKeysColumn
      * @param selectColumnValue
      * @return
@@ -1102,7 +1133,8 @@ public abstract class RdtResolver {
 
     /**
      * 获取当前列实际类型的数据值列表
-     * @param groupKeysValueList 与selectColumnValue类型一致的数据列表
+     *
+     * @param groupKeysValueList    与selectColumnValue类型一致的数据列表
      * @param modifyGroupKeysColumn
      * @param selectColumnValue
      * @return
@@ -1121,7 +1153,8 @@ public abstract class RdtResolver {
 
     /**
      * 获取groupKeyValue所对应项的所有值列表
-     * @param groupKeyValue groupKey列的属性值
+     *
+     * @param groupKeyValue         groupKey列的属性值
      * @param modifyGroupKeysColumn
      * @return
      */
@@ -1140,21 +1173,21 @@ public abstract class RdtResolver {
             switch (columnClassType) {
                 case BASIC:
                     if (columnBasicClass == String.class) {
-                        groupKeysExpectValueList = split((String)groupKeyValue, connector, targetColumnClass);
+                        groupKeysExpectValueList = split((String) groupKeyValue, connector, targetColumnClass);
                     } else {
                         groupKeysExpectValueList = Arrays.asList(isBasicEqTargetColumnClass ? groupKeyValue : cast(groupKeyValue, targetColumnClass));
                     }
                     break;
                 case ARRAY:
                     groupKeysExpectValueList = new ArrayList<Object>(16);
-                    for (Object val : (Object[])groupKeyValue) {
+                    for (Object val : (Object[]) groupKeyValue) {
                         groupKeysExpectValueList.add(isBasicEqTargetColumnClass ? val : cast(val, targetColumnClass));
                     }
                     break;
                 case SET:
                 case LIST:
                     groupKeysExpectValueList = new ArrayList<Object>(16);
-                    for (Object val : (Collection)groupKeyValue) {
+                    for (Object val : (Collection) groupKeyValue) {
                         groupKeysExpectValueList.add(isBasicEqTargetColumnClass ? val : cast(val, targetColumnClass));
                     }
                     break;
@@ -1165,6 +1198,7 @@ public abstract class RdtResolver {
 
     /**
      * 通过columnPropertyValueList转换为GroupColumn的属性值
+     *
      * @param columnPropertyValueList columnPropertyValue与实际类型一致
      * @param groupColumn
      * @return
@@ -1233,6 +1267,7 @@ public abstract class RdtResolver {
 
     /**
      * 通过column集合获取对应的property列表数据
+     *
      * @param columnCollection
      * @return
      */
@@ -1247,12 +1282,75 @@ public abstract class RdtResolver {
     }
 
     /**
+     * 检查关系(complexClass中不应该包含引用它的对象类以及相关被引用的对象类)
+     *
+     * @param complexClass
+     */
+    protected void checkComplexClassRelation(Class complexClass) {
+        ClassModel complexClassClassModel = getClassModel(complexClass);
+        List<ComplexModel> complexModelList = complexClassClassModel.getComplexModelList();
+        if (!complexModelList.isEmpty()) {
+            //存在关联对象关系时
+            for (ComplexModel complexModel : complexModelList) {
+                checkComplexClassRelation(complexModel, complexClassClassModel);
+            }
+        }
+    }
+
+   /**
+     * 检查当前complexModel是否满足关系
+     *
+     * @param complexModel
+     * @param complexClassClassModel
+     */
+    protected void checkComplexClassRelation(ComplexModel complexModel, ClassModel complexClassClassModel) {
+        //验证关联对象的类型是否不存在于当前父引用类及父引用类的父引用类中
+        Class relationClass = complexModel.getCurrentType();
+        //当前所属类
+        Class ownerType = complexModel.getOwnerType();
+        for (Class parentContainsClass : complexClassClassModel.getParentContainsClassSet()) {
+            if (relationClass == parentContainsClass) {
+                String text = String.format("%s not allowed property %s, cause by: the property type %s equals parent relation type", ownerType.getName(), complexModel.getProperty(), relationClass.getName());
+                throw new IllegalArgumentException(text);
+            }
+            List<String> parentContainsClassNameList = new ArrayList<String>(16);
+            parentContainsClassNameList.add(parentContainsClass.getName());
+            checkComplexClassRelation(complexModel, getClassModel(parentContainsClass), parentContainsClassNameList);
+        }
+    }
+
+    /**
+     * 检查父引用类的父引用类中的关系
+     * @param complexModel
+     * @param complexClassParentContainsClassModel
+     * @param parentContainsClassNameList
+     */
+    protected void checkComplexClassRelation(ComplexModel complexModel, ClassModel complexClassParentContainsClassModel, List<String> parentContainsClassNameList) {
+        Class relationClass = complexModel.getCurrentType();
+        //当前所属类
+        Class ownerType = complexModel.getOwnerType();
+        for (Class parentContainsClass : complexClassParentContainsClassModel.getParentContainsClassSet()) {
+            if (relationClass == parentContainsClass) {
+                String text = String.format("%s not allowed property %s, cause by: the property type %s contains parent relation type about: %s", ownerType.getName(), complexModel.getProperty(), relationClass.getName(), join(parentContainsClassNameList, "->"));
+                throw new IllegalArgumentException(text);
+            } else if (parentContainsClassNameList.contains(ownerType.getName())) {
+                //包含所属类时
+                String text = String.format("%s check property %s type %s has error, cause by: parent relation type about: %s", ownerType.getName(), complexModel.getProperty(), relationClass.getName(), join(parentContainsClassNameList, "->"));
+                throw new IllegalArgumentException(text);
+            }
+            parentContainsClassNameList.add(parentContainsClass.getName());
+            checkComplexClassRelation(complexModel, getClassModel(parentContainsClass), parentContainsClassNameList);
+        }
+    }
+
+    /**
      * 解析复杂model之间的关系
      */
     protected void parseComplexModel() {
         Map<Class, List<ComplexModel>> classComplexModelsMap = properties.getClassComplexModelsMap();
         for (Class complexClass : classComplexModelsMap.keySet()) {
-            //当存在问题时直接抛出异常
+            //验证关系,当存在问题时直接抛出异常
+            checkComplexClassRelation(complexClass);
             getComplexAnalysisList(complexClass);
         }
     }
@@ -1260,6 +1358,7 @@ public abstract class RdtResolver {
 
     /**
      * 获取当前复杂对象的组合,返回数组按照倒序的属性方式
+     *
      * @param complexClass
      * @return
      */
@@ -1299,6 +1398,7 @@ public abstract class RdtResolver {
 
     /**
      * 获取当前非base类所对应的所有关联关系数据集合
+     *
      * @param complexClass
      * @return
      */
@@ -1323,10 +1423,10 @@ public abstract class RdtResolver {
 
     /**
      * 解析当前关系列表的结果,即base类的关联关系
+     *
      * @param complexModelList
      * @return e.g
-     *  {"currentTypeList": ["com.joker17.rdt_sbm.model.Reply"],"hasMany":false,"oneList":[true],"prefix":"reply","propertyList":["reply"],"rootClass":"com.joker17.rdt_sbm.domain.Article"}
-     *
+     * {"currentTypeList": ["com.joker17.rdt_sbm.model.Reply"],"hasMany":false,"oneList":[true],"prefix":"reply","propertyList":["reply"],"rootClass":"com.joker17.rdt_sbm.domain.Article"}
      */
     protected ComplexAnalysis getComplexAnalysis(List<ComplexModel> complexModelList) {
         ComplexAnalysis complexAnalysis = new ComplexAnalysis();

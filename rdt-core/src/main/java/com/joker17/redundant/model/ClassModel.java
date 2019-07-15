@@ -71,8 +71,15 @@ public class ClassModel {
      */
     private Set<Class> changedComplexClassSet = new LinkedHashSet<Class>(16);
 
-
+    /**
+     * 逻辑状态列
+     */
     private LogicalModel logicalModel;
+
+    /**
+     * 包含当前类型的父引用类集合
+     */
+    private Set<Class> parentContainsClassSet = new LinkedHashSet<Class>(16);
 
 
     public Class getCurrentClass() {
@@ -292,5 +299,13 @@ public class ClassModel {
 
     public void setLogicalModel(LogicalModel logicalModel) {
         this.logicalModel = logicalModel;
+    }
+
+    public Set<Class> getParentContainsClassSet() {
+        return parentContainsClassSet;
+    }
+
+    public void setParentContainsClassSet(Set<Class> parentContainsClassSet) {
+        this.parentContainsClassSet = parentContainsClassSet;
     }
 }

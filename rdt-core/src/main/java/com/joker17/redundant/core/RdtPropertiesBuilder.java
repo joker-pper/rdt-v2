@@ -27,6 +27,15 @@ public class RdtPropertiesBuilder {
     private String defaultLogicalProperty;
     private List<Class> disabledLogicalPropertyClassList;
 
+    private final List<Class<? extends Annotation>> sortFieldAnnotationClassList = Arrays.asList(
+            RdtLogicalField.class, RdtRelys.class, RdtRely.class,
+            RdtFieldConditionRelys.class, RdtFieldConditionRely.class, RdtFieldRely.class,
+            RdtFieldConditions.class, RdtFields.class,
+            RdtFieldCondition.class, RdtField.class,
+            RdtGroupKeys.class, RdtGroupConcatField.class,
+            RdtOne.class, RdtMany.class
+    );
+
     public RdtPropertiesBuilder(RdtResolver rdtResolver, RdtProperties properties) {
         this.rdtResolver = rdtResolver;
         this.properties = properties;
@@ -53,14 +62,6 @@ public class RdtPropertiesBuilder {
         Boolean isBaseClass = classModel.getBaseClass();
 
         List<Field> fieldList = classModel.getFieldList();
-        List<Class<? extends Annotation>> sortFieldAnnotationClassList = Arrays.asList(
-                RdtLogicalField.class, RdtRelys.class, RdtRely.class,
-                RdtFieldConditionRelys.class, RdtFieldConditionRely.class, RdtFieldRely.class,
-                RdtFieldConditions.class, RdtFields.class,
-                RdtFieldCondition.class, RdtField.class,
-                RdtGroupKeys.class, RdtGroupConcatField.class,
-                RdtOne.class, RdtMany.class
-        );
 
         Map<Class, Map<Field, Annotation>> sortFieldAnnotationClassMap = new LinkedHashMap<Class, Map<Field, Annotation>>(16);
 
@@ -1402,11 +1403,10 @@ public class RdtPropertiesBuilder {
         complexModel.setIsOne(one);
 
         Class current = rdtResolver.getRelationModelCurrentClassType(classModel, column, one); //获取类型
-        complexModel.setCurrentType(current);
-
         if (rdtResolver.isBasicClass(current)) {
             throw new IllegalArgumentException(classModel.getClassName() + " property " + column.getProperty() + " type is " + current.getName() + ", it's not allowed association object type");
         }
+        complexModel.setCurrentType(current);
 
         complexModel.setOwnerType(classModel.getCurrentClass());  //所属类
         complexModel.setOwnerBase(classModel.getBaseClass());
@@ -1427,7 +1427,10 @@ public class RdtPropertiesBuilder {
         }
         relationModelList.add(complexModel);
 
-        loadClassWithAnnotation(current);  //加载不在packge的class
+        //加载可能不在package的class
+        ClassModel complexClassModel = loadClassWithAnnotation(current);
+        //添加复杂类对象的父类
+        complexClassModel.getParentContainsClassSet().add(classModel.getCurrentClass());
         return complexModel;
     }
 
@@ -1449,11 +1452,12 @@ public class RdtPropertiesBuilder {
      * 加载注解上的target class
      * @param currentClass
      */
-    private void loadClassWithAnnotation(Class currentClass) {
+    private ClassModel loadClassWithAnnotation(Class currentClass) {
         Set<Class> extraClassSet = properties.getExtraClassSet();
-        builderClass(currentClass);
+        ClassModel currentClassModel = builderClass(currentClass);
         if (!properties.hasPackageContainsClass(currentClass) && !extraClassSet.contains(currentClass)) {
             extraClassSet.add(currentClass);
         }
+        return currentClassModel;
     }
 }
