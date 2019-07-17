@@ -522,7 +522,7 @@ public class RdtPropertiesBuilder {
                     for (Object value : fillSaveIgnoresType) {
                         if (!targetValueList.contains(value)) {
                             //忽略更新的值必须在值列表中
-                            throw new IllegalArgumentException(hintPrefix + " @RdtFieldRelyDetail target class " + targetClass.getName() + " fill saveExecute val " + value + " must be in value: " + targetValueList);
+                            throw new IllegalArgumentException(hintPrefix + " @RdtFieldRelyDetail target class " + targetClass.getName() + " fill save val " + value + " must be in value: " + targetValueList);
                         }
                     }
                 }
@@ -586,11 +586,11 @@ public class RdtPropertiesBuilder {
             }
 
             if (fillSaveTypeSize != expectSaveSize) {
-                throw new IllegalArgumentException(hintPrefix + " expect fill saveExecute type length is " + expectSaveSize);
+                throw new IllegalArgumentException(hintPrefix + " expect fill save type length is " + expectSaveSize);
             }
         } else {
             if (nullTipsSize > 1 && nullTipsSize != classSize) {
-                throw new IllegalArgumentException(hintPrefix + " expect fill saveExecute type length is " + expectSaveSize);
+                throw new IllegalArgumentException(hintPrefix + " expect fill save type length is " + expectSaveSize);
             }
         }
 
