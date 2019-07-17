@@ -107,7 +107,7 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
         if (entity == null) {
             throw new NullPointerException("entity must be not null.");
         }
-        return save(entity, (Class<T>)entity.getClass());
+        return saveExecute(entity, (Class<T>)entity.getClass());
     }
 
 
@@ -116,7 +116,7 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
         if (collection == null || collection.size() == 0) {
             throw new IllegalArgumentException("data must be not empty.");
         }
-        return saveAll(collection, (Class<T>) collection.iterator().next().getClass());
+        return saveAllExecute(collection, (Class<T>) collection.iterator().next().getClass());
     }
 
     /**
@@ -143,9 +143,9 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
         return dataList.isEmpty() ? null : dataList.get(0);
     }
 
-    protected abstract <T> T save(T entity, Class<T> entityClass);
+    protected abstract <T> T saveExecute(T entity, Class<T> entityClass);
 
-    protected abstract <T> Collection<T> saveAll(Collection<T> collection, Class<T> entityClass);
+    protected abstract <T> Collection<T> saveAllExecute(Collection<T> collection, Class<T> entityClass);
 
 
     @Override

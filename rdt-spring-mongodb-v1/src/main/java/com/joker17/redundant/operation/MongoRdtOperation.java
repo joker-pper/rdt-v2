@@ -27,7 +27,7 @@ public class MongoRdtOperation extends AbstractMongoOperation {
     }
 
     @Override
-    protected <T> T save(T entity, Class<T> entityClass) {
+    protected <T> T saveExecute(T entity, Class<T> entityClass) {
         mongoTemplate.save(entity);
         return entity;
     }
@@ -65,7 +65,7 @@ public class MongoRdtOperation extends AbstractMongoOperation {
      * @return
      */
     @Override
-    protected <T> Collection<T> saveAll(Collection<T> collection, Class<T> entityClass) {
+    protected <T> Collection<T> saveAllExecute(Collection<T> collection, Class<T> entityClass) {
         for (T entity : collection) {
             mongoTemplate.save(entity);
         }
@@ -613,7 +613,7 @@ public class MongoRdtOperation extends AbstractMongoOperation {
 
                     @Override
                     public void check(String sourceAccessProperty, Object source, String resultAccessProperty, Object result, boolean status, Expression expression, String property, Object value) {
-                       /* if (!saveAll && status) {
+                       /* if (!saveAllExecute && status) {
                             //增加约束
                             String useProperty = resultAccessProperty.replace("[", "").replace("]", "");
                             criteriaIn(currentCriteria.and(useProperty), value);
@@ -673,7 +673,7 @@ public class MongoRdtOperation extends AbstractMongoOperation {
                                     public void execute(ModifyColumn modifyColumn, int position, String targetProperty, Object targetPropertyVal) {
                                         String property = modifyColumn.getColumn().getProperty();
 
-                                        if (saveAll) {
+                                        if (saveAllExecute) {
                                             rdtResolver.setPropertyValue(result, property, targetPropertyVal);
                                         } else {
                                             currentUpdate.set(usePropertyPrefix + property, targetPropertyVal);
@@ -681,7 +681,7 @@ public class MongoRdtOperation extends AbstractMongoOperation {
                                     }
                                 });
 
-                                if (!saveAll) {
+                                if (!saveAllExecute) {
                                     //加入result类的id标识,避免更新出错
                                     String primaryId = complexClassModel.getPrimaryId();
                                     if (StringUtils.isNotEmpty(primaryId)) {

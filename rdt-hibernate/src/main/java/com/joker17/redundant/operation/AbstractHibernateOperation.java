@@ -25,12 +25,12 @@ public abstract class AbstractHibernateOperation extends AbstractOperation {
     public abstract Session getSession();
 
     @Override
-    protected <T> T save(T entity, Class<T> entityClass) {
+    protected <T> T saveExecute(T entity, Class<T> entityClass) {
         return (T) getSession().save(entity);
     }
 
     @Override
-    protected <T> Collection<T> saveAll(Collection<T> collection, Class<T> entityClass) {
+    protected <T> Collection<T> saveAllExecute(Collection<T> collection, Class<T> entityClass) {
         Session session = getSession();
         int i = 0;
         for (T data : collection) {

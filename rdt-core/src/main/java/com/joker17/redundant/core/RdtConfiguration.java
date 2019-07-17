@@ -647,7 +647,7 @@ public class RdtConfiguration {
     public boolean isModifyColumnRemove(ModifyColumn modifyColumn, boolean isPersistentType) {
         RdtFillType fillType;
         if (isPersistentType) {
-            //填充持久化列时(save)
+            //填充持久化列时(saveExecute)
             fillType = modifyColumn.getFillSaveType();
         } else {
             fillType = modifyColumn.getFillShowType();

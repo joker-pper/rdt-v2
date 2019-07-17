@@ -1050,6 +1050,20 @@ public abstract class RdtResolver {
         return PojoUtils.newInstanceArray(classType, length);
     }
 
+    public <T> T newInstance(Class<T> classType) {
+        if (classType == null) {
+            throw new IllegalArgumentException("classType must not be null");
+        }
+        if (classType.isInterface() && (Map.class == classType || Map.class.isAssignableFrom(classType))) {
+            return (T) new HashMap();
+        }
+        try {
+            return classType.newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("can't new instance class %s", classType.getName()), e);
+        }
+    }
+
     /**
      * 获取格式化后的class名称
      *

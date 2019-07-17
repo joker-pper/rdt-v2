@@ -27,12 +27,12 @@ public class JpaOperation extends AbstractJpaOperation {
     }
 
     @Override
-    protected <T> T save(T entity, Class<T> entityClass) {
+    protected <T> T saveExecute(T entity, Class<T> entityClass) {
         return (T)getCrudRepository(entityClass).save(entity);
     }
 
     @Override
-    protected <T> Collection<T> saveAll(Collection<T> data, Class<T> entityClass) {
+    protected <T> Collection<T> saveAllExecute(Collection<T> data, Class<T> entityClass) {
         return (Collection<T>)getCrudRepository(entityClass).saveAll(data);
     }
 
