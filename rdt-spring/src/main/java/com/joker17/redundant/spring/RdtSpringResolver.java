@@ -118,4 +118,8 @@ public abstract class RdtSpringResolver extends RdtResolver implements BeanDefin
         PojoUtils.setPropertyValue(obj, property, value);
     }
 
+    @Override
+    public <T> T newInstance(Class<T> classType) {
+        return PojoUtils.instantiateClass(classType);
+    }
 }

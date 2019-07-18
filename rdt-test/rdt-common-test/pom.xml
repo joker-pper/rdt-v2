@@ -69,6 +69,13 @@
 
 
             <dependency>
+                <groupId>com.github.joker-pper</groupId>
+                <artifactId>rdt-mybatis-plus</artifactId>
+                <version>${rdt-mybatis-plus.version}</version>
+            </dependency>
+
+
+            <dependency>
                 <groupId>com.alibaba</groupId>
                 <artifactId>fastjson</artifactId>
                 <version>${fastjson.version}</version>

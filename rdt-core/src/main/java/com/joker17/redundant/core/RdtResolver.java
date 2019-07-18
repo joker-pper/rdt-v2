@@ -13,8 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.util.*;
 
 public abstract class RdtResolver {
@@ -387,6 +386,141 @@ public abstract class RdtResolver {
 
     public ClassModel getClassModel(Class entityClass) {
         return properties.getClassModel(entityClass);
+    }
+
+
+
+    public Class getTypeClass(ParameterizedType parameterizedType, int index) {
+        if (parameterizedType != null) {
+            Type[] types = parameterizedType.getActualTypeArguments();
+            int typeLength = types == null ? 0 : types.length;
+            if (index >= typeLength) {
+                throw new IllegalArgumentException(String.format("index out of bounds, actual type arguments length %s, cause by index %s", typeLength, index));
+            }
+            Type resultType = types[index];
+            if (resultType instanceof Class) {
+                return (Class) resultType;
+            }
+        }
+        return null;
+    }
+
+    public Type getGenericType(Method method, int parameterIndex) {
+        if (method == null) {
+            return null;
+        }
+        Type[] types = method.getGenericParameterTypes();
+        int typeLength = types == null ? 0 : types.length;
+
+        if (parameterIndex >= typeLength) {
+            throw new IllegalArgumentException(String.format("%s  parameters index out of bounds, actual parameters length %s, cause by parameter index %s", method.toGenericString(), typeLength, parameterIndex));
+        }
+        return types[parameterIndex];
+    }
+
+    public Type getGenericType(Field field) {
+        if (field != null) {
+            return field.getGenericType();
+        }
+        return null;
+    }
+
+
+    public Class getGenericActualTypeClass(Method method, int parameterIndex, int index) {
+        return getGenericActualTypeClass(getGenericType(method, parameterIndex), index);
+    }
+
+    public Class getGenericActualTypeClass(Type type, int index) {
+        if (type == null) {
+            return null;
+        } else if (type instanceof Class) {
+            Class typeClass = (Class) type;
+            return typeClass.isArray() ? typeClass.getComponentType() : typeClass;
+        } else if (type instanceof ParameterizedType) {
+            return getTypeClass((ParameterizedType) type, index);
+        } else if (type instanceof GenericArrayType) {
+            return getGenericActualTypeClass(((GenericArrayType) type).getGenericComponentType(), index);
+        }
+        return null;
+    }
+
+    public Class getGenericActualTypeClass(Field field, int index) {
+        if (field != null) {
+            return getGenericActualTypeClass(field.getGenericType(), index);
+        }
+        return null;
+    }
+
+
+    /**
+     * 获取泛型对象的实际类型
+     * @param genericBean
+     * @param position
+     * @return
+     */
+    public Class getGenericActualTypeClass(Object genericBean, int position) {
+        return getGenericActualTypeClass(genericBean, null, position);
+    }
+
+    public Class getGenericActualTypeClass(Object genericBean, Class parentType, int position) {
+        if (genericBean == null) {
+            return null;
+        }
+        return getGenericActualTypeClass(genericBean.getClass(), parentType, position);
+    }
+
+    /**
+     * 获取class对应索引位置的泛型实际类型
+     * @param leafClass
+     * @param position
+     * @return
+     */
+    public Class getGenericActualTypeClass(Class leafClass, int position) {
+        return getGenericActualTypeClass(leafClass, null, position);
+    }
+
+    public Class getGenericActualTypeClass(Class leafClass, Class parentType, int position) {
+        if (leafClass != null) {
+            Type[] typeParameters = leafClass.getTypeParameters();
+            int typeParametersLength = typeParameters == null ? 0 : typeParameters.length;
+            if (typeParametersLength > 0) {
+                //存在定义泛型时
+                return null;
+            }
+            Type superclassType = leafClass.getGenericSuperclass();
+            if (superclassType == null || (superclassType != null && superclassType == Object.class)) {
+                Type[] genericInterfaces = leafClass.getGenericInterfaces();
+                if (genericInterfaces != null && genericInterfaces.length == 1) {
+                    superclassType = genericInterfaces[0];
+                }
+            }
+            ParameterizedType parameterizedType = null;
+            while(superclassType != null && parameterizedType == null) {
+                if (superclassType instanceof Class) {
+                    superclassType = ((Class)superclassType).getGenericSuperclass();
+                } else if (superclassType instanceof ParameterizedType) {
+                    parameterizedType = (ParameterizedType)superclassType;
+                    superclassType = null;
+                }
+
+                if (parameterizedType != null) {
+                    Type rawType = parameterizedType.getRawType();
+                    boolean clear = false;
+                    if (rawType != null && rawType instanceof Class) {
+                        if (parentType != null && !parentType.isAssignableFrom((Class) rawType)) {
+                            clear = true;
+                        }
+                    }
+                    if (clear) {
+                        parameterizedType = null;
+                    }
+                }
+            }
+            if (parameterizedType != null) {
+                return getTypeClass(parameterizedType, position);
+            }
+        }
+        return null;
     }
 
 
@@ -1474,6 +1608,9 @@ public abstract class RdtResolver {
         }
         return complexAnalysis;
     }
+
+
+
 
 
 }

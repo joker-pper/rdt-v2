@@ -23,11 +23,27 @@ public @interface RdtGroupKeys {
 
     String nullTips() default "";
 
+    /**
+     * 通过动态获取的实体类
+     * @return
+     */
     Class gain() default Void.class;
 
+    /**
+     * 获取数据的来源列
+     * @return
+     */
     String gainProperty() default "";
 
+    /**
+     * 获取数据的条件列
+     * @return
+     */
     String[] gainConditionPropertys() default {};
 
+    /**
+     * 获取数据的条件列(依赖于当前类的列值)
+     * @return
+     */
     String[] gainConditionValueRelyPropertys() default {"id"};
 }

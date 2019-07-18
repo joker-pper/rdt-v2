@@ -154,7 +154,14 @@ public class DataSupport {
             }
         });
 
-        DataSupport.dispose(resultMap, "value2.[0]", new DataSupport.Callback() {
+        DataSupport.dispose(resultMap, "value2.[0].*", new DataSupport.Callback() {
+            @Override
+            public void execute(String property, Object data) {
+                System.out.println(property + ": " + data);
+            }
+        });
+
+        DataSupport.dispose(resultMap.get("value1"), "*.*", new DataSupport.Callback() {
             @Override
             public void execute(String property, Object data) {
                 System.out.println(property + ": " + data);

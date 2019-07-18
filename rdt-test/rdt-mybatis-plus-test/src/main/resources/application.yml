@@ -1,0 +1,35 @@
+
+spring:
+  datasource:
+    driver-class-name: org.h2.Driver
+    schema: classpath:db/schema-h2.sql
+    data: classpath:db/data-h2.sql
+    url: jdbc:h2:mem:test
+    username: root
+    password: test
+  output:
+    ansi: #设置支持颜色显示
+      enabled: always
+  profiles:
+    #active: mysql  #mysql
+
+mybatis-plus:
+  global-config:
+    db-config:
+      id-type: id_worker
+  type-aliases-package: com.joker17.*.*.domain
+
+logging:
+  level:
+    com.joker17: debug
+
+
+rdt-config:
+  base-package: com.joker17.*.*.domain
+  is-modify-column-must-same-type: false #设置允许modify column类型不一致
+  is-update-throw-exception: true
+  show-describe: false #是否显示describe信息(debug级别默认显示)
+  fill-with-logical: true
+  find-by-id-with-logical: true
+  update-multi-with-logical: true
+  default-logical-property: status
