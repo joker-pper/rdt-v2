@@ -441,7 +441,7 @@ public class RdtConfiguration {
             clonedColumn.setColumn(sourceColumn.getColumn());
             clonedColumn.setTargetColumn(sourceColumn.getTargetColumn());
             clonedColumn.setGainSelectColumn(sourceColumn.getGainSelectColumn());
-            clonedColumn.setGainConditionColumnList(sourceColumn.getGainConditionValueRelyColumnList());
+            clonedColumn.setGainConditionColumnList(sourceColumn.getGainConditionColumnList());
             clonedColumn.setGainConditionValueRelyColumnList(sourceColumn.getGainConditionValueRelyColumnList());
         }
     }
