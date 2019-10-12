@@ -7,8 +7,6 @@ import com.baomidou.mybatisplus.core.metadata.TableFieldInfo;
 import com.baomidou.mybatisplus.core.metadata.TableInfo;
 import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.baomidou.mybatisplus.core.override.MybatisMapperProxy;
-import com.baomidou.mybatisplus.core.toolkit.LambdaUtils;
-import com.baomidou.mybatisplus.core.toolkit.support.ColumnCache;
 import com.joker17.redundant.core.RdtConfiguration;
 import com.joker17.redundant.model.*;
 

@@ -10,7 +10,6 @@ import com.joker17.redundant.fill.FillType;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -166,14 +165,14 @@ public class FillTest extends ApplicationTests  {
     @Test
     public void fill() throws Exception {
         List<UserRoleComplexVO> results = getUserRoleVoList();
-        rdtOperation.fillForShow(results, false,FillType.ALL);
+        rdtOperation.fillForShow(results, false, FillType.ALL);
         logger.info("results: {}", JsonUtils.toJson(results));
     }
 
     @Test
     public void fill2() throws Exception {
         List<User> users = userService.findAll();
-        rdtOperation.fillForShow(users, false,FillType.ALL);
+        rdtOperation.fillForShow(users, false, FillType.ALL);
         logger.info("results: {}", JsonUtils.toJson(users));
     }
 
@@ -184,7 +183,7 @@ public class FillTest extends ApplicationTests  {
         users.get(0).setType(99);
         objectList.addAll(users);
         objectList.addAll(getUserRoleVoList());
-        rdtOperation.fillForShow(objectList, false,FillType.ALL);
+        rdtOperation.fillForShow(objectList, false, FillType.ALL);
         logger.info("results: {}", JsonUtils.toJson(objectList));
     }
 
@@ -196,8 +195,7 @@ public class FillTest extends ApplicationTests  {
         results.get(3).setUserList(users);
         results.get(2).setUserArray(JSON.parseArray(JsonUtils.toJson(users), User.class).toArray(new User[users.size()]));
         results.get(0).setComplexVOList(getUserRoleVoList());
-
-        rdtOperation.fillForShow(results, false,FillType.ALL);
+        rdtOperation.fillForShow(results, false, FillType.ALL);
         logger.info("results: {}", JsonUtils.toJson(results));
     }
 

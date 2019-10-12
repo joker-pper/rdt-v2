@@ -1453,43 +1453,33 @@ public abstract class RdtResolver {
      */
     protected void checkComplexClassRelation(ComplexModel complexModel, ClassModel complexClassClassModel) {
         //验证关联对象的类型是否不存在于当前父引用类及父引用类的父引用类中
-        Class relationClass = complexModel.getCurrentType();
-        //当前所属类
-        Class ownerType = complexModel.getOwnerType();
+
+        Class complexModelCurrentType = complexModel.getCurrentType();
+        Class complexModelOwnerType = complexModel.getOwnerType();
+
+        if (complexModelCurrentType == complexModelOwnerType) {
+            //自己本身时
+            return;
+        }
         for (Class parentContainsClass : complexClassClassModel.getParentContainsClassSet()) {
-            if (relationClass == parentContainsClass) {
-                String text = String.format("%s not allowed property %s, cause by: the property type %s equals parent relation type", ownerType.getName(), complexModel.getProperty(), relationClass.getName());
+            if (parentContainsClass == complexModelOwnerType) {
+                //父类与complexModel所在的类一致时跳过
+                continue;
+            }
+
+            if (complexModelCurrentType == parentContainsClass) {
+                //complexModel所存在的属性类型与其所对应的父类属性一致时(提示非法)
+                String text = String.format("%s not allowed property %s, cause by: the property type %s equals parent relation type", complexModelOwnerType.getName(), complexModel.getProperty(), complexModelCurrentType.getName());
                 throw new IllegalArgumentException(text);
             }
             List<String> parentContainsClassNameList = new ArrayList<String>(16);
             parentContainsClassNameList.add(parentContainsClass.getName());
-            checkComplexClassRelation(complexModel, getClassModel(parentContainsClass), parentContainsClassNameList);
+
+            //检查complexModel与父引用类的父引用类中的关系
+            checkComplexClassRelation(complexModel, getClassModel(parentContainsClass));
         }
     }
 
-    /**
-     * 检查父引用类的父引用类中的关系
-     * @param complexModel
-     * @param complexClassParentContainsClassModel
-     * @param parentContainsClassNameList
-     */
-    protected void checkComplexClassRelation(ComplexModel complexModel, ClassModel complexClassParentContainsClassModel, List<String> parentContainsClassNameList) {
-        Class relationClass = complexModel.getCurrentType();
-        //当前所属类
-        Class ownerType = complexModel.getOwnerType();
-        for (Class parentContainsClass : complexClassParentContainsClassModel.getParentContainsClassSet()) {
-            if (relationClass == parentContainsClass) {
-                String text = String.format("%s not allowed property %s, cause by: the property type %s contains parent relation type about: %s", ownerType.getName(), complexModel.getProperty(), relationClass.getName(), join(parentContainsClassNameList, "->"));
-                throw new IllegalArgumentException(text);
-            } else if (parentContainsClassNameList.contains(ownerType.getName())) {
-                //包含所属类时
-                String text = String.format("%s check property %s type %s has error, cause by: parent relation type about: %s", ownerType.getName(), complexModel.getProperty(), relationClass.getName(), join(parentContainsClassNameList, "->"));
-                throw new IllegalArgumentException(text);
-            }
-            parentContainsClassNameList.add(parentContainsClass.getName());
-            checkComplexClassRelation(complexModel, getClassModel(parentContainsClass), parentContainsClassNameList);
-        }
-    }
 
     /**
      * 解析复杂model之间的关系
@@ -1538,6 +1528,7 @@ public abstract class RdtResolver {
                             }
                         }
                     }
+
                 }
             }
         }
