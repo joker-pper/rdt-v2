@@ -1,5 +1,6 @@
 package com.joker17.redundant.operation;
 
+import com.joker17.redundant.core.RdtUpdateRelevantCallback;
 import com.joker17.redundant.fill.FillNotAllowedDataException;
 import com.joker17.redundant.fill.FillNotAllowedValueException;
 import com.joker17.redundant.fill.FillType;
@@ -185,9 +186,9 @@ public interface RdtOperation {
      * 字段数据
      * @param data
      * @param beforePrimaryKeyEntityMap
-     * @param cast 是否转换idKey值
+     * @param callback 用于转换idKey值以获取entityMap中的数据
      */
-    void updateRelevant(Object data, Map<? extends Serializable, ? extends Object> beforePrimaryKeyEntityMap, boolean cast);
+    void updateRelevant(Object data, Map<? extends Serializable, ? extends Object> beforePrimaryKeyEntityMap, RdtUpdateRelevantCallback callback);
 
     /**
      * fill(collection, allowedNullValue, checkValue, clear, FillType.ALL);

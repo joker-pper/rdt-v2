@@ -2,6 +2,7 @@ package com.joker17.redundant.operation;
 
 import com.joker17.redundant.core.RdtConfiguration;
 import com.joker17.redundant.core.RdtProperties;
+import com.joker17.redundant.core.RdtUpdateRelevantCallback;
 import com.joker17.redundant.fill.*;
 import com.joker17.redundant.model.*;
 import com.joker17.redundant.core.RdtResolver;
@@ -300,15 +301,14 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
 
     @Override
     public void updateRelevant(Object multiData, Map<? extends Serializable, ? extends Object> beforePrimaryKeyEntityMap) {
-        updateRelevant(multiData, beforePrimaryKeyEntityMap, false);
+        updateRelevant(multiData, beforePrimaryKeyEntityMap, null);
     }
 
     @Override
-    public void updateRelevant(Object multiData, Map<? extends Serializable, ? extends Object> beforePrimaryKeyEntityMap, boolean cast) {
+    public void updateRelevant(Object multiData, Map<? extends Serializable, ? extends Object> beforePrimaryKeyEntityMap, RdtUpdateRelevantCallback callback) {
         Collection<Object> dataList = parseEntityData(multiData);
         String idKey = null;
-        Class idKeyType = null;
-
+        Class dataClass = null;
         boolean isLoad = beforePrimaryKeyEntityMap != null && !beforePrimaryKeyEntityMap.isEmpty();
         for (Object data : dataList) {
             if (data == null) {
@@ -317,21 +317,17 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
             Object before = null;
             if (isLoad) {
                 if (idKey == null) {
-                    Class dataClass = data.getClass();
-                    ClassModel classModel = getClassModel(dataClass);
-                    if (classModel == null) {
-                        throw new IllegalArgumentException("not found classModel with type " + classModel);
-                    }
-                    idKey = classModel.getPrimaryId();
-                    if (cast) {
-                        idKeyType = classModel.getPrimaryIdType();
-                    }
+                    dataClass = data.getClass();
+                    idKey = getPrimaryId(dataClass);
                 }
                 Object idVal = rdtResolver.getPropertyValue(data, idKey);
-                if (cast) {
-                    idVal = rdtResolver.cast(idVal, idKeyType);
+                if (callback != null) {
+                    idVal = callback.castToEntityMapKeyValue(idVal);
                 }
                 before = beforePrimaryKeyEntityMap.get(idVal);
+                if (callback != null) {
+                    before = callback.castToEntity(dataClass, before);
+                }
             }
             updateMulti(data, before);
         }
