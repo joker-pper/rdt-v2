@@ -68,6 +68,9 @@ public class RdtPropertiesBuilder {
         for (Field field : fieldList) {
             if (StringUtils.isEmpty(classModel.getPrimaryId())) {
                 classModel.setPrimaryId(rdtResolver.getPrimaryId(currentClass, field));  //设置PrimaryId
+                if (StringUtils.isNotEmpty(classModel.getPrimaryId())) {
+                    classModel.setPrimaryIdType(field.getType());
+                }
             }
 
             //初始化列数据
@@ -98,8 +101,10 @@ public class RdtPropertiesBuilder {
 
         if (StringUtils.isEmpty(classModel.getPrimaryId())) {
             String defaultIdKey = properties.getDefaultIdKey();
-            if (classModel.getPropertyFieldMap().keySet().contains(defaultIdKey)) {
+            Map<String, Field> propertyFieldMap = classModel.getPropertyFieldMap();
+            if (propertyFieldMap.keySet().contains(defaultIdKey)) {
                 classModel.setPrimaryId(defaultIdKey);
+                classModel.setPrimaryIdType(propertyFieldMap.get(defaultIdKey).getType());
                 logger.info("rdt " + (isBaseClass ? " base " : "") + "class --- {} not found primary id, so use default primary id : {}, please make sure no problem.", classModel.getClassName(), defaultIdKey);
             }
         }

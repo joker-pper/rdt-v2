@@ -23,6 +23,7 @@ public class ClassModel {
      */
     private String primaryId;
 
+    private Class primaryIdType;
 
     /**
      * 未找到的提示
@@ -128,6 +129,14 @@ public class ClassModel {
 
     public void setPrimaryId(String primaryId) {
         this.primaryId = primaryId;
+    }
+
+    public Class getPrimaryIdType() {
+        return primaryIdType;
+    }
+
+    public void setPrimaryIdType(Class primaryIdType) {
+        this.primaryIdType = primaryIdType;
     }
 
     public String getNotFoundTips() {

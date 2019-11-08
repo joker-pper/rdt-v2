@@ -181,6 +181,15 @@ public interface RdtOperation {
     void updateRelevant(Object data, Map<? extends Serializable, ? extends Object> beforePrimaryKeyEntityMap);
 
     /**
+     * 通过当前数据以及更新数据前的数据,对比后去更新被引用字段值所发生改变后的相关冗余
+     * 字段数据
+     * @param data
+     * @param beforePrimaryKeyEntityMap
+     * @param cast 是否转换idKey值
+     */
+    void updateRelevant(Object data, Map<? extends Serializable, ? extends Object> beforePrimaryKeyEntityMap, boolean cast);
+
+    /**
      * fill(collection, allowedNullValue, checkValue, clear, FillType.ALL);
      */
     void fill(Collection<?> collection, boolean allowedNullValue, boolean checkValue, boolean clear);

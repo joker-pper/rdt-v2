@@ -300,8 +300,14 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
 
     @Override
     public void updateRelevant(Object multiData, Map<? extends Serializable, ? extends Object> beforePrimaryKeyEntityMap) {
+        updateRelevant(multiData, beforePrimaryKeyEntityMap, false);
+    }
+
+    @Override
+    public void updateRelevant(Object multiData, Map<? extends Serializable, ? extends Object> beforePrimaryKeyEntityMap, boolean cast) {
         Collection<Object> dataList = parseEntityData(multiData);
         String idKey = null;
+        Class idKeyType = null;
 
         boolean isLoad = beforePrimaryKeyEntityMap != null && !beforePrimaryKeyEntityMap.isEmpty();
         for (Object data : dataList) {
@@ -312,9 +318,19 @@ public abstract class AbstractOperation implements RdtOperation, RdtFillThrowExc
             if (isLoad) {
                 if (idKey == null) {
                     Class dataClass = data.getClass();
-                    idKey = getPrimaryId(dataClass);
+                    ClassModel classModel = getClassModel(dataClass);
+                    if (classModel == null) {
+                        throw new IllegalArgumentException("not found classModel with type " + classModel);
+                    }
+                    idKey = classModel.getPrimaryId();
+                    if (cast) {
+                        idKeyType = classModel.getPrimaryIdType();
+                    }
                 }
                 Object idVal = rdtResolver.getPropertyValue(data, idKey);
+                if (cast) {
+                    idVal = rdtResolver.cast(idVal, idKeyType);
+                }
                 before = beforePrimaryKeyEntityMap.get(idVal);
             }
             updateMulti(data, before);
