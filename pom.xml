@@ -38,7 +38,7 @@
         <log4j.version>2.11.0</log4j.version>
         <spring.version>5.0.9.RELEASE</spring.version>
         <spring-boot.version>2.0.5.RELEASE</spring-boot.version>
-        <spring-data-mongodb.version>2.0.5.RELEASE</spring-data-mongodb.version>
+        <spring-data-mongodb.version>3.3.5</spring-data-mongodb.version>
         <spring-data-jpa.version>2.0.5.RELEASE</spring-data-jpa.version>
         <hibernate.version>4.1.8.Final</hibernate.version>
         <mybatis-plus.version>3.1.2</mybatis-plus.version>
