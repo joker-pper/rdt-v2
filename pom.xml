@@ -4,10 +4,31 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.github.joker-pper</groupId>
+    <groupId>io.github.joker-pper</groupId>
     <artifactId>rdt-v2</artifactId>
     <packaging>pom</packaging>
     <version>1.0.1-SNAPSHOT</version>
+    <description>rdt-v2是基于注解维护实体对象之间的冗余字段关系,然后可以进行统一更新或自动填充冗余列数据,可避免多次重复编写逻辑代码以及减少复杂关系维护的操作框架.</description>
+    <url>http://github.com/joker-pper/rdt-v2</url>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>joker-pper</name>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/joker-pper/rdt-v2.git</connection>
+        <developerConnection>scm:git:ssh://github.com:joker-pper/rdt-v2.git</developerConnection>
+        <url>http://github.com/joker-pper/rdt-v2</url>
+    </scm>
 
     <modules>
         <module>rdt-annotation</module>
@@ -15,10 +36,14 @@
         <module>rdt-spring-mongodb-v1</module>
         <module>rdt-spring-mongodb-v2</module>
         <module>rdt-jpa</module>
-        <module>rdt-test</module>
         <module>rdt-spring</module>
         <module>rdt-hibernate</module>
         <module>rdt-mybatis-plus</module>
+
+<!--
+        <module>rdt-test</module>
+-->
+
     </modules>
 
     <properties>
@@ -42,34 +67,12 @@
         <spring-data-jpa.version>2.0.5.RELEASE</spring-data-jpa.version>
         <hibernate.version>4.1.8.Final</hibernate.version>
         <mybatis-plus.version>3.1.2</mybatis-plus.version>
+        <maven-compiler-plugin.version>3.1</maven-compiler-plugin.version>
+        <nexus-staging-maven-plugin.version>1.6.7</nexus-staging-maven-plugin.version>
+        <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
+        <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
+        <maven.deploy.skip>false</maven.deploy.skip>
     </properties>
-
-    <repositories>
-        <repository>
-            <id>joker17-maven-repository-thirdparty</id>
-            <url>http://106.12.198.45:8083/repository/thirdparty/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-                <checksumPolicy>fail</checksumPolicy>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>joker17-maven-repository-snapshots</id>
-            <url>http://106.12.198.45:8083/repository/maven-snapshots/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-                <checksumPolicy>fail</checksumPolicy>
-            </snapshots>
-        </repository>
-    </repositories>
 
     <dependencyManagement>
         <dependencies>
@@ -101,18 +104,30 @@
 
     </dependencies>
 
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
+
     <build>
         <plugins>
             <plugin>
                 <inherited>true</inherited>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.1</version>
+                <version>${maven-compiler-plugin.version}</version>
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                 </configuration>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -121,6 +136,47 @@
                     <skipTests>true</skipTests>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>${nexus-staging-maven-plugin.version}</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>ossrh</serverId>
+                    <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>${maven-gpg-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>${maven-source-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -139,6 +195,7 @@
                 </executions>
             </plugin>
         </plugins>
+
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
@@ -174,21 +231,5 @@
         </testResources>
     </build>
 
-    <distributionManagement>
-        <repository>
-<!--
--->
-<!--
-            <id>joker17-maven-repository</id>
--->
-            <id>joker17-maven-repository-thirdparty</id>
-            <url>http://106.12.198.45:8083/repository/thirdparty/</url>
-        </repository>
-        <snapshotRepository>
 
-            <id>joker17-maven-repository-snapshots</id>
-
-            <url>http://106.12.198.45:8083/repository/maven-snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
 </project>

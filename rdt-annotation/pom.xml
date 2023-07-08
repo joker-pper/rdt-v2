@@ -5,7 +5,7 @@
 
     <parent>
         <artifactId>rdt-v2</artifactId>
-        <groupId>com.github.joker-pper</groupId>
+        <groupId>io.github.joker-pper</groupId>
         <version>1.0.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>

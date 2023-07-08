@@ -4,21 +4,24 @@
 
     <parent>
         <artifactId>rdt-test</artifactId>
-        <groupId>com.github.joker-pper</groupId>
+        <groupId>io.github.joker-pper</groupId>
         <version>1.0.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
+
+
     <artifactId>rdt-common-test</artifactId>
     <packaging>pom</packaging>
     <version>1.0.1-SNAPSHOT</version>
 
 
-<!--    <modules>
+    <modules>
         <module>../rdt-jpa-test</module>
         <module>../rdt-spring-mongodb-test</module>
-    </modules>-->
+        <module>../rdt-mybatis-plus-test</module>
+    </modules>
 
     <properties>
         <java.version>1.8</java.version>
@@ -37,39 +40,39 @@
 
 
             <dependency>
-                <groupId>com.github.joker-pper</groupId>
+                <groupId>io.github.joker-pper</groupId>
                 <artifactId>rdt-spring</artifactId>
                 <version>${rdt.spring.version}</version>
             </dependency>
 
 
             <dependency>
-                <groupId>com.github.joker-pper</groupId>
+                <groupId>io.github.joker-pper</groupId>
                 <artifactId>rdt-spring-mongodb-v1</artifactId>
                 <version>${rdt-spring-mongodb-v1.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>com.github.joker-pper</groupId>
+                <groupId>io.github.joker-pper</groupId>
                 <artifactId>rdt-spring-mongodb-v2</artifactId>
                 <version>${rdt-spring-mongodb-v2.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>com.github.joker-pper</groupId>
+                <groupId>io.github.joker-pper</groupId>
                 <artifactId>rdt-jpa</artifactId>
                 <version>${rdt-jpa.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>com.github.joker-pper</groupId>
+                <groupId>io.github.joker-pper</groupId>
                 <artifactId>rdt-hibernate</artifactId>
                 <version>${rdt-hibernate.version}</version>
             </dependency>
 
 
             <dependency>
-                <groupId>com.github.joker-pper</groupId>
+                <groupId>io.github.joker-pper</groupId>
                 <artifactId>rdt-mybatis-plus</artifactId>
                 <version>${rdt-mybatis-plus.version}</version>
             </dependency>
@@ -87,7 +90,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.github.joker-pper</groupId>
+            <groupId>io.github.joker-pper</groupId>
             <artifactId>rdt-core</artifactId>
             <!-- 打包jar时需要添加jar到lib下 -->
             <!--<scope>system</scope>

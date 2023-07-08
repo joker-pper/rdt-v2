@@ -4,21 +4,23 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>rdt-v2</artifactId>
-        <groupId>com.github.joker-pper</groupId>
+        <groupId>io.github.joker-pper</groupId>
         <version>1.0.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <version>1.0.1-SNAPSHOT</version>
-
     <artifactId>rdt-test</artifactId>
     <packaging>pom</packaging>
+
+    <properties>
+        <maven.deploy.skip>true</maven.deploy.skip>
+        <skipRemoteStaging>true</skipRemoteStaging>
+    </properties>
 
     <modules>
         <module>rdt-common-test</module>
     </modules>
-
-
 
 
 </project>

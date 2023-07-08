@@ -31,46 +31,18 @@ rdt-jpa及rdt-spring-mongodb为已提供的数据层操作实现,可作为具体
 > 如何引用 (当前版本1.0.1-SNAPSHOT)
 
 ````
-    <repositories>
-        <repository>
-            <id>joker17-maven-repository-thirdparty</id>
-            <url>http://106.12.198.45:8083/repository/thirdparty/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-                <checksumPolicy>fail</checksumPolicy>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>joker17-maven-repository-snapshots</id>
-            <url>http://106.12.198.45:8083/repository/maven-snapshots/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-                <checksumPolicy>fail</checksumPolicy>
-            </snapshots>
-        </repository>
-    </repositories>
-
-
 
     <dependencies>
     
         <dependency>
-            <groupId>com.github.joker-pper</groupId>
+            <groupId>io.github.joker-pper</groupId>
             <artifactId>rdt-annotation</artifactId>
             <version>${version}</version>
         </dependency>
         
         <!-- 包含 rdt-annotation -->
         <dependency>
-            <groupId>com.github.joker-pper</groupId>
+            <groupId>io.github.joker-pper</groupId>
             <artifactId>rdt-core</artifactId>
             <version>${version}</version>
         </dependency>
@@ -79,21 +51,21 @@ rdt-jpa及rdt-spring-mongodb为已提供的数据层操作实现,可作为具体
         <!-- 以下均包含 rdt-annotation及rdt-core -->
         
         <dependency>
-            <groupId>com.github.joker-pper</groupId>
+            <groupId>io.github.joker-pper</groupId>
             <artifactId>rdt-jpa</artifactId>
             <version>${version}</version>
         </dependency>
         
     
         <dependency>
-            <groupId>com.github.joker-pper</groupId>
+            <groupId>io.github.joker-pper</groupId>
             <artifactId>rdt-spring-mongodb-v1</artifactId>
             <version>${version}</version>
         </dependency>
         
     
         <dependency>
-            <groupId>com.github.joker-pper</groupId>
+            <groupId>io.github.joker-pper</groupId>
             <artifactId>rdt-spring-mongodb-v2</artifactId>
             <version>${version}</version>
         </dependency>

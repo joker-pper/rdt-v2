@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>rdt-v2</artifactId>
-        <groupId>com.github.joker-pper</groupId>
+        <groupId>io.github.joker-pper</groupId>
         <version>1.0.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
@@ -23,7 +23,7 @@
         </dependency>
 
         <dependency>
-            <groupId>com.github.joker-pper</groupId>
+            <groupId>io.github.joker-pper</groupId>
             <artifactId>rdt-core</artifactId>
             <version>${rdt.core.version}</version>
         </dependency>

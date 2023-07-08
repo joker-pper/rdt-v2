@@ -5,4 +5,5 @@
 .idea/
 pom.xml.versionsBackup
 /rdt-*/target
+/**/target
 
